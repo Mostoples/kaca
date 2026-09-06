@@ -1,0 +1,59 @@
+rules_version = '2';
+
+// ==========================================================
+// KACA — aturan akses Firestore
+//
+// Prinsip: setiap dokumen berada di bawah users/{uid} dan hanya
+// bisa dibaca/ditulis oleh pemiliknya sendiri. Tidak ada koleksi
+// yang bisa dibaca lintas pengguna, dan tidak ada akses publik.
+//
+// Data citra DICOM TIDAK PERNAH disimpan di sini — hanya status
+// baca dan isi laporan. Piksel tetap diurai di browser.
+// ==========================================================
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function masuk() {
+      return request.auth != null;
+    }
+    function pemilik(uid) {
+      return masuk() && request.auth.uid == uid;
+    }
+
+    // Profil, status worklist, dan laporan milik satu pengguna
+    match /users/{uid} {
+      allow read, write: if pemilik(uid);
+
+      // Status baca per studi: users/{uid}/worklist/{studyId}
+      match /worklist/{studyId} {
+        allow read, delete: if pemilik(uid);
+        allow create, update: if pemilik(uid)
+                     && request.resource.data.keys().hasOnly(['status', 'updatedAt', 'studyId'])
+                     && request.resource.data.status is string
+                     && request.resource.data.status.size() <= 40;
+      }
+
+      // Laporan per studi: users/{uid}/reports/{studyId}
+      match /reports/{studyId} {
+        allow read: if pemilik(uid);
+        allow delete: if pemilik(uid);
+        allow create, update: if pemilik(uid)
+                     && request.resource.data.keys().hasOnly(
+                          ['clinical', 'findings', 'impression', 'status',
+                           'updatedAt', 'by', 'studyId', 'patient'])
+                     && request.resource.data.findings is string
+                     && request.resource.data.findings.size() <= 20000
+                     && request.resource.data.impression.size() <= 20000
+                     && request.resource.data.clinical.size() <= 5000;
+      }
+
+      // Tidak ada wildcard di bawah users/{uid}: koleksi lain ditolak agar
+      // batasan bentuk data di atas benar-benar berlaku.
+    }
+
+    // Semua yang lain ditolak
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

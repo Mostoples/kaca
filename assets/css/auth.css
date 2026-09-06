@@ -1,0 +1,86 @@
+/* ==========================================================
+   KACA — halaman masuk / daftar
+   ========================================================== */
+.auth-body{min-height:100vh}
+.auth-wrap{
+  display:grid;grid-template-columns:minmax(0,460px) 1fr;
+  min-height:100vh;align-items:stretch;
+}
+
+/* ---------- kolom formulir ---------- */
+.auth-card{
+  padding:44px 44px 40px;display:flex;flex-direction:column;justify-content:center;
+  max-width:520px;width:100%;margin-inline:auto;
+}
+.auth-card h1{font-size:26px;letter-spacing:-.03em;margin-bottom:8px}
+.auth-card .sub{color:var(--muted);font-size:14px;margin-bottom:22px}
+
+.btn-block{width:100%;justify-content:center}
+.btn-google{width:100%;justify-content:center;background:#fff;color:#1c1f24;border-color:#fff;font-weight:600}
+.btn-google:hover{background:#eef1f5;border-color:#eef1f5}
+
+.divider{display:flex;align-items:center;gap:12px;margin:18px 0;color:var(--muted);font-size:12px}
+.divider::before,.divider::after{content:"";flex:1;height:1px;background:var(--line-soft)}
+
+.field-row{margin-bottom:14px}
+.pw{position:relative}
+.pw .field{padding-right:42px}
+.pw-toggle{
+  position:absolute;right:6px;top:50%;transform:translateY(-50%);
+  background:none;border:none;cursor:pointer;color:var(--muted);padding:6px;border-radius:7px;
+  display:grid;place-items:center;
+}
+.pw-toggle:hover{color:var(--text);background:rgba(255,255,255,.06)}
+.pw-toggle svg{width:17px;height:17px}
+
+.linkbtn{
+  background:none;border:none;padding:0;cursor:pointer;color:var(--accent);
+  font-size:13px;font-weight:600;text-decoration:none;
+}
+.linkbtn:hover{text-decoration:underline}
+
+.swap{font-size:13.5px;color:var(--muted);text-align:center;margin:16px 0 0}
+.tiny{font-size:11.5px;color:#63748a;line-height:1.55;margin:12px 0 0;text-align:center}
+
+.alert{
+  padding:11px 14px;border-radius:10px;font-size:13px;margin-bottom:16px;
+  background:rgba(242,84,91,.12);border:1px solid rgba(242,84,91,.35);color:#ffb1b4;
+}
+.alert.ok{background:rgba(74,222,128,.12);border-color:rgba(74,222,128,.35);color:#8ff0bb}
+.alert a{color:inherit;text-decoration:underline}
+
+/* ---------- kolom kanan ---------- */
+.auth-aside{
+  position:relative;overflow:hidden;display:flex;align-items:center;
+  background:linear-gradient(160deg,#0b1119,#0a1a20 55%,#0b1119);
+  border-left:1px solid var(--line-soft);padding:48px;
+}
+.auth-aside::before{
+  content:"";position:absolute;inset:0;pointer-events:none;
+  background:radial-gradient(620px 380px at 30% 18%,rgba(47,212,189,.18),transparent 65%),
+             radial-gradient(560px 340px at 82% 78%,rgba(91,156,255,.16),transparent 65%);
+}
+.aside-inner{position:relative;max-width:520px;margin-inline:auto}
+.auth-aside h2{font-size:clamp(22px,2.4vw,30px);letter-spacing:-.03em;margin:16px 0 12px}
+.auth-aside p{color:var(--text-2);font-size:15px;max-width:46ch}
+.aside-mock{
+  position:relative;margin:26px 0;border:1px solid var(--line);border-radius:14px;
+  overflow:hidden;background:#04070a;box-shadow:var(--shadow);
+}
+.aside-mock canvas{width:100%;height:auto;display:block}
+.aside-mock .ovl{
+  position:absolute;font-family:var(--mono);font-size:10.5px;color:#8fe9dc;
+  text-shadow:0 1px 3px #000;letter-spacing:.03em;
+}
+.aside-mock .ovl.tl{top:10px;left:12px}
+.aside-mock .ovl.br{bottom:10px;right:12px}
+
+/* ---------- responsif ---------- */
+@media (max-width:900px){
+  .auth-wrap{grid-template-columns:1fr}
+  .auth-aside{display:none}
+  .auth-card{padding:32px 22px 40px;justify-content:flex-start;padding-top:44px}
+}
+@media (max-width:400px){
+  .auth-card{padding-inline:16px}
+}

@@ -9,6 +9,7 @@
 <link rel="stylesheet" href="assets/css/app.css">
 </head>
 <body class="app">
+<a class="skip-link" href="#konten">Lewati ke konten utama</a>
 
 <div class="app-shell">
 
@@ -21,21 +22,24 @@
       <a href="index.html">Situs</a>
     </div>
     <span class="spacer"></span>
+    <button class="btn btn-sm only-mobile" id="btnFilter" aria-expanded="false" aria-controls="wlSide">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+           stroke-linecap="round" aria-hidden="true"><path d="M3 6h18M6 12h12M10 18h4"/></svg>
+      Filter
+    </button>
     <button class="btn btn-sm" id="btnOpenFiles">Buka File DICOM</button>
-    <button class="btn btn-sm" id="btnOpenFolder">Buka Folder</button>
+    <button class="btn btn-sm hide-narrow" id="btnOpenFolder">Buka Folder</button>
     <input type="file" id="fileInput" multiple accept=".dcm,.dicom,application/dicom,*/*" hidden>
     <input type="file" id="dirInput" webkitdirectory directory multiple hidden>
-    <div class="user-chip" title="Pengguna aktif">
-      <span class="avatar">RA</span>
-      <span><span class="nm">dr. Rizky Aditama</span><span class="rl">Radiolog</span></span>
-    </div>
+    <div class="user-chip" id="userChip"></div>
   </header>
 
   <!-- ====== BODY ====== -->
   <div class="wl-body">
 
     <!-- sidebar filter -->
-    <aside class="wl-side">
+    <div class="scrim" id="scrim" hidden></div>
+    <aside class="wl-side" id="wlSide">
       <h5>Antrian</h5>
       <div class="side-item active" data-filter="all">
         <span id="i-inbox"></span><span>Semua studi</span><span class="cnt" id="c-all">0</span>
@@ -69,7 +73,7 @@
     </aside>
 
     <!-- main -->
-    <main class="wl-main">
+    <main class="wl-main" id="konten">
       <div class="wl-tools">
         <div class="search-box">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
@@ -115,8 +119,9 @@
 
       <div class="wl-foot">
         <span id="foot">0 studi</span>
+        <span class="sync-dot" id="syncState" aria-live="polite"><i></i>Memeriksa sesi…</span>
         <span class="spacer"></span>
-        <span>Klik ganda baris untuk membuka viewer · <kbd>Enter</kbd> membuka studi terpilih</span>
+        <span class="foot-hint">Klik ganda baris untuk membuka viewer · <kbd>Enter</kbd> membuka studi terpilih</span>
       </div>
     </main>
   </div>
@@ -124,10 +129,12 @@
 
 <div id="toasts"></div>
 
+<script type="module" src="assets/js/firebase-init.js"></script>
 <script src="assets/js/common.js"></script>
 <script src="assets/js/idb.js"></script>
 <script src="assets/js/dicom.js"></script>
 <script src="assets/js/demo.js"></script>
+<script src="assets/js/auth.js"></script>
 <script src="assets/js/worklist.js"></script>
 </body>
 </html>

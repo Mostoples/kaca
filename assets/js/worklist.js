@@ -25,6 +25,19 @@
   };
 
   var statusOverride = K.store.get('wl.status', {});   /* perubahan status yang dibuat pengguna */
+  var sesi = null;                                     /* {fb, pembaca} dari KAUTH.jaga() */
+
+  /* Simpan status baca: selalu ke penyimpanan lokal, dan ke Firestore
+     bila pengguna masuk dengan akun sehingga tersinkron antar perangkat. */
+  function setStatus(key, status) {
+    statusOverride[key] = status;
+    K.store.set('wl.status', statusOverride);
+    if (sesi && sesi.fb && sesi.fb.user) {
+      sesi.fb.simpanStatus(key, status).catch(function (err) {
+        K.toast('Status tersimpan lokal, gagal menyinkronkan: ' + sesi.fb.pesanGalat(err), 'warn');
+      });
+    }
+  }
 
   function demoRows() {
     return window.DEMO.studies.map(function (s) {
@@ -148,17 +161,20 @@
 
     state.rows = rows;
     tbody.innerHTML = rows.map(function (r) {
-      return '<tr data-key="' + r.key + '"' + (state.selected === r.key ? ' class="sel"' : '') + '>' +
-        '<td>' + (r.urgent ? '<span title="Cito" style="color:#ff8b90">&#9679;</span>' : '') + '</td>' +
+      /* data-l dipakai sebagai label kolom saat tabel berubah jadi kartu di ponsel */
+      return '<tr data-key="' + r.key + '" tabindex="0"' +
+          (state.selected === r.key ? ' class="sel"' : '') + '>' +
+        '<td class="c-urgent">' + (r.urgent
+          ? '<span class="mod-tag pill-urgent" title="Cito">CITO</span>' : '') + '</td>' +
         '<td class="pn">' + esc(r.patient) +
           '<span class="sub">' + esc(r.patientId) + (r.sex ? ' · ' + r.sex : '') + (r.age ? ' · ' + fmtAge(r.age) : '') + '</span></td>' +
-        '<td><span class="mod-tag mod-' + esc(r.modality) + '">' + esc(r.modality) + '</span></td>' +
-        '<td>' + esc(r.desc) + '<span class="sub">' + r.series + ' seri · ' + r.images + ' citra</span></td>' +
-        '<td>' + esc(r.bodyPart || '—') + '</td>' +
-        '<td>' + K.fmtDate(r.date) + '<span class="sub">' + K.fmtTime(r.time) + '</span></td>' +
-        '<td>' + r.images + '</td>' +
-        '<td>' + statusPill(r.status) + '</td>' +
-        '<td style="font-family:var(--mono);font-size:12px">' + esc(r.accession) + '</td>' +
+        '<td data-l="Modalitas"><span class="mod-tag mod-' + esc(r.modality) + '">' + esc(r.modality) + '</span></td>' +
+        '<td data-l="Studi">' + esc(r.desc) + '<span class="sub">' + r.series + ' seri · ' + r.images + ' citra</span></td>' +
+        '<td data-l="Regio">' + esc(r.bodyPart || '—') + '</td>' +
+        '<td data-l="Tanggal">' + K.fmtDate(r.date) + '<span class="sub">' + K.fmtTime(r.time) + '</span></td>' +
+        '<td data-l="Citra">' + r.images + '</td>' +
+        '<td data-l="Status">' + statusPill(r.status) + '</td>' +
+        '<td data-l="Accession" style="font-family:var(--mono);font-size:12px">' + esc(r.accession) + '</td>' +
       '</tr>';
     }).join('');
 
@@ -220,10 +236,22 @@
   /* ==========================================================
      Interaksi
      ========================================================== */
+  K.qsa('.wl-side .side-item').forEach(function (n) {
+    n.setAttribute('role', 'button');
+    n.setAttribute('tabindex', '0');
+    n.addEventListener('keydown', function (e) {
+      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); n.click(); }
+    });
+  });
   K.qsa('.wl-side .side-item[data-filter]').forEach(function (n) {
+    n.setAttribute('aria-pressed', n.classList.contains('active') ? 'true' : 'false');
     n.addEventListener('click', function () {
-      K.qsa('.wl-side .side-item[data-filter]').forEach(function (x) { x.classList.remove('active'); });
+      K.qsa('.wl-side .side-item[data-filter]').forEach(function (x) {
+        x.classList.remove('active');
+        x.setAttribute('aria-pressed', 'false');
+      });
       n.classList.add('active');
+      n.setAttribute('aria-pressed', 'true');
       state.filter = n.dataset.filter;
       K.store.set('wl.filter', state.filter);
       render();
@@ -277,6 +305,30 @@
     }
   });
 
+  /* ---------- laci filter untuk layar sempit ---------- */
+  (function laci() {
+    var side = document.getElementById('wlSide');
+    var scrim = document.getElementById('scrim');
+    var btn = document.getElementById('btnFilter');
+    if (!side || !btn) return;
+
+    function buka(on) {
+      side.classList.toggle('open', on);
+      scrim.hidden = !on;
+      btn.setAttribute('aria-expanded', on ? 'true' : 'false');
+      if (on) side.querySelector('.side-item').focus();
+    }
+    btn.addEventListener('click', function () { buka(!side.classList.contains('open')); });
+    scrim.addEventListener('click', function () { buka(false); });
+    document.addEventListener('keydown', function (e) {
+      if (e.key === 'Escape' && side.classList.contains('open')) { buka(false); btn.focus(); }
+    });
+    /* memilih filter di ponsel langsung menutup laci */
+    side.addEventListener('click', function (e) {
+      if (e.target.closest('.side-item') && window.matchMedia('(max-width:900px)').matches) buka(false);
+    });
+  })();
+
   document.getElementById('btnOpen').addEventListener('click', openSelected);
   document.getElementById('btnRefresh').addEventListener('click', function () {
     refreshLocalFromDB().then(function () { buildModFilters(); render(); K.toast('Worklist disegarkan.'); });
@@ -286,7 +338,7 @@
     var r = state.rows.filter(function (x) { return x.key === state.selected; })[0];
     if (!r) { K.toast('Pilih satu studi terlebih dahulu.', 'warn'); return; }
     if (r.source === 'demo') {
-      if (r.status === 'Belum dibaca') { statusOverride[r.key] = 'Sedang dibaca'; K.store.set('wl.status', statusOverride); }
+      if (r.status === 'Belum dibaca') setStatus(r.key, 'Sedang dibaca');
       location.href = 'viewer.html?demo=' + encodeURIComponent(r.key);
     } else {
       location.href = 'viewer.html?local=' + encodeURIComponent(r.studyUID);
@@ -398,9 +450,50 @@
     next();
   }
 
-  /* ---------- init ---------- */
-  refreshLocalFromDB().then(function () {
-    buildModFilters();
-    render();
+  /* ==========================================================
+     Init — pastikan sesi dulu, baru bangun tampilan
+     ========================================================== */
+  /* Tampilkan worklist lebih dulu dari data yang sudah ada di perangkat,
+     baru lengkapi dengan sesi dan sinkronisasi. Dengan begitu daftar tidak
+     pernah kosong hanya karena menunggu jaringan. */
+  buildModFilters();
+  render();
+  refreshLocalFromDB().then(function () { buildModFilters(); render(); });
+
+  window.KAUTH.jaga().then(function (ses) {
+    sesi = ses;
+    window.KAUTH.pasangChip(document.getElementById('userChip'), ses.pembaca);
+
+    if (!(ses.fb && ses.fb.user)) { tandaiSinkron(null); return; }
+
+    return ses.fb.ambilSemuaStatus().then(function (jauh) {
+      Object.keys(jauh).forEach(function (k) { statusOverride[k] = jauh[k]; });
+      K.store.set('wl.status', statusOverride);
+      tandaiSinkron(true);
+      render();
+    }).catch(function (err) {
+      tandaiSinkron(false, ses.fb.pesanGalat(err));
+    });
+  }).catch(function (err) {
+    console.warn('Init worklist:', err);
+    tandaiSinkron(false, 'sesi tidak terbaca');
   });
+
+  /* identitas menyusul bila sesi akun baru diketahui belakangan */
+  window.addEventListener('kaca-pembaca', function (e) {
+    window.KAUTH.pasangChip(document.getElementById('userChip'), e.detail);
+  });
+
+  /* indikator kecil di bilah bawah */
+  function tandaiSinkron(ok, pesan) {
+    var host = document.getElementById('syncState');
+    if (!host) return;
+    if (ok === null) {
+      host.className = 'sync-dot off';
+      host.innerHTML = '<i></i>Mode tamu — tersimpan di peramban ini';
+      return;
+    }
+    host.className = 'sync-dot ' + (ok ? 'on' : 'off');
+    host.innerHTML = '<i></i>' + (ok ? 'Tersinkron dengan akun Anda' : 'Sinkronisasi gagal: ' + esc(pesan || ''));
+  }
 })();

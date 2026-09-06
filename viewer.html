@@ -9,6 +9,7 @@
 <link rel="stylesheet" href="assets/css/app.css">
 </head>
 <body class="app">
+<a class="skip-link" href="#konten">Lewati ke konten utama</a>
 
 <div class="app-shell">
 
@@ -27,17 +28,18 @@
 
     <span class="spacer"></span>
 
-    <div class="row" style="gap:4px">
+    <div class="row layout-btns" style="gap:4px">
       <button class="btn btn-sm" data-layout="1x1" title="Tata letak 1×1">1×1</button>
       <button class="btn btn-sm" data-layout="1x2" title="Tata letak 1×2">1×2</button>
       <button class="btn btn-sm" data-layout="2x2" title="Tata letak 2×2">2×2</button>
       <button class="btn btn-sm" data-layout="1x3" title="Tata letak 1×3">1×3</button>
     </div>
+    <button class="btn btn-sm only-mobile" id="btnSeries" aria-expanded="false" aria-controls="seriesPanel">Seri</button>
+    <button class="btn btn-sm only-mobile" id="btnPanel" aria-expanded="false" aria-controls="sidePanel">Panel</button>
     <button class="btn btn-sm" id="btnOpenLocal">Buka File</button>
     <input type="file" id="fileInput" multiple hidden>
     <button class="btn btn-sm" id="btnFull" title="Layar penuh">⤢</button>
-    <div class="user-chip"><span class="avatar">RA</span>
-      <span><span class="nm">dr. Rizky Aditama</span><span class="rl">Radiolog</span></span></div>
+    <div class="user-chip" id="userChip"></div>
   </header>
 
   <!-- ====== BODY ====== -->
@@ -93,13 +95,14 @@
     </nav>
 
     <!-- panel seri -->
-    <aside class="series-panel">
+    <div class="scrim" id="scrim" hidden></div>
+    <aside class="series-panel" id="seriesPanel">
       <div class="panel-head">Seri <span id="serCount" style="margin-left:auto;font-family:var(--mono)"></span></div>
       <div class="series-list" id="seriesList"></div>
     </aside>
 
     <!-- panggung -->
-    <section class="stage-wrap">
+    <section class="stage-wrap" id="konten">
       <div class="vp-grid l1x1" id="grid"></div>
       <div class="vw-foot">
         <div class="cine-ctrl">
@@ -122,7 +125,7 @@
     </section>
 
     <!-- panel kanan -->
-    <aside class="side-panel">
+    <aside class="side-panel" id="sidePanel">
       <div class="tabbar">
         <button class="on" data-tab="info">Info</button>
         <button data-tab="wl">W/L</button>
@@ -225,8 +228,9 @@
           <button class="btn btn-sm btn-primary" id="btnSaveRep">Simpan Laporan</button>
           <button class="btn btn-sm" id="btnCopyRep">Salin Teks</button>
         </div>
-        <p style="font-size:11.5px;color:var(--muted);margin-top:12px;line-height:1.5">
-          Laporan disimpan di penyimpanan lokal peramban ini saja. Prototipe — bukan dokumen medis resmi.
+        <p class="sync-dot" id="repSync" style="margin-top:12px" aria-live="polite"><i></i>Memeriksa sesi…</p>
+        <p style="font-size:11.5px;color:var(--muted);margin-top:8px;line-height:1.5">
+          Prototipe — bukan dokumen medis resmi. Hanya teks laporan yang disimpan; citra tidak pernah diunggah.
         </p>
       </div>
     </aside>
@@ -238,10 +242,12 @@
 </div>
 <div id="toasts"></div>
 
+<script type="module" src="assets/js/firebase-init.js"></script>
 <script src="assets/js/common.js"></script>
 <script src="assets/js/idb.js"></script>
 <script src="assets/js/dicom.js"></script>
 <script src="assets/js/demo.js"></script>
+<script src="assets/js/auth.js"></script>
 <script src="assets/js/viewer.js"></script>
 </body>
 </html>

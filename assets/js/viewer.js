@@ -76,6 +76,9 @@
 
     var el = document.createElement('div');
     el.className = 'viewport';
+    el.tabIndex = 0;
+    el.setAttribute('role', 'img');
+    el.setAttribute('aria-label', 'Viewport citra ' + (index + 1));
     el.innerHTML =
       '<canvas class="img"></canvas><canvas class="ann"></canvas>' +
       '<div class="vp-empty">Viewport kosong — klik seri di panel kiri</div>' +
@@ -92,15 +95,73 @@
     this.off = document.createElement('canvas');
     this.octx = this.off.getContext('2d');
 
-    el.addEventListener('mousedown', function (e) { onDown(self, e); });
-    el.addEventListener('mousemove', function (e) { onHover(self, e); });
+    /* Pointer Events dipakai agar tetikus, pena, dan layar sentuh
+       ditangani lewat jalur yang sama. */
+    this.pointers = new Map();
+
+    el.addEventListener('pointerdown', function (e) {
+      setActive(self.i);
+      self.pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+      try { el.setPointerCapture(e.pointerId); } catch (err) {}
+
+      if (self.pointers.size === 2) {
+        batalDrag();                       /* dua jari → cubit, bukan alat */
+        self.pinch = pinchState(self);
+        return;
+      }
+      if (self.pointers.size === 1) onDown(self, e);
+    });
+
+    el.addEventListener('pointermove', function (e) {
+      if (self.pointers.has(e.pointerId)) {
+        self.pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+      }
+      if (self.pointers.size === 2 && self.pinch) { onPinch(self); return; }
+      onHover(self, e);
+    });
+
+    function lepas(e) {
+      self.pointers.delete(e.pointerId);
+      try { el.releasePointerCapture(e.pointerId); } catch (err) {}
+      if (self.pointers.size < 2) self.pinch = null;
+      if (self.pointers.size === 0) onUp();
+    }
+    el.addEventListener('pointerup', lepas);
+    el.addEventListener('pointercancel', lepas);
+
     el.addEventListener('wheel', function (e) { onWheel(self, e); }, { passive: false });
     el.addEventListener('contextmenu', function (e) { e.preventDefault(); });
-    el.addEventListener('mousedown', function () { setActive(self.i); });
     el.addEventListener('dblclick', function () {
       App.layout = App.layout === '1x1' ? '2x2' : '1x1';
       applyLayout();
     });
+  }
+
+  /* ---------- cubit dua jari: perbesar + geser ---------- */
+  function pinchState(vp) {
+    var p = Array.from(vp.pointers.values());
+    var r = vp.el.getBoundingClientRect();
+    return {
+      jarak: Math.hypot(p[0].x - p[1].x, p[0].y - p[1].y) || 1,
+      cx: (p[0].x + p[1].x) / 2 - r.left,
+      cy: (p[0].y + p[1].y) / 2 - r.top,
+      zoom0: vp.zoom, panX0: vp.panX, panY0: vp.panY
+    };
+  }
+  function onPinch(vp) {
+    var p = Array.from(vp.pointers.values());
+    if (p.length < 2 || !vp.img) return;
+    var r = vp.el.getBoundingClientRect();
+    var jarak = Math.hypot(p[0].x - p[1].x, p[0].y - p[1].y) || 1;
+    var cx = (p[0].x + p[1].x) / 2 - r.left;
+    var cy = (p[0].y + p[1].y) / 2 - r.top;
+    var s = vp.pinch;
+
+    vp.zoom = Math.max(0.08, Math.min(24, s.zoom0 * (jarak / s.jarak)));
+    vp.panX = s.panX0 + (cx - s.cx) * vp.dpr;
+    vp.panY = s.panY0 + (cy - s.cy) * vp.dpr;
+    vp.draw();
+    syncPanels();
   }
 
   Viewport.prototype.resize = function () {
@@ -218,12 +279,19 @@
       this.drawAnn(); this.overlay(); return;
     }
 
-    var idata = window.DICOM.toImageData(img, {
-      windowCenter: this.wc, windowWidth: this.ww,
-      invert: this.invert, colormap: this.colormap
-    });
-    this.off.width = img.cols; this.off.height = img.rows;
-    this.octx.putImageData(idata, 0, 0);
+    /* Hasil window/level di-cache: geser, perbesar, putar, dan cermin
+       cukup menggambar ulang kanvas luring tanpa menghitung LUT lagi. */
+    var kunci = Math.round(this.ww) + '|' + Math.round(this.wc) + '|' +
+                (this.invert ? 1 : 0) + '|' + (this.colormap || '');
+    if (this._cImg !== img || this._cKey !== kunci) {
+      var idata = window.DICOM.toImageData(img, {
+        windowCenter: this.wc, windowWidth: this.ww,
+        invert: this.invert, colormap: this.colormap
+      });
+      this.off.width = img.cols; this.off.height = img.rows;
+      this.octx.putImageData(idata, 0, 0);
+      this._cImg = img; this._cKey = kunci;
+    }
     this.blit(this.off, img.cols, img.rows);
     this.drawAnn();
     this.overlay();
@@ -428,8 +496,26 @@
       drag = null; vp.drawAnn(); refreshMeasList(); return;
     }
 
-    window.addEventListener('mousemove', onMove);
-    window.addEventListener('mouseup', onUp);
+    window.addEventListener('pointermove', onMove);
+    window.addEventListener('pointerup', onUp);
+    window.addEventListener('pointercancel', onUp);
+  }
+
+  /* dipakai saat jari kedua menyentuh: batalkan aksi alat yang sedang jalan */
+  function batalDrag() {
+    if (!drag) return;
+    if (drag.meas) {
+      var i = drag.vp.meas.indexOf(drag.meas);
+      if (i !== -1) drag.vp.meas.splice(i, 1);
+      drag.vp.drawAnn();
+    }
+    drag = null;
+    lepasListenerDrag();
+  }
+  function lepasListenerDrag() {
+    window.removeEventListener('pointermove', onMove);
+    window.removeEventListener('pointerup', onUp);
+    window.removeEventListener('pointercancel', onUp);
   }
 
   function onMove(e) {
@@ -493,8 +579,7 @@
       refreshMeasList();
     }
     drag = null;
-    window.removeEventListener('mousemove', onMove);
-    window.removeEventListener('mouseup', onUp);
+    lepasListenerDrag();
   }
 
   function onHover(vp, e) {
@@ -1013,8 +1098,12 @@
   /* alat */
   K.qsa('#toolrail [data-tool]').forEach(function (b) {
     b.addEventListener('click', function () {
-      K.qsa('#toolrail [data-tool]').forEach(function (x) { x.classList.remove('on'); });
+      K.qsa('#toolrail [data-tool]').forEach(function (x) {
+        x.classList.remove('on');
+        x.setAttribute('aria-pressed', 'false');
+      });
       b.classList.add('on');
+      b.setAttribute('aria-pressed', 'true');
       App.tool = b.dataset.tool;
       cancelPendingAngle();
       document.getElementById('measHint').textContent = 'Alat aktif: ' + b.dataset.tip.split(' (')[0] + '.';
@@ -1090,12 +1179,68 @@
     b.addEventListener('click', function () { App.layout = b.dataset.layout; applyLayout(); });
   });
 
+  /* ---------- laci seri & panel untuk layar sempit ---------- */
+  (function laci() {
+    var scrim = document.getElementById('scrim');
+    var pasangan = [
+      [document.getElementById('btnSeries'), document.getElementById('seriesPanel')],
+      [document.getElementById('btnPanel'), document.getElementById('sidePanel')]
+    ];
+    function tutupSemua() {
+      pasangan.forEach(function (p) {
+        if (p[1]) p[1].classList.remove('open');
+        if (p[0]) p[0].setAttribute('aria-expanded', 'false');
+      });
+      if (scrim) scrim.hidden = true;
+    }
+    pasangan.forEach(function (p) {
+      var btn = p[0], panel = p[1];
+      if (!btn || !panel) return;
+      btn.addEventListener('click', function () {
+        var buka = !panel.classList.contains('open');
+        tutupSemua();
+        if (buka) {
+          panel.classList.add('open');
+          btn.setAttribute('aria-expanded', 'true');
+          if (scrim) scrim.hidden = false;
+        }
+      });
+    });
+    if (scrim) scrim.addEventListener('click', tutupSemua);
+    document.addEventListener('keydown', function (e) { if (e.key === 'Escape') tutupSemua(); });
+    /* memilih seri di ponsel langsung menutup laci */
+    var sl = document.getElementById('seriesList');
+    if (sl) sl.addEventListener('click', function () {
+      if (window.matchMedia('(max-width:900px)').matches) tutupSemua();
+    });
+    App.tutupLaci = tutupSemua;
+  })();
+
+  /* ---------- aksesibilitas: label untuk tombol berikon ---------- */
+  K.qsa('#toolrail .trbtn').forEach(function (b) {
+    if (b.dataset.tip && !b.getAttribute('aria-label')) b.setAttribute('aria-label', b.dataset.tip);
+    if (b.dataset.tool) b.setAttribute('aria-pressed', b.classList.contains('on') ? 'true' : 'false');
+  });
+  K.qsa('.iconbtn[title]').forEach(function (b) {
+    if (!b.getAttribute('aria-label')) b.setAttribute('aria-label', b.getAttribute('title'));
+  });
+  K.qsa('.tabbar button').forEach(function (b) {
+    b.setAttribute('role', 'tab');
+    b.setAttribute('aria-selected', b.classList.contains('on') ? 'true' : 'false');
+  });
+  var tb = document.querySelector('.tabbar');
+  if (tb) tb.setAttribute('role', 'tablist');
+
   /* tab panel kanan */
   K.qsa('.tabbar button').forEach(function (b) {
     b.addEventListener('click', function () {
-      K.qsa('.tabbar button').forEach(function (x) { x.classList.remove('on'); });
+      K.qsa('.tabbar button').forEach(function (x) {
+        x.classList.remove('on');
+        x.setAttribute('aria-selected', 'false');
+      });
       K.qsa('.tabpane').forEach(function (x) { x.classList.remove('on'); });
       b.classList.add('on');
+      b.setAttribute('aria-selected', 'true');
       document.getElementById('tab-' + b.dataset.tab).classList.add('on');
     });
   });
@@ -1246,25 +1391,79 @@
   });
 
   function reportKey() { return 'report.' + (App.study ? App.study.id : 'none'); }
-  function loadReport() {
-    var r = K.store.get(reportKey(), null);
-    document.getElementById('repClinical').value = r ? r.clinical : '';
-    document.getElementById('repFindings').value = r ? r.findings : '';
-    document.getElementById('repImpression').value = r ? r.impression : '';
-    document.getElementById('repStatus').value = r ? r.status : 'Draf';
+  function studyId() { return App.study ? String(App.study.id).replace(/[/\\]/g, '_') : 'none'; }
+
+  function isiFormLaporan(r) {
+    document.getElementById('repClinical').value = (r && r.clinical) || '';
+    document.getElementById('repFindings').value = (r && r.findings) || '';
+    document.getElementById('repImpression').value = (r && r.impression) || '';
+    document.getElementById('repStatus').value = (r && r.status) || 'Draf';
   }
+
+  /* Muat laporan: dari Firestore bila memakai akun, jika tidak dari peramban.
+     Salinan lokal tetap ditulis agar laporan bisa dibuka saat luring. */
+  function loadReport() {
+    isiFormLaporan(K.store.get(reportKey(), null));
+    var fb = App.sesi && App.sesi.fb;
+    if (!fb || !fb.user || !App.study) { tandaiLaporan(null); return; }
+    fb.ambilLaporan(studyId()).then(function (r) {
+      if (r) { isiFormLaporan(r); K.store.set(reportKey(), r); }
+      tandaiLaporan(true, r && r.updatedAt ? r : null);
+    }).catch(function (err) {
+      tandaiLaporan(false, null, fb.pesanGalat(err));
+    });
+  }
+
+  function tandaiLaporan(ok, data, pesan) {
+    var el = document.getElementById('repSync');
+    if (!el) return;
+    if (ok === null) {
+      el.className = 'sync-dot off';
+      el.innerHTML = '<i></i>Mode tamu — laporan hanya di peramban ini';
+    } else if (ok) {
+      el.className = 'sync-dot on';
+      el.innerHTML = '<i></i>Tersinkron' + (data && data.by ? ' · terakhir oleh ' + esc(data.by) : '');
+    } else {
+      el.className = 'sync-dot off';
+      el.innerHTML = '<i></i>Gagal sinkron: ' + esc(pesan || '');
+    }
+  }
+
   document.getElementById('btnSaveRep').addEventListener('click', function () {
     if (!App.study) return;
-    K.store.set(reportKey(), {
+    var data = {
       clinical: document.getElementById('repClinical').value,
       findings: document.getElementById('repFindings').value,
       impression: document.getElementById('repImpression').value,
       status: document.getElementById('repStatus').value,
+      patient: (App.study.patient && App.study.patient.name) || '',
       savedAt: new Date().toISOString(),
-      by: 'dr. Rizky Aditama'
-    });
-    K.toast('Laporan tersimpan di peramban ini.');
+      by: namaPembaca()
+    };
+    K.store.set(reportKey(), data);
+
+    var fb = App.sesi && App.sesi.fb;
+    if (fb && fb.user) {
+      var btn = this;
+      btn.disabled = true; btn.textContent = 'Menyimpan…';
+      fb.simpanLaporan(studyId(), data).then(function () {
+        K.toast('Laporan tersimpan dan tersinkron ke akun Anda.');
+        tandaiLaporan(true, data);
+      }).catch(function (err) {
+        K.toast('Tersimpan lokal, gagal sinkron: ' + fb.pesanGalat(err), 'warn');
+        tandaiLaporan(false, null, fb.pesanGalat(err));
+      }).then(function () {
+        btn.disabled = false; btn.textContent = 'Simpan Laporan';
+      });
+    } else {
+      K.toast('Laporan tersimpan di peramban ini.');
+    }
   });
+
+  function namaPembaca() {
+    return (App.sesi && App.sesi.pembaca && !App.sesi.pembaca.tamu)
+      ? App.sesi.pembaca.nama : 'Mode tamu';
+  }
   document.getElementById('btnCopyRep').addEventListener('click', function () {
     var st = App.study || {};
     var txt = [
@@ -1279,7 +1478,7 @@
       '', 'TEMUAN:', document.getElementById('repFindings').value || '—',
       '', 'KESAN:', document.getElementById('repImpression').value || '—',
       '', 'Status: ' + document.getElementById('repStatus').value,
-      'Pembaca: dr. Rizky Aditama'
+      'Pembaca: ' + namaPembaca()
     ].join('\n');
     if (navigator.clipboard) {
       navigator.clipboard.writeText(txt).then(function () { K.toast('Teks laporan disalin.'); },
@@ -1322,23 +1521,36 @@
      ========================================================== */
   App.layout = K.store.get('vw.layout', '1x1');
   applyLayout();
+  document.getElementById('measHint').textContent = 'Alat aktif: Window / Level.';
 
   var params = new URLSearchParams(location.search);
   var demoId = params.get('demo'), localUid = params.get('local');
 
-  if (localUid && window.KDB) {
-    loader(true, 'Memuat berkas lokal…');
-    window.KDB.byStudy(localUid).then(function (recs) {
-      loader(false);
-      if (!recs.length) { K.toast('Berkas lokal tidak ditemukan, memuat studi demo.', 'warn'); mountStudy(buildDemoStudy(null)); return; }
-      mountStudy(buildLocalStudy(recs));
-    }).catch(function () {
-      loader(false);
-      mountStudy(buildDemoStudy(null));
-    });
-  } else {
-    mountStudy(buildDemoStudy(demoId));
-  }
+  loader(true, 'Memeriksa sesi…');
+  window.KAUTH.jaga().then(function (ses) {
+    App.sesi = ses;
+    window.KAUTH.pasangChip(document.getElementById('userChip'), ses.pembaca);
 
-  document.getElementById('measHint').textContent = 'Alat aktif: Window / Level.';
+    if (localUid && window.KDB) {
+      loader(true, 'Memuat berkas lokal…');
+      return window.KDB.byStudy(localUid).then(function (recs) {
+        loader(false);
+        if (!recs.length) {
+          K.toast('Berkas lokal tidak ditemukan, memuat studi demo.', 'warn');
+          mountStudy(buildDemoStudy(null));
+          return;
+        }
+        mountStudy(buildLocalStudy(recs));
+      }).catch(function () {
+        loader(false);
+        mountStudy(buildDemoStudy(null));
+      });
+    }
+    loader(false);
+    mountStudy(buildDemoStudy(demoId));
+  }).catch(function (err) {
+    loader(false);
+    console.warn('Init viewer:', err);
+    mountStudy(buildDemoStudy(demoId));
+  });
 })();
