@@ -22,10 +22,26 @@ adalah ES module, dan `http.server` bawaan Python di Windows mengirimkannya seba
 
 ```bash
 node tests/node-runner.js       # 66 uji parser, volume, & permukaan — keluar 1 bila gagal
+node tests/asap-halaman.js      # 57 uji asap skrip halaman di tiruan DOM
 node tests/periksa-contoh.js    # buka 20 berkas .dcm di contoh-dicom/
 node tests/periksa-volume.js    # bangun volume dari data demo & berkas nyata, ukur waktunya
 node tests/periksa-mesh.js      # rekonstruksi permukaan dari seri volumetrik
 ```
+
+**Semuanya berjalan di Node — tidak ada peramban yang dipakai, tidak ada jaringan.**
+Halaman uji di `/tests/` hanya kenyamanan tambahan; daftar ujinya sama persis.
+
+`tests/asap-halaman.js` memuat berkas HTML sungguhan ke tiruan DOM (`tests/dom-tiruan.js`),
+menjalankan setiap `<script>` apa adanya, lalu menekan tombol dan memicu pintasan seperti
+pengguna: memilih semua alat, memasang setiap tata letak, membangun volume 3D, membuka MPR,
+merekonstruksi permukaan, mengekspor STL/OBJ, menyimpan laporan, dan menjalankan panggung
+prisma sampai keempat sisinya benar-benar tergambar. Yang tertangkap: galat inisialisasi,
+`getElementById` yang mengembalikan `null`, dan pengendali yang melempar.
+
+Tiruan DOM-nya sengaja tidak lengkap — cakupannya persis sebatas yang dipakai kode Kaca:
+pohon elemen dari HTML asli, subset selector CSS yang benar-benar muncul, dan konteks canvas
+2D yang **mencatat panggilan alih-alih menggambar**. Jadi yang **tidak** teruji tetap sama:
+hasil gambar, tata letak, dan gaya CSS. Untuk itu perlu dilihat mata di peramban.
 
 Uji yang sama bisa dijalankan di peramban: `node serve.js`, lalu buka
 <http://localhost:8080/tests/>. Tidak ada dependensi dan tidak ada langkah pemasangan —
@@ -47,6 +63,10 @@ node tools/buat-contoh.js --daftar   # perkirakan ukurannya dulu
 node tools/unduh-contoh.js           # 20 berkas nyata dari pydicom-data, ~2,3 MB
 node tools/unduh-contoh.js --lengkap # tambah berkas besar
 node tools/unduh-contoh.js --daftar
+
+node tools/unduh-volume.js           # seri phantom 172 irisan dari TCIA, ~40 MB
+node tools/unduh-volume.js --semua   # tambah CT pasien nyata, ~90 MB
+node tools/unduh-volume.js --daftar  # lihat lisensi & ukurannya dulu
 ```
 
 **`buat-contoh.js`** membuat CT kepala, CT toraks, CT angiografi, dan MRI otak sebagai
@@ -66,6 +86,32 @@ cara inilah yang menemukan bug sequence yang dijelaskan di bawah.
 
 Berkas unduhan tidak dilacak git meski lisensinya mengizinkan, supaya repo ini tidak ikut
 menjadi tempat redistribusi biner proyek lain.
+
+### Seri volumetrik sungguhan dari TCIA
+
+**`unduh-volume.js`** mengambil seri DICOM ratusan irisan dari
+[The Cancer Imaging Archive](https://www.cancerimagingarchive.net) lewat REST API publik
+NBIA — tanpa akun. Ini satu-satunya sumber besar yang sekaligus berisi volume sungguhan,
+sudah de-identifikasi oleh penerbitnya, dan melampirkan lisensi yang jelas per koleksi.
+
+| Seri | Isi | Lisensi | Hasil |
+|---|---|---|---|
+| `ct-phantom-toraks` | phantom QA, Siemens SOMATOM Definition Edge, 172 irisan | CC BY 4.0 | 34 rb segitiga |
+| `ct-pankreas` | CT abdomen pasien, 186 irisan, irisan 1,0 mm | CC BY 3.0 | 66 rb segitiga |
+| `ct-toraks-pasien` | CT toraks pasien, 60 irisan pada 512² penuh | CC BY 3.0 | 178 rb segitiga |
+
+Bawaannya **hanya seri phantom** — objek uji, bukan manusia, jadi sejalan dengan proyek ini
+yang seluruh datanya memang bukan pasien. Seri pasien baru terunduh bila Anda menambahkan
+`--semua`; keduanya citra manusia sungguhan yang sudah de-identifikasi dan dipublikasikan
+resmi, tetapi tetap data medis orang lain.
+
+Lisensi dan DOI **tidak ditulis tangan** di skripnya — diambil dari API TCIA saat mengunduh
+lalu dicatat ke `contoh-dicom/tcia/SUMBER.md`, sehingga atribusinya tidak bisa salah. CC BY
+mewajibkan atribusi bila data disebarkan kembali.
+
+Pembaca ZIP-nya ditulis sendiri (~40 baris di atas `zlib` bawaan Node) supaya tetap tanpa
+dependensi. Setelah diekstraksi, setiap seri langsung diverifikasi: disusun jadi volume dan
+diekstraksi permukaannya, jadi kalau ada yang tidak terbaca akan langsung kelihatan.
 
 ## Struktur
 
@@ -99,14 +145,17 @@ assets/js/worklist.js   Script worklist
 assets/js/viewer.js     Mesin viewer (render, alat, pengukuran)
 
 tools/tulis-dicom.js    Penulis DICOM minimal (uji + pembuat contoh)
-tools/buat-contoh.js    Pembuat seri volumetrik
-tools/unduh-contoh.js   Pengunduh berkas contoh dari internet
+tools/buat-contoh.js    Pembuat seri volumetrik sintetis
+tools/unduh-contoh.js   Pengunduh berkas uji parser (pydicom-data)
+tools/unduh-volume.js   Pengunduh seri volumetrik sungguhan (TCIA)
 
 tests/index.html        Penjalan uji di peramban
 tests/node-runner.js    Penjalan uji tanpa peramban
 tests/uji-dicom.js      Berkas uji parser
 tests/uji-volume.js     Berkas uji volume 3D
 tests/uji-mesh.js       Berkas uji rekonstruksi permukaan
+tests/dom-tiruan.js     Tiruan DOM & canvas untuk Node
+tests/asap-halaman.js   Uji asap skrip halaman tanpa peramban
 tests/periksa-contoh.js Pemeriksa berkas contoh-dicom/
 tests/periksa-volume.js Pemeriksa volume dari data sungguhan
 tests/periksa-mesh.js   Pemeriksa rekonstruksi dari seri volumetrik
@@ -273,9 +322,10 @@ dan panggung prisma lewat jalur yang sudah ada — **dan bisa diuji tanpa peramb
 tepat radius itu dari pusat, luasnya harus mendekati 4πr², normalnya harus radial keluar,
 dan lebarnya di layar harus 2r.
 
-Ukuran nyata pada seri volumetrik 192×192×64: 38 ribu segitiga untuk angiografi, 129 ribu
+Ukuran nyata pada phantom sintetis 192×192×64: 38 ribu segitiga untuk angiografi, 129 ribu
 untuk kepala, 209 ribu untuk MRI otak; ekstraksi 110–300 ms, render 75–370 ms per sudut
-pada 256².
+pada 256². Pada CT toraks sungguhan dari TCIA (512×512×60, irisan 2,5 mm): 178 ribu segitiga
+pada 300 HU — kosta dan vertebra terbaca jelas.
 
 ## Proyeksi prisma hologram
 

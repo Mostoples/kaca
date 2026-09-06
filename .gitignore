@@ -31,3 +31,7 @@ contoh-dicom/volume/
 # Berkas contoh dari internet hasil `node tools/unduh-contoh.js` —
 # milik pihak lain, jadi tidak diredistribusikan lewat repo ini.
 contoh-dicom/unduhan/
+
+# Seri volumetrik dari TCIA hasil `node tools/unduh-volume.js` — ratusan MB,
+# milik pihak lain, dan sebagian citra pasien sungguhan. Jangan pernah dilacak.
+contoh-dicom/tcia/

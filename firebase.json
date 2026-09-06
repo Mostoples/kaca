@@ -18,10 +18,14 @@
       "tests/periksa-contoh.js",
       "tests/periksa-volume.js",
       "tests/periksa-mesh.js",
+      "tests/asap-halaman.js",
+      "tests/dom-tiruan.js",
       "contoh-dicom/volume/**",
       "contoh-dicom/unduhan/**",
+      "contoh-dicom/tcia/**",
       "tools/buat-contoh.js",
-      "tools/unduh-contoh.js"
+      "tools/unduh-contoh.js",
+      "tools/unduh-volume.js"
     ],
     "cleanUrls": false,
     "trailingSlash": false,

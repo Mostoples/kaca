@@ -33,6 +33,12 @@ Lima halaman: `index.html` (landing), `masuk.html` (auth), `worklist.html`, `vie
    `site.css`/`auth.css`/`app.css` khusus per halaman.
 7. **Jalankan lewat `node serve.js`**, bukan `python -m http.server` (ES module dikirim
    sebagai `text/plain` oleh http.server di Windows).
+8. **Jangan pakai peramban pengguna untuk menguji.** Seluruh pengujian harus jalan di Node.
+   `tests/dom-tiruan.js` menyediakan tiruan DOM + canvas; `tests/asap-halaman.js` memakainya
+   untuk menjalankan skrip halaman sungguhan. Kalau menambah global peramban baru
+   (`IntersectionObserver`, `ResizeObserver`, dan sejenisnya), tambahkan juga ke tiruannya —
+   kalau tidak, uji asap akan gagal dengan pesan "… is not defined", dan itu justru
+   pertanda tiruan yang perlu dilengkapi, bukan kode aplikasi yang salah.
 
 ## Menjalankan & menguji
 
@@ -43,12 +49,25 @@ node tests/periksa-contoh.js    # buka 20 berkas .dcm sungguhan
 node tests/periksa-volume.js    # bangun volume dari demo & berkas nyata + ukur waktu
 node tests/periksa-mesh.js      # rekonstruksi permukaan (perlu tools/buat-contoh.js dulu)
 
+node tests/asap-halaman.js      # 57 uji asap skrip halaman di tiruan DOM
+
 node tools/buat-contoh.js       # 4 seri volumetrik 64 irisan → contoh-dicom/volume/
-node tools/unduh-contoh.js      # 20 berkas nyata pydicom-data → contoh-dicom/unduhan/
+node tools/unduh-contoh.js      # 20 berkas uji parser → contoh-dicom/unduhan/
+node tools/unduh-volume.js      # seri volumetrik TCIA → contoh-dicom/tcia/
 ```
 
-Kedua keluaran `tools/` **dikecualikan git** (lihat `.gitignore`). `buat-contoh.js`
+Seluruh keluaran `tools/` **dikecualikan git** (lihat `.gitignore`). `buat-contoh.js`
 deterministik — UID dan pembangkit acaknya tetap, jadi hasilnya identik tiap kali.
+
+**Sumber data volumetrik sungguhan: TCIA.** REST API NBIA
+(`services.cancerimagingarchive.net/nbia-api/services/v1/`) bisa dipakai **tanpa akun**:
+`getCollectionValues`, `getSeries?Collection=`, `getSeriesMetaData?SeriesInstanceUID=`,
+`getImage?SeriesInstanceUID=` (mengembalikan ZIP). Lisensi ada **per seri** di field
+`License Name` / `License URL`, dan DOI koleksi di `Data Description URI` — jadi jangan
+pernah menulis lisensi secara manual, ambil dari API. Endpoint `getCollectionDescriptions`
+dan `v2/getLicenses` mengembalikan HTTP 500; yang jalan adalah `getLicenses` tanpa versi.
+Perhatikan `getSeries` memakai nama field rapat (`ImageCount`, `LicenseName`) sementara
+`getSeriesMetaData` memakai nama berspasi (`Number of Images`, `License Name`).
 
 Uji yang sama juga jalan di peramban di `/tests/`. `tests/node-runner.js` memuat
 `assets/js/dicom.js` dan `assets/js/volume.js` apa adanya di dalam `vm` dan hanya meniru
@@ -58,6 +77,17 @@ Uji yang sama juga jalan di peramban di `/tests/`. `tests/node-runner.js` memuat
 Uji baru ditambahkan lewat `it(...)` di `tests/uji-dicom.js` atau `tests/uji-volume.js`;
 keduanya menumpuk ke daftar yang sama (`window.UJI.daftar`), jadi urutan pemuatan berkas
 uji tidak boleh dibalik.
+
+**Cakupan `tests/dom-tiruan.js`.** Bukan DOM lengkap dan tidak berusaha jadi itu. Yang ada:
+pohon dari HTML asli (pemindai sendiri, menangani void element & `<svg>` bersarang), subset
+selector (`#id`, `.kelas`, `tag`, `[atr]`, `[atr="v"]`, `:not()`, keturunan, koma),
+`innerHTML` yang **memindai ulang** sehingga `querySelectorAll` sesudahnya menemukan anak
+baru, `classList`/`dataset` lewat Proxy, perambatan peristiwa dengan `closest`, dan konteks
+canvas 2D yang **mencatat panggilan** (`ctx._catatan.perNama`) alih-alih menggambar —
+itulah cara uji memastikan keempat sisi prisma benar tergambar per bingkai.
+`indexedDB` sengaja dibiarkan `undefined` supaya jalur "IndexedDB tidak tersedia" di
+`idb.js` ikut teruji. Modul ES (`firebase-init.js`) dilewati; mode tamu disetel lewat
+`localStorage['kaca.sesi.tamu']='true'` supaya `KAUTH.jaga()` selesai seketika.
 
 **Pelajaran dari sesi 3D:** tiga uji proyeksi awalnya "gagal" karena metode ujinya keliru,
 bukan kodenya. Yang perlu diingat: (a) satu voxel menutupi beberapa piksel layar, jadi
@@ -202,7 +232,14 @@ untuk menandainya.
 **Perkakas data** (`tools/`) — `tulis-dicom.js` dipindah dari `tests/` karena kini dipakai
 dua pihak; `buat-contoh.js` membuat 4 seri volumetrik dari **medan 3D** (bukan gambar per
 irisan, supaya bentuknya menyambung antar irisan); `unduh-contoh.js` mengambil 20 berkas
-nyata dari pydicom-data (MIT) dan memverifikasinya dengan parser sendiri.
+nyata dari pydicom-data (MIT) dan memverifikasinya dengan parser sendiri;
+`unduh-volume.js` mengambil seri ratusan irisan dari TCIA, memuat pembaca ZIP sendiri
+(~40 baris di atas `zlib` bawaan Node, metode 0 & 8, EOCD dicari dari belakang), lalu
+memverifikasi tiap seri dengan menyusun volume dan mengekstraksi permukaannya.
+
+**Bawaan `unduh-volume.js` hanya mengunduh seri PHANTOM.** Seri pasien nyata (Pancreas-CT,
+TCGA-LUAD) baru terunduh dengan `--semua`. Ini bukan kehati-hatian berlebihan: repo ini
+sengaja tidak memuat data pasien, jadi jangan ubah bawaannya tanpa diminta.
 
 Penulis DICOM diperbaiki: `[].concat(typedArray)` **tidak** membentangkan isinya (jadi
 `keDaftar()`), dan elemen kini diurutkan menaik menurut tag sebelum ditulis.
