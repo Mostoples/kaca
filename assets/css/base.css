@@ -133,4 +133,31 @@ select.field{appearance:none;background-image:linear-gradient(45deg,transparent 
 .modal .body{padding:20px 22px}
 .modal footer{display:flex;justify-content:flex-end;gap:10px;padding:16px 22px;border-top:1px solid var(--line-soft)}
 
+/* ---------- dialog pintasan papan ketik ---------- */
+.sc-modal{width:min(720px,94vw)}
+.sc-body{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:20px 28px}
+.sc-grup h4{
+  margin:0 0 8px;font-size:11px;letter-spacing:.12em;text-transform:uppercase;
+  color:var(--muted);font-weight:700;
+}
+.sc-grup dl{margin:0;display:flex;flex-direction:column;gap:2px}
+.sc-grup dl>div{
+  display:flex;align-items:baseline;gap:10px;padding:4px 0;
+  border-bottom:1px solid var(--line-soft);
+}
+.sc-grup dl>div:last-child{border-bottom:none}
+.sc-grup dt{flex:none;min-width:104px;display:flex;align-items:center;gap:5px;flex-wrap:wrap}
+.sc-grup dd{margin:0;font-size:13px;color:var(--text-2)}
+.sc-grup .atau{font-size:10.5px;color:var(--muted)}
+.sc-body kbd{
+  display:inline-block;font-family:var(--mono);font-size:11px;line-height:1.5;
+  padding:2px 7px;border-radius:6px;background:var(--panel-2);
+  border:1px solid var(--line);border-bottom-width:2px;color:var(--text);
+  white-space:nowrap;
+}
+@media (max-width:620px){
+  .sc-grup dt{min-width:92px}
+  .sc-body{gap:16px}
+}
+
 @media (prefers-reduced-motion:reduce){*{animation-duration:.01ms !important;transition-duration:.01ms !important}}

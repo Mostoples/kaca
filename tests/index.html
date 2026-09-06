@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Uji Parser DICOM — Kaca</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='8' fill='%232fd4bd'/><text x='16' y='22' font-size='17' font-family='sans-serif' font-weight='bold' text-anchor='middle' fill='%2304211d'>K</text></svg>">
+<link rel="stylesheet" href="../assets/css/base.css">
+<style>
+  body{padding:34px 0}
+  .head{display:flex;align-items:center;gap:14px;margin-bottom:6px}
+  .head h1{font-size:22px;margin:0}
+  .lead{color:var(--muted);font-size:13.5px;margin:0 0 22px;max-width:70ch;line-height:1.6}
+  .lead code{font-family:var(--mono);font-size:12.5px;background:var(--panel-2);
+    padding:1px 6px;border-radius:5px;border:1px solid var(--line)}
+
+  .ringkas{
+    display:flex;align-items:center;gap:10px;flex-wrap:wrap;
+    background:var(--panel);border:1px solid var(--line);border-radius:12px;
+    padding:14px 18px;margin-bottom:18px;font-family:var(--mono);font-size:13px;
+  }
+  .ringkas .tag{padding:3px 10px;border-radius:20px;font-weight:600}
+  .tag-ok{background:rgba(74,222,128,.14);color:var(--ok);border:1px solid rgba(74,222,128,.3)}
+  .tag-bad{background:rgba(242,84,91,.14);color:var(--danger);border:1px solid rgba(242,84,91,.32)}
+  .tag-skip{background:rgba(245,185,66,.13);color:var(--warn);border:1px solid rgba(245,185,66,.3)}
+  .tag-run{background:var(--panel-2);color:var(--text-2);border:1px solid var(--line)}
+
+  ol.hasil{list-style:none;margin:0;padding:0;counter-reset:n}
+  ol.hasil li{
+    counter-increment:n;display:grid;grid-template-columns:30px 74px 1fr;gap:12px;
+    align-items:baseline;padding:11px 16px;border:1px solid var(--line-soft);
+    border-radius:10px;margin-bottom:7px;background:var(--panel);
+  }
+  ol.hasil li::before{content:counter(n);color:var(--muted);font-family:var(--mono);font-size:12px}
+  ol.hasil li.bad{border-color:rgba(242,84,91,.45)}
+  .st{font-family:var(--mono);font-size:11px;font-weight:700;letter-spacing:.06em;
+    padding:2px 0;text-transform:uppercase}
+  .st.ok{color:var(--ok)} .st.bad{color:var(--danger)} .st.skip{color:var(--warn)}
+  .nm{font-size:13.5px}
+  .why{
+    grid-column:2/4;margin:8px 0 0;font-family:var(--mono);font-size:12px;line-height:1.6;
+    color:#ffc4c7;background:rgba(242,84,91,.09);border-left:3px solid var(--danger);
+    padding:9px 12px;border-radius:0 8px 8px 0;white-space:pre-wrap;word-break:break-word;
+  }
+  .why.info{color:var(--warn);background:rgba(245,185,66,.08);border-left-color:var(--warn)}
+  .kembali{display:inline-block;margin-top:24px;font-size:13px;color:var(--accent)}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="head">
+    <span class="brand"><span class="mark">K</span></span>
+    <h1>Uji round-trip parser DICOM</h1>
+  </div>
+
+  <p class="lead">
+    Setiap uji menyusun berkas DICOM Part-10 sungguhan di memori, mengurainya kembali dengan
+    <code>assets/js/dicom.js</code>, lalu membandingkan nilai piksel dan metadata satu per satu.
+    Tidak ada berkas contoh yang dibaca dan tidak ada jaringan yang dipakai — halaman ini
+    berjalan sepenuhnya di peramban. Jalankan lewat <code>node serve.js</code>, lalu buka
+    <code>/tests/</code>.
+  </p>
+
+  <div class="ringkas" id="ringkas" aria-live="polite">
+    <span class="tag tag-run">Menjalankan…</span>
+  </div>
+
+  <ol class="hasil" id="hasil"></ol>
+
+  <a class="kembali" href="../index.html">← Kembali ke Kaca</a>
+</div>
+
+<script src="../assets/js/dicom.js"></script>
+<script src="../assets/js/volume.js"></script>
+<script src="../tools/tulis-dicom.js"></script>
+<script src="../assets/js/mesh.js"></script>
+<script src="uji-dicom.js"></script>
+<script src="uji-volume.js"></script>
+<script src="uji-mesh.js"></script>
+<script>
+(function () {
+  'use strict';
+  var host = document.getElementById('hasil');
+  var ringkas = document.getElementById('ringkas');
+  var lulus = 0, gagal = 0, lewat = 0;
+
+  function esc(s) {
+    return String(s === undefined || s === null ? '' : s)
+      .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  }
+
+  function baris(nama, status, pesan) {
+    var kelas = status === 'ok' ? 'ok' : status === 'skip' ? 'skip' : 'bad';
+    var label = status === 'ok' ? 'lulus' : status === 'skip' ? 'lewat' : 'gagal';
+    var li = document.createElement('li');
+    if (status === 'bad') li.className = 'bad';
+    li.innerHTML =
+      '<span class="st ' + kelas + '">' + label + '</span>' +
+      '<span class="nm">' + esc(nama) + '</span>' +
+      (pesan ? '<p class="why' + (status === 'skip' ? ' info' : '') + '">' + esc(pesan) + '</p>' : '');
+    host.appendChild(li);
+  }
+
+  function selesai() {
+    ringkas.innerHTML =
+      '<span class="tag ' + (gagal ? 'tag-bad' : 'tag-ok') + '">' +
+        (gagal ? gagal + ' gagal' : 'semua lulus') + '</span>' +
+      '<span>' + lulus + ' lulus</span>' +
+      (lewat ? '<span class="tag tag-skip">' + lewat + ' dilewati</span>' : '') +
+      '<span style="color:var(--muted)">dari ' + (lulus + gagal + lewat) + ' uji</span>';
+    document.title = (gagal ? '✗ ' + gagal + ' gagal' : '✓ ' + lulus + ' lulus') + ' — Uji Kaca';
+    /* ringkasan juga dicetak ke konsol supaya mudah dibaca saat debugging */
+    (gagal ? console.error : console.log)(
+      '[Kaca] uji parser DICOM — ' + lulus + ' lulus, ' + gagal + ' gagal, ' + lewat + ' dilewati');
+  }
+
+  var daftar = (window.UJI && window.UJI.daftar) || [];
+  if (!daftar.length) {
+    ringkas.innerHTML = '<span class="tag tag-bad">tidak ada uji yang termuat</span>';
+  }
+
+  var i = 0;
+  (function berikut() {
+    if (i >= daftar.length) return selesai();
+    var u = daftar[i++];
+
+    function catatLulus(hasil) {
+      if (hasil && hasil.lewat) { lewat++; baris(u.nama, 'skip', hasil.lewat); }
+      else { lulus++; baris(u.nama, 'ok'); }
+      berikut();
+    }
+    function catatGagal(err) {
+      gagal++;
+      baris(u.nama, 'bad', (err && err.message) || String(err));
+      if (err && err.stack) console.error(u.nama, err);
+      berikut();
+    }
+
+    var hasil;
+    try { hasil = u.fn(); }
+    catch (err) { return catatGagal(err); }
+
+    if (hasil && typeof hasil.then === 'function') hasil.then(catatLulus, catatGagal);
+    else catatLulus(hasil);
+  })();
+})();
+</script>
+</body>
+</html>

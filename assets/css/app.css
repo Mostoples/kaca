@@ -149,7 +149,7 @@ table.wl td .sub{display:block;font-size:11.5px;color:var(--muted);font-weight:4
 
 /* panel seri */
 .series-panel{
-  width:180px;flex:none;background:var(--bg-1);border-right:1px solid var(--line);
+  width:196px;flex:none;background:var(--bg-1);border-right:1px solid var(--line);
   display:flex;flex-direction:column;min-height:0;
 }
 .panel-head{
@@ -158,7 +158,28 @@ table.wl td .sub{display:block;font-size:11.5px;color:var(--muted);font-weight:4
   border-bottom:1px solid var(--line-soft);
 }
 .panel-head .btn-sm{padding:3px 8px;font-size:11px;margin-left:auto}
-.series-list{overflow:auto;padding:8px;display:grid;gap:8px}
+.series-list{overflow:auto;padding:8px;display:grid;gap:8px;flex:1;min-height:0;align-content:start}
+
+/* kotak volume 3D di bawah panel seri */
+.vol-box{
+  flex:none;border-top:1px solid var(--line-soft);padding:10px;
+  background:var(--panel);
+}
+.vol-box .vol-info{
+  margin:8px 0 0;font-family:var(--mono);font-size:10.5px;line-height:1.55;
+  color:var(--text-2);word-break:break-word;
+}
+.vol-box .vol-note{
+  margin:8px 0 0;font-size:10.5px;line-height:1.5;color:var(--muted);
+}
+.vol-box .vol-row{display:flex;align-items:center;gap:6px;margin:8px 0 6px}
+.vol-box .vol-row label{flex:none;font-size:11px;color:var(--text-2)}
+.vol-box .vol-row input[type=number]{
+  flex:1;min-width:0;padding:5px 7px;font-size:11.5px;font-family:var(--mono);
+}
+.vol-box .vol-row span{flex:none;font-size:10.5px;color:var(--muted);font-family:var(--mono)}
+.series-item.derived{border-color:rgba(91,156,255,.42)}
+.series-item.derived .meta b{color:var(--accent-2)}
 .series-item{
   border:1px solid var(--line-soft);border-radius:10px;overflow:hidden;cursor:pointer;background:var(--panel);
   transition:border-color .15s,transform .12s;
@@ -310,7 +331,7 @@ h6.grp:first-child{margin-top:0}
 }
 @keyframes fadeIn{from{opacity:0}to{opacity:1}}
 
-@media (max-width:1180px){ .side-panel{width:264px} .series-panel{width:152px} }
+@media (max-width:1180px){ .side-panel{width:264px} .series-panel{width:172px} }
 
 @media (max-width:900px){
   .only-mobile{display:inline-flex}
@@ -358,7 +379,7 @@ h6.grp:first-child{margin-top:0}
 
   /* --- panel seri & panel kanan jadi laci --- */
   .series-panel{
-    position:fixed;top:52px;bottom:0;left:0;z-index:160;width:170px;
+    position:fixed;top:52px;bottom:0;left:0;z-index:160;width:200px;
     transform:translateX(-100%);transition:transform .22s ease;
     box-shadow:0 0 40px rgba(0,0,0,.6);display:flex;
   }

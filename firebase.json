@@ -13,7 +13,15 @@
       "**/node_modules/**",
       "serve.js",
       "README.md",
-      "LICENSE"
+      "LICENSE",
+      "tests/node-runner.js",
+      "tests/periksa-contoh.js",
+      "tests/periksa-volume.js",
+      "tests/periksa-mesh.js",
+      "contoh-dicom/volume/**",
+      "contoh-dicom/unduhan/**",
+      "tools/buat-contoh.js",
+      "tools/unduh-contoh.js"
     ],
     "cleanUrls": false,
     "trailingSlash": false,

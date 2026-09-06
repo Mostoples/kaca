@@ -5,11 +5,14 @@
      - Preamble 128 byte + magic "DICM" (dan file tanpa preamble)
      - Meta group (0002,xxxx) Explicit VR Little Endian
      - Dataset: Implicit VR LE, Explicit VR LE, Explicit VR BE
+     - Deflated Explicit VR LE lewat DICOM.parseAsync()
      - Sequence (SQ) dengan panjang eksplisit maupun undefined
      - Pixel data native 8/16 bit, signed/unsigned, multi-frame
-     - MONOCHROME1 / MONOCHROME2 / RGB / PALETTE COLOR
-     - Pixel data terenkapsulasi: JPEG baseline & JPEG-LS?/J2K
-       (baseline didekode lewat <img>, sisanya ditandai unsupported)
+     - MONOCHROME1 / MONOCHROME2 / RGB (planar & interleaved) /
+       PALETTE COLOR dengan LUT 8 maupun 16 bit
+     - Pixel data terenkapsulasi JPEG baseline (didekode peramban
+       lewat <img>); JPEG 2000 / JPEG-LS / RLE dikenali dan ditandai
+       perlu dekoder tambahan, bukan dirender sebagai sampah
    ========================================================== */
 (function (global) {
   'use strict';
@@ -40,6 +43,7 @@
     '00101030': ['DS', 'PatientWeight'],
     '00180015': ['CS', 'BodyPartExamined'],
     '00180050': ['DS', 'SliceThickness'],
+    '00180088': ['DS', 'SpacingBetweenSlices'],
     '00180060': ['DS', 'KVP'],
     '00180080': ['DS', 'RepetitionTime'],
     '00180081': ['DS', 'EchoTime'],
@@ -72,12 +76,41 @@
     '00281052': ['DS', 'RescaleIntercept'],
     '00281053': ['DS', 'RescaleSlope'],
     '00281054': ['LO', 'RescaleType'],
-    '00281101': ['US', 'RedPaletteDescriptor'],
-    '00281201': ['OW', 'RedPaletteData'],
-    '00281202': ['OW', 'GreenPaletteData'],
-    '00281203': ['OW', 'BluePaletteData'],
+    '00281101': ['US', 'RedPaletteColorLookupTableDescriptor'],
+    '00281102': ['US', 'GreenPaletteColorLookupTableDescriptor'],
+    '00281103': ['US', 'BluePaletteColorLookupTableDescriptor'],
+    '00281201': ['OW', 'RedPaletteColorLookupTableData'],
+    '00281202': ['OW', 'GreenPaletteColorLookupTableData'],
+    '00281203': ['OW', 'BluePaletteColorLookupTableData'],
     '00082111': ['ST', 'DerivationDescription'],
-    '7FE00010': ['OW', 'PixelData']
+    '7FE00010': ['OW', 'PixelData'],
+
+    /* Sequence yang umum dijumpai. Pada Implicit VR, VR tidak ada di
+       berkas — tanpa entri ini isi sequence akan dibaca seolah elemen
+       tingkat atas dan mengacaukan dataset. */
+    '00080096': ['SQ', 'ReferringPhysicianIdentificationSequence'],
+    '00081032': ['SQ', 'ProcedureCodeSequence'],
+    '00081110': ['SQ', 'ReferencedStudySequence'],
+    '00081111': ['SQ', 'ReferencedPerformedProcedureStepSequence'],
+    '00081115': ['SQ', 'ReferencedSeriesSequence'],
+    '00081120': ['SQ', 'ReferencedPatientSequence'],
+    '00081140': ['SQ', 'ReferencedImageSequence'],
+    '00081250': ['SQ', 'AlternateRepresentationSequence'],
+    '00082112': ['SQ', 'SourceImageSequence'],
+    '00082218': ['SQ', 'AnatomicRegionSequence'],
+    '00089092': ['SQ', 'ReferencedImageEvidenceSequence'],
+    '00089215': ['SQ', 'DerivationCodeSequence'],
+    '00186011': ['SQ', 'SequenceOfUltrasoundRegions'],
+    '00189152': ['SQ', 'MRImagingModifierSequence'],
+    '00283010': ['SQ', 'VOILUTSequence'],
+    '00289132': ['SQ', 'FrameVOILUTSequence'],
+    '00321064': ['SQ', 'RequestedProcedureCodeSequence'],
+    '00400260': ['SQ', 'PerformedProtocolCodeSequence'],
+    '00400275': ['SQ', 'RequestAttributesSequence'],
+    '00400555': ['SQ', 'AcquisitionContextSequence'],
+    '00400008': ['SQ', 'ScheduledProtocolCodeSequence'],
+    '52009229': ['SQ', 'SharedFunctionalGroupsSequence'],
+    '52009230': ['SQ', 'PerFrameFunctionalGroupsSequence']
   };
 
   /* VR dengan header 12 byte pada Explicit VR */
@@ -100,7 +133,15 @@
     '1.2.840.10008.1.2.4.81': null,           // JPEG-LS Lossy
     '1.2.840.10008.1.2.4.90': null,           // JPEG 2000 Lossless
     '1.2.840.10008.1.2.4.91': null,           // JPEG 2000
-    '1.2.840.10008.1.2.5':    null            // RLE
+    '1.2.840.10008.1.2.5':    null,           // RLE
+    '1.2.840.10008.1.2.4.201': null,          // HTJ2K Lossless
+    '1.2.840.10008.1.2.4.202': null,          // HTJ2K Lossless RPCL
+    '1.2.840.10008.1.2.4.203': null,          // HTJ2K
+    /* Deflated Image Frame Compression — jangan tertukar dengan
+       Deflated Explicit VR LE (…1.2.1.99) yang DIDUKUNG lewat
+       parseAsync(). Yang ini men-deflate tiap frame di dalam pixel
+       data terenkapsulasi, bukan seluruh dataset. */
+    '1.2.840.10008.1.2.8.1':  null
   };
 
   function pad4(n) { var s = n.toString(16).toUpperCase(); return '00000000'.slice(s.length) + s; }
@@ -124,15 +165,26 @@
   };
 
   /* ---------- parse dataset ---------- */
-  function parseDataset(r, explicit, endAt, out, depth) {
+  function parseDataset(r, explicit, endAt, out, depth, sampaiItemDelim) {
     while (r.pos + 8 <= endAt) {
+      var awal = r.pos;
       var group = r.u16(), elem = r.u16();
 
-      /* item delimiter di dalam sequence */
+      /* Item dan delimiter memakai bentuk tag + panjang 4 byte tanpa VR,
+         bahkan pada dataset Explicit VR. Penanganannya HARUS dipisahkan
+         dari elemen biasa: satu sequence berisi banyak item, masing-masing
+         diakhiri Item Delimitation, jadi berhenti di delimiter pertama
+         membuat pembacaan kehilangan sinkron dan sisa berkas jadi sampah. */
       if (group === 0xFFFE) {
-        var l = r.u32();
-        if (elem === 0xE00D || elem === 0xE0DD) return;   // ItemDelimitation / SeqDelimitation
-        continue;                                          // Item start
+        r.u32();                                  /* panjang; tidak dipakai di sini */
+        if (elem === 0xE00D) {                    /* Item Delimitation */
+          if (sampaiItemDelim) return;            /* akhir item tanpa panjang tetap */
+          continue;
+        }
+        /* Sequence Delimitation atau awal Item di tempat yang tidak
+           diharapkan: serahkan ke bacaSequence dengan memundurkan posisi */
+        r.pos = awal;
+        return;
       }
 
       var key = tagKey(group, elem), vr, vlen;
@@ -143,11 +195,10 @@
         else { vlen = r.u16(); }
         if (!/^[A-Z]{2}$/.test(vr)) { vr = (DICT[key] && DICT[key][0]) || 'UN'; }
       } else {
+        /* Implicit VR: berkas tidak menyimpan VR, jadi VR diambil dari
+           kamus. Tag yang tidak dikenal jadi 'UN' dan dilewati apa adanya. */
         vlen = r.u32();
         vr = (DICT[key] && DICT[key][0]) || 'UN';
-        if (vlen !== 0xFFFFFFFF && group !== 0x7FE0) {
-          /* heuristik: item bersarang tetap ditangani via SQ di kamus */
-        }
       }
 
       /* PixelData terenkapsulasi (undefined length) */
@@ -158,18 +209,55 @@
       }
 
       if (vr === 'SQ' || (vlen === 0xFFFFFFFF && vr !== 'OB' && vr !== 'OW')) {
-        var seqEnd = vlen === 0xFFFFFFFF ? endAt : Math.min(r.pos + vlen, endAt);
-        if (depth < 6) parseDataset(r, explicit, seqEnd, out, depth + 1);
-        else r.pos = seqEnd;
-        if (vlen !== 0xFFFFFFFF) r.pos = seqEnd;
+        bacaSequence(r, explicit, vlen, endAt, out, depth);
         continue;
       }
 
       if (vlen === 0xFFFFFFFF || r.pos + vlen > endAt) vlen = Math.max(0, endAt - r.pos);
 
-      out.set(key, { vr: vr, offset: r.pos, length: vlen, le: r.le });
+      /* Isi sequence ikut dicatat supaya terlihat di inspektur tag, tetapi
+         tidak boleh menimpa elemen tingkat atas dengan nama yang sama —
+         misalnya SOPInstanceUID milik ReferencedImageSequence. */
+      if (depth === 0 || !out.has(key)) {
+        out.set(key, { vr: vr, offset: r.pos, length: vlen, le: r.le, depth: depth });
+      }
       r.pos += vlen + (vlen % 2);   /* panjang DICOM selalu genap; jaga-jaga file rusak */
     }
+  }
+
+  /* ----------------------------------------------------------
+     Sequence (SQ)
+     ----------------------------------------------------------
+     Sebuah sequence berisi nol atau lebih Item (FFFE,E000). Baik
+     sequence-nya maupun tiap item bisa berpanjang tetap ATAU tanpa
+     panjang; keempat kombinasinya sah dan semuanya ditemui di berkas
+     nyata. Isi item dicatat ke peta yang sama supaya terlihat di
+     inspektur tag, tanpa menimpa elemen tingkat atas.
+     ---------------------------------------------------------- */
+  function bacaSequence(r, explicit, vlen, endAt, out, depth) {
+    var takTentu = vlen === 0xFFFFFFFF;
+    var seqEnd = takTentu ? endAt : Math.min(r.pos + vlen, endAt);
+
+    if (depth >= 6) { r.pos = seqEnd; return; }     /* terlalu bersarang: lewati */
+
+    while (r.pos + 8 <= seqEnd) {
+      var g = r.u16(), e = r.u16(), l = r.u32();
+      if (g !== 0xFFFE) { r.pos -= 8; break; }      /* rusak: serahkan ke pemanggil */
+      if (e === 0xE0DD) {                            /* Sequence Delimitation */
+        if (!takTentu) r.pos = seqEnd;
+        return;
+      }
+      if (e !== 0xE000) continue;                    /* tag FFFE lain: abaikan */
+
+      if (l === 0xFFFFFFFF) {
+        parseDataset(r, explicit, seqEnd, out, depth + 1, true);
+      } else {
+        var akhirItem = Math.min(r.pos + l, seqEnd);
+        parseDataset(r, explicit, akhirItem, out, depth + 1, false);
+        r.pos = akhirItem;
+      }
+    }
+    if (!takTentu) r.pos = seqEnd;
   }
 
   function readFragments(r, endAt) {
@@ -270,7 +358,8 @@
   };
 
   /* ---------- entry point ---------- */
-  function parse(arrayBuffer) {
+  function parse(arrayBuffer, opts) {
+    opts = opts || {};
     var r = new Reader(arrayBuffer, true);
     var elements = new Map();
 
@@ -310,13 +399,71 @@
       r.pos = 0;
     }
 
+    var tsAsli = ts;
+    if (opts.forceTS) ts = opts.forceTS;
+
+    var dataStart = r.pos;
+
+    /* Deflated Explicit VR LE: hanya meta group yang tidak terkompresi.
+       Membaca sisanya sebagai dataset biasa hanya menghasilkan sampah,
+       jadi berhenti di sini dan tandai supaya parseAsync bisa mengembangkannya. */
+    if (ts === TS.DEFLATE_LE) {
+      var dsDeflate = new DataSet(arrayBuffer, elements, ts);
+      dsDeflate.deflated = true;
+      dsDeflate.dataStart = dataStart;
+      return dsDeflate;
+    }
+
     var explicit = ts !== TS.IMPLICIT_LE;
     var bigEndian = ts === TS.EXPLICIT_BE;
     var dr = new Reader(arrayBuffer, !bigEndian);
-    dr.pos = r.pos;
+    dr.pos = dataStart;
     parseDataset(dr, explicit, dr.len, elements, 0);
 
-    return new DataSet(arrayBuffer, elements, ts);
+    var out = new DataSet(arrayBuffer, elements, ts);
+    out.dataStart = dataStart;
+    if (tsAsli !== ts) out.originalTransferSyntax = tsAsli;
+    return out;
+  }
+
+  /* ==========================================================
+     parseAsync — seperti parse(), tetapi mampu membuka berkas
+     Deflated Explicit VR Little Endian (1.2.840.10008.1.2.1.99)
+     memakai DecompressionStream milik peramban.
+
+     Hasilnya adalah DataSet biasa di atas buffer yang sudah
+     dikembangkan, sehingga pemanggil lain (dan parse() sinkron)
+     bisa memakainya tanpa perlakuan khusus.
+     ========================================================== */
+  function inflateRaw(bytes) {
+    if (typeof DecompressionStream === 'undefined') {
+      return Promise.reject(new Error('Peramban ini tidak menyediakan DecompressionStream.'));
+    }
+    function coba(format) {
+      var aliran = new Blob([bytes]).stream().pipeThrough(new DecompressionStream(format));
+      return new Response(aliran).arrayBuffer();
+    }
+    /* DICOM memakai deflate mentah (RFC 1951); sebagian encoder
+       menambahkan bungkus zlib, jadi keduanya dicoba. */
+    return coba('deflate-raw').catch(function () { return coba('deflate'); });
+  }
+
+  function parseAsync(arrayBuffer) {
+    var ds;
+    try { ds = parse(arrayBuffer); }
+    catch (e) { return Promise.reject(e); }
+    if (!ds.deflated) return Promise.resolve(ds);
+
+    var mulai = ds.dataStart;
+    return inflateRaw(new Uint8Array(arrayBuffer, mulai, arrayBuffer.byteLength - mulai))
+      .then(function (kembang) {
+        var gabung = new Uint8Array(mulai + kembang.byteLength);
+        gabung.set(new Uint8Array(arrayBuffer, 0, mulai), 0);
+        gabung.set(new Uint8Array(kembang), mulai);
+        /* meta group tetap menyebut deflate, jadi transfer syntax dataset
+           dipaksa ke Explicit VR LE — itulah isi sebenarnya setelah dibuka */
+        return parse(gabung.buffer, { forceTS: TS.EXPLICIT_LE });
+      });
   }
 
   /* ==========================================================
@@ -324,6 +471,9 @@
      ========================================================== */
   function readPixels(ds, frame) {
     frame = frame || 0;
+    if (ds.deflated) {
+      throw new Error('Dataset masih terkompresi deflate — pakai DICOM.parseAsync() untuk membukanya.');
+    }
     var rows = ds.int('00280010'), cols = ds.int('00280011');
     if (!rows || !cols) throw new Error('Dimensi gambar (Rows/Columns) tidak ditemukan.');
 
@@ -339,12 +489,27 @@
       rows: rows, cols: cols, frames: frames, frame: frame,
       samplesPerPixel: spp, bitsAllocated: bits, signed: signed,
       photometric: photo,
+      /* modalitas & Rescale Type ikut dibawa agar satuan nilai piksel
+         bisa ditentukan per citra, bukan per studi */
+      modality: (ds.string('00080060') || '').trim().toUpperCase(),
+      rescaleType: (ds.string('00281054') || '').trim().toUpperCase(),
+      planar: ds.int('00280006') || 0,
       slope: numOr(ds.float('00281053'), 1),
       intercept: numOr(ds.float('00281052'), 0),
       windowCenter: ds.float('00281050'),
       windowWidth: ds.float('00281051'),
       pixelSpacing: [numOr(ds.float('00280030', 0), 0), numOr(ds.float('00280030', 1), 0)],
       sliceThickness: ds.float('00180050'),
+      /* geometri irisan — dipakai assets/js/volume.js untuk mengurutkan
+         irisan dan menghitung jarak antar irisan */
+      spacingBetweenSlices: ds.float('00180088'),
+      sliceLocation: ds.float('00201041'),
+      instanceNumber: ds.int('00200013'),
+      imagePosition: ds.has('00200032')
+        ? [ds.float('00200032', 0), ds.float('00200032', 1), ds.float('00200032', 2)] : null,
+      imageOrientation: ds.has('00200037')
+        ? [ds.float('00200037', 0), ds.float('00200037', 1), ds.float('00200037', 2),
+           ds.float('00200037', 3), ds.float('00200037', 4), ds.float('00200037', 5)] : null,
       encapsulated: !!el.encapsulated,
       mime: null, blobBytes: null,
       pixels: null, min: 0, max: 0
@@ -361,7 +526,26 @@
       return img;
     }
 
-    /* --- native --- */
+    /* --- native 1 bit (mis. objek Segmentation) ---
+       Bit dikemas rapat dan mengalir menyambung antar frame, bukan
+       dibulatkan ke batas byte per frame. Bit paling rendah lebih dulu. */
+    if (bits === 1) {
+      var n1 = rows * cols * spp;
+      var bit = new Uint8Array(n1);
+      var sumber = new Uint8Array(ds.buffer, el.offset, el.length);
+      var bitAwal = frame * n1;
+      for (var q = 0; q < n1; q++) {
+        var b = bitAwal + q, bi = b >> 3;
+        if (bi >= sumber.length) break;
+        bit[q] = (sumber[bi] >> (b & 7)) & 1;
+      }
+      img.pixels = bit;
+      img.min = 0; img.max = 1;
+      img.windowWidth = 1; img.windowCenter = 0.5;
+      return img;
+    }
+
+    /* --- native 8/16 bit --- */
     var frameSize = rows * cols * spp * (bits === 8 ? 1 : 2);
     var start = el.offset + frame * frameSize;
     if (start + frameSize > el.offset + el.length) {
@@ -375,14 +559,26 @@
       arr = new Uint8Array(ds.buffer, start, Math.min(n, frameSize));
       if (signed) { var s8 = new Int8Array(ds.buffer, start, Math.min(n, frameSize)); arr = s8; }
     } else {
-      var dv = new DataView(ds.buffer);
-      arr = signed ? new Int16Array(n) : new Uint16Array(n);
       var maxI = Math.min(n, Math.floor(frameSize / 2));
-      for (var i = 0; i < maxI; i++) {
-        arr[i] = signed ? dv.getInt16(start + i * 2, le) : dv.getUint16(start + i * 2, le);
+      if (le && start % 2 === 0 && maxI === n) {
+        /* Jalur cepat: little endian dan offset sudah rata 2 byte, jadi
+           buffer bisa dibaca langsung tanpa loop DataView per piksel. */
+        arr = signed ? new Int16Array(ds.buffer, start, n) : new Uint16Array(ds.buffer, start, n);
+      } else {
+        var dv = new DataView(ds.buffer);
+        arr = signed ? new Int16Array(n) : new Uint16Array(n);
+        for (var i = 0; i < maxI; i++) {
+          arr[i] = signed ? dv.getInt16(start + i * 2, le) : dv.getUint16(start + i * 2, le);
+        }
       }
     }
     img.pixels = arr;
+
+    /* --- PALETTE COLOR: LUT indeks → RGB --- */
+    if (photo.indexOf('PALETTE') === 0) {
+      img.palette = bacaPalet(ds);
+      if (!img.palette) img.photometric = photo = 'MONOCHROME2';   /* LUT tidak lengkap */
+    }
 
     /* min/max untuk auto-window */
     if (spp === 1) {
@@ -403,6 +599,41 @@
 
   function numOr(v, d) { return (v === undefined || v === null || isNaN(v)) ? d : v; }
 
+  /* ---------- Palette Color LUT ----------
+     Descriptor (0028,110x) berisi tiga nilai: jumlah entri (0 berarti
+     65536), nilai piksel pertama yang dipetakan, dan jumlah bit per
+     entri (8 atau 16). Data LUT (0028,120x) dinormalkan ke 8 bit. */
+  function bacaPalet(ds) {
+    var desc = ds.raw('00281101');
+    var rEl = ds.raw('00281201'), gEl = ds.raw('00281202'), bEl = ds.raw('00281203');
+    if (!desc || !rEl || !gEl || !bEl) return null;
+
+    var jumlah = ds.uint16('00281101', 0) || 65536;
+    var pertama = numOr(ds.uint16('00281101', 1), 0);
+    var bit = ds.uint16('00281101', 2) || 8;
+    if (jumlah > 65536) return null;
+
+    function kanal(el) {
+      var out = new Uint8Array(jumlah);
+      if (bit === 8 && el.length >= jumlah) {
+        /* satu byte per entri */
+        out.set(new Uint8Array(ds.buffer, el.offset, jumlah));
+        return out;
+      }
+      var dv = new DataView(ds.buffer), le = el.le !== false;
+      var maxI = Math.min(jumlah, Math.floor(el.length / 2));
+      for (var i = 0; i < maxI; i++) {
+        /* entri 16 bit: byte tinggi yang dipakai untuk tampilan 8 bit */
+        out[i] = dv.getUint16(el.offset + i * 2, le) >> 8;
+      }
+      return out;
+    }
+
+    try {
+      return { count: jumlah, first: pertama, bits: bit, r: kanal(rEl), g: kanal(gEl), b: kanal(bEl) };
+    } catch (e) { return null; }
+  }
+
   /* ==========================================================
      Render image → ImageData dengan window/level + LUT
      ========================================================== */
@@ -417,8 +648,25 @@
     var out = new Uint8ClampedArray(n * 4);
     var px = img.pixels;
 
+    /* PALETTE COLOR: nilai piksel adalah indeks LUT, bukan intensitas,
+       jadi window/level tidak berlaku di sini. */
+    if (img.palette && px) {
+      var pal = img.palette, batas = pal.count - 1;
+      for (var q = 0; q < n; q++) {
+        var idx = (px[q] | 0) - pal.first;
+        if (idx < 0) idx = 0; else if (idx > batas) idx = batas;
+        var oq = q * 4;
+        var pr = pal.r[idx], pg = pal.g[idx], pb = pal.b[idx];
+        if (invert) { pr = 255 - pr; pg = 255 - pg; pb = 255 - pb; }
+        out[oq] = pr; out[oq + 1] = pg; out[oq + 2] = pb; out[oq + 3] = 255;
+      }
+      return new ImageData(out, img.cols, img.rows);
+    }
+
     if (img.samplesPerPixel === 3) {
-      var planar = opts.planar === 1;
+      /* PlanarConfiguration = 1 berarti kanal tersimpan berurutan
+         (RRR…GGG…BBB…), bukan berselang-seling per piksel. */
+      var planar = (opts.planar !== undefined ? opts.planar : img.planar) === 1;
       for (var i = 0; i < n; i++) {
         var r, g, b;
         if (planar) { r = px[i]; g = px[n + i]; b = px[2 * n + i]; }
@@ -485,6 +733,7 @@
 
   global.DICOM = {
     parse: parse,
+    parseAsync: parseAsync,
     readPixels: readPixels,
     toImageData: toImageData,
     colormaps: COLORMAPS,

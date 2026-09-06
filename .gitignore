@@ -23,3 +23,11 @@ tmp/
 # Folder contoh-dicom/ berisi phantom sintetis dan sengaja dilacak.
 *.dcm
 !contoh-dicom/*.dcm
+
+# Seri volumetrik hasil `node tools/buat-contoh.js` — puluhan MB dan
+# bisa dibuat ulang identik kapan saja, jadi tidak perlu dilacak.
+contoh-dicom/volume/
+
+# Berkas contoh dari internet hasil `node tools/unduh-contoh.js` —
+# milik pihak lain, jadi tidak diredistribusikan lewat repo ini.
+contoh-dicom/unduhan/

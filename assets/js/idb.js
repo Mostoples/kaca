@@ -75,5 +75,35 @@
     });
   }
 
-  global.KDB = { put: put, byStudy: byStudy, all: all, clear: clear };
+  /* Buang semua instance milik satu studi. Dipakai tombol "hapus studi
+     lokal" di worklist agar ArrayBuffer berkas tidak menumpuk selamanya. */
+  function deleteStudy(uid) {
+    return tx('readwrite').then(function (os) {
+      return new Promise(function (res, rej) {
+        var n = 0, rq = os.index('studyUID').openCursor(IDBKeyRange.only(uid));
+        rq.onsuccess = function () {
+          var c = rq.result;
+          if (c) { c.delete(); n++; c.continue(); } else res(n);
+        };
+        rq.onerror = function () { rej(rq.error); };
+      });
+    });
+  }
+
+  /* Perkiraan pemakaian ruang: jumlah instance dan total byte tersimpan. */
+  function usage() {
+    return all().then(function (recs) {
+      var byte = recs.reduce(function (a, r) {
+        return a + (r.size || (r.buf && r.buf.byteLength) || 0);
+      }, 0);
+      var studi = {};
+      recs.forEach(function (r) { studi[r.studyUID] = 1; });
+      return { instances: recs.length, bytes: byte, studies: Object.keys(studi).length };
+    });
+  }
+
+  global.KDB = {
+    put: put, byStudy: byStudy, all: all, clear: clear,
+    deleteStudy: deleteStudy, usage: usage
+  };
 })(window);

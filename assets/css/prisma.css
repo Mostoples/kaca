@@ -1,0 +1,108 @@
+/* ==========================================================
+   KACA — halaman proyeksi prisma hologram
+   ========================================================== */
+.prisma-shell{
+  height:100vh;height:100dvh;display:flex;flex-direction:column;overflow:hidden;background:#000;
+}
+
+/* ---------- bilah atas ---------- */
+.prisma-bar{
+  flex:none;display:flex;align-items:center;gap:12px;padding:0 14px;height:52px;
+  background:var(--bg-1);border-bottom:1px solid var(--line);
+}
+.prisma-bar .tit{min-width:0}
+.prisma-bar .tit b{display:block;font-size:13.5px;font-weight:650;line-height:1.2;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.prisma-bar .tit span{display:block;font-size:11.5px;color:var(--muted);line-height:1.2;
+  font-family:var(--mono);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+
+.prisma-body{flex:1;display:flex;min-height:0}
+
+/* ---------- panggung ---------- */
+.panggung{
+  flex:1;min-width:0;display:grid;place-items:center;background:#000;position:relative;padding:10px;
+}
+.panggung canvas{
+  display:block;touch-action:none;cursor:grab;
+  background:#000;border-radius:2px;
+}
+.panggung canvas:active{cursor:grabbing}
+.panggung:fullscreen{padding:0}
+.panggung:fullscreen canvas{border-radius:0}
+
+.panggung-info{
+  position:absolute;left:12px;bottom:10px;font-family:var(--mono);font-size:11px;
+  color:#4d5f73;pointer-events:none;
+}
+.panggung:fullscreen .panggung-info{display:none}
+
+/* ---------- panel kontrol ---------- */
+.prisma-panel{
+  flex:none;width:308px;background:var(--bg-1);border-left:1px solid var(--line);
+  overflow:auto;padding:14px;
+}
+body.tanpa-panel .prisma-panel{display:none}
+
+.prisma-panel h6{
+  margin:18px 0 9px;font-size:10.5px;letter-spacing:.13em;text-transform:uppercase;
+  color:var(--muted);font-weight:700;
+}
+.prisma-panel h6:first-child{margin-top:0}
+
+.pgrid{display:grid;grid-template-columns:repeat(2,1fr);gap:6px}
+.pgrid.tiga{grid-template-columns:repeat(3,1fr)}
+.pgrid button{
+  background:var(--panel);border:1px solid var(--line);border-radius:8px;
+  padding:7px 6px;cursor:pointer;color:var(--text-2);font-size:11.5px;line-height:1.3;
+  display:flex;flex-direction:column;gap:2px;align-items:flex-start;
+}
+.pgrid button b{font-size:12px;color:var(--text);font-weight:600}
+.pgrid button span{font-size:10px;color:var(--muted)}
+.pgrid button:hover{border-color:#2c3d52}
+.pgrid button.on{border-color:var(--accent);background:rgba(47,212,189,.08)}
+.pgrid button.on b{color:var(--accent)}
+.pgrid button:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+
+.prow{display:flex;align-items:center;gap:9px;margin-bottom:7px}
+.prow label{flex:none;width:98px;font-size:11.5px;color:var(--text-2)}
+.prow input[type=range]{flex:1;min-width:0}
+.prow .v{flex:none;width:62px;text-align:right;font-family:var(--mono);font-size:11px;color:var(--muted)}
+.prow .switch{margin-left:auto}
+
+.prisma-panel .btn-render{width:100%;margin-top:4px}
+.btn.perlu{
+  border-color:var(--warn);color:var(--warn);
+  animation:denyut 1.6s ease-in-out infinite;
+}
+@keyframes denyut{50%{background:rgba(245,185,66,.1)}}
+
+.vinfo{
+  margin:9px 0 0;font-family:var(--mono);font-size:10.5px;line-height:1.6;
+  color:var(--text-2);word-break:break-word;
+}
+.pnote{margin:9px 0 0;font-size:11px;line-height:1.6;color:var(--muted)}
+.pnote b{color:var(--text-2);font-weight:600}
+.pnote + .pnote{margin-top:7px}
+
+/* ---------- status / kemajuan ---------- */
+.pstatus{
+  position:absolute;inset:0;display:grid;place-items:center;
+  background:rgba(0,0,0,.82);backdrop-filter:blur(3px);z-index:20;
+}
+.pstatus .kotak{text-align:center;width:min(340px,80vw)}
+.pstatus p{margin:0 0 6px;font-size:14px}
+.pstatus small{display:block;font-family:var(--mono);font-size:11.5px;color:var(--muted);min-height:1.4em}
+.pbar{
+  height:4px;border-radius:20px;background:var(--line);overflow:hidden;margin-top:14px;
+}
+.pbar i{display:block;height:100%;width:0;background:var(--accent);transition:width .18s linear}
+
+@media (max-width:1000px){
+  .prisma-body{flex-direction:column}
+  .prisma-panel{
+    width:auto;border-left:none;border-top:1px solid var(--line);
+    max-height:48vh;flex:none;
+  }
+  .panggung{flex:1;min-height:44vh}
+  .prow label{width:88px}
+}

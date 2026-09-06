@@ -370,6 +370,10 @@
       else img = GEN[s.gen](size, size, k, s.n, seed);
 
       if (s.wc !== undefined) { img.windowCenter = s.wc; img.windowWidth = s.ww; }
+      /* modalitas dibawa di tingkat citra supaya satuan nilai piksel
+         (HU atau tanpa satuan) bisa ditentukan per citra */
+      img.modality = study.modality;
+      img.rescaleType = study.modality === 'CT' ? 'HU' : '';
       img.instanceNumber = k + 1;
       img.sliceLocation = (k - s.n / 2) * (img.sliceThickness || 3);
       imgs.push(img);

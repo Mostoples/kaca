@@ -51,6 +51,61 @@
   ];
   var MEAS_COLORS = ['#2fd4bd', '#f5b942', '#8ab8ff', '#ff8b90', '#c79bff', '#5ce7a8'];
 
+  /* ==========================================================
+     Penyimpanan pengukuran
+     ----------------------------------------------------------
+     Pengukuran melekat pada seri, bukan pada viewport: dua
+     viewport yang menampilkan seri yang sama berbagi satu daftar,
+     dan berpindah seri tidak lagi menyeret anotasi seri lama.
+     Daftar disimpan per studi di peramban agar tidak hilang saat
+     halaman dimuat ulang.
+     ========================================================== */
+  var measStore = {};
+
+  function measStoreKey() {
+    return 'vw.meas.' + (App.study ? String(App.study.id).replace(/[/\\]/g, '_') : 'none');
+  }
+
+  function muatMeasStore() {
+    var raw = K.store.get(measStoreKey(), null);
+    measStore = (raw && typeof raw === 'object') ? raw : {};
+    /* buang entri yang bentuknya tidak sesuai supaya render tidak pecah */
+    Object.keys(measStore).forEach(function (k) {
+      if (!Array.isArray(measStore[k])) { delete measStore[k]; return; }
+      measStore[k] = measStore[k].filter(function (m) {
+        return m && typeof m === 'object' && Array.isArray(m.pts) && m.pts.length;
+      });
+    });
+  }
+
+  function simpanMeas() {
+    /* stats hasil hitung ulang tidak perlu disimpan */
+    var bersih = {};
+    Object.keys(measStore).forEach(function (k) {
+      if (!measStore[k].length) return;
+      bersih[k] = measStore[k].map(function (m) {
+        return {
+          id: m.id, type: m.type, pts: m.pts, color: m.color,
+          slice: m.slice, label: m.label, text: m.text
+        };
+      });
+    });
+    K.store.set(measStoreKey(), bersih);
+  }
+
+  /* daftar pengukuran milik sebuah seri (dibuat bila belum ada) */
+  function measFor(series) {
+    if (!series) return [];
+    var k = series.key || 'S?';
+    if (!Array.isArray(measStore[k])) measStore[k] = [];
+    return measStore[k];
+  }
+
+  /* gambar ulang anotasi di semua viewport yang memakai daftar yang sama */
+  function redrawMeas(daftar) {
+    App.viewports.forEach(function (o) { if (o.meas === daftar) o.drawAnn(); });
+  }
+
   function loader(on, msg) {
     var l = document.getElementById('loader');
     l.classList.toggle('hide', !on);
@@ -175,29 +230,40 @@
     this.cw = this.cv.width; this.ch = this.cv.height;
   };
 
+  /* Perbandingan tinggi piksel terhadap lebarnya. Citra aksial hampir
+     selalu punya piksel bujur sangkar, tetapi MPR koronal/sagital tidak:
+     jarak antar irisan bisa 5 mm sementara lebar pikselnya 0,86 mm. Tanpa
+     koreksi ini hasil MPR tampil gepeng dan pengukuran ikut salah tempat. */
+  Viewport.prototype.aspek = function () {
+    var sp = this.img && this.img.pixelSpacing;
+    if (!sp || !sp[0] || !sp[1]) return 1;
+    var a = sp[0] / sp[1];
+    return isFinite(a) && a > 0 ? a : 1;
+  };
+
   Viewport.prototype.base = function () {
     if (!this.img) return 1;
-    return Math.min(this.cw / this.img.cols, this.ch / this.img.rows);
+    return Math.min(this.cw / this.img.cols, this.ch / (this.img.rows * this.aspek()));
   };
 
   /* koordinat gambar → kanvas (dalam piksel kanvas ber-dpr) */
   Viewport.prototype.toScreen = function (px, py) {
     var img = this.img; if (!img) return [0, 0];
-    var s = this.base() * this.zoom;
+    var s = this.base() * this.zoom, ar = this.aspek();
     var dx = (px - img.cols / 2) * (this.flipH ? -1 : 1) * s;
-    var dy = (py - img.rows / 2) * (this.flipV ? -1 : 1) * s;
+    var dy = (py - img.rows / 2) * (this.flipV ? -1 : 1) * s * ar;
     var a = this.rot * Math.PI / 2, c = Math.cos(a), si = Math.sin(a);
     return [this.cw / 2 + this.panX + dx * c - dy * si,
             this.ch / 2 + this.panY + dx * si + dy * c];
   };
   Viewport.prototype.toImage = function (sx, sy) {
     var img = this.img; if (!img) return [0, 0];
-    var s = this.base() * this.zoom;
+    var s = this.base() * this.zoom, ar = this.aspek();
     var rx = sx - this.cw / 2 - this.panX, ry = sy - this.ch / 2 - this.panY;
     var a = this.rot * Math.PI / 2, c = Math.cos(a), si = Math.sin(a);
     var dx = rx * c + ry * si, dy = -rx * si + ry * c;
     dx = dx / s * (this.flipH ? -1 : 1);
-    dy = dy / s * (this.flipV ? -1 : 1);
+    dy = dy / (s * ar) * (this.flipV ? -1 : 1);
     return [dx + img.cols / 2, dy + img.rows / 2];
   };
   /* posisi mouse → koordinat kanvas */
@@ -222,6 +288,11 @@
   Viewport.prototype.load = function (series, index, keepView) {
     var self = this;
     if (!series) return Promise.resolve();
+    /* berpindah seri: lepaskan anotasi seri lama, ambil milik seri baru */
+    if (this.series !== series) {
+      if (App.pendingAngle && App.pendingAngle.vp === this) cancelPendingAngle();
+      this.meas = measFor(series);
+    }
     this.series = series;
     this.index = Math.max(0, Math.min(series.count - 1, index || 0));
     return series.getImage(this.index).then(function (img) {
@@ -298,13 +369,15 @@
   };
 
   Viewport.prototype.blit = function (src, iw, ih) {
-    var ctx = this.ctx, s = this.base() * this.zoom;
+    var ctx = this.ctx, s = this.base() * this.zoom, ar = this.aspek();
     ctx.save();
     ctx.imageSmoothingEnabled = App.smooth;
     ctx.imageSmoothingQuality = 'high';
     ctx.translate(this.cw / 2 + this.panX, this.ch / 2 + this.panY);
     ctx.rotate(this.rot * Math.PI / 2);
-    ctx.scale(s * (this.flipH ? -1 : 1), s * (this.flipV ? -1 : 1));
+    /* sumbu y diskalakan tambahan sebesar aspek piksel supaya proporsi
+       gambar benar dalam milimeter, bukan dalam jumlah piksel */
+    ctx.scale(s * (this.flipH ? -1 : 1), s * ar * (this.flipV ? -1 : 1));
     ctx.drawImage(src, -iw / 2, -ih / 2, iw, ih);
     ctx.restore();
   };
@@ -359,7 +432,11 @@
     /* skala referensi */
     if (this.img.pixelSpacing && this.img.pixelSpacing[0]) {
       var s = this.base() * this.zoom;
-      var mmPer = this.img.pixelSpacing[0];
+      /* bilah skala digambar mendatar, jadi yang dipakai adalah jarak
+         antar KOLOM. Setelah koreksi aspek, satu piksel layar mewakili
+         jarak yang sama pada kedua arah, jadi rotasi tidak berpengaruh. */
+      var sp = this.img.pixelSpacing;
+      var mmPer = sp[1] || sp[0];
       var target = 90 * d;
       var mm = Math.max(1, Math.round((target / s) * mmPer / 10) * 10);
       var pxLen = mm / mmPer * s;
@@ -412,14 +489,21 @@
     q[2].innerHTML = 'W: ' + Math.round(this.ww) + '  L: ' + Math.round(this.wc) + '<br>' +
       'Zoom: ' + Math.round(this.zoom * 100) + '%' + (this.invert ? ' · INV' : '') +
       (this.colormap ? ' · ' + this.colormap.toUpperCase() : '');
-    q[3].innerHTML = 'Im: ' + (this.index + 1) + '/' + s.count + '<br>' +
-      (img.sliceThickness ? img.sliceThickness + ' mm<br>' : '') +
+    q[3].innerHTML = (img.derived ? '<span class="hl">' + esc(img.derived) + '</span><br>' : '') +
+      'Im: ' + (this.index + 1) + '/' + s.count + '<br>' +
+      (img.sliceThickness ? Math.round(img.sliceThickness * 10) / 10 + ' mm<br>' : '') +
       img.cols + '×' + img.rows;
 
-    /* penanda orientasi (untuk citra aksial) */
+    /* penanda orientasi — bergantung bidang citra, jadi ikut berubah
+       untuk MPR koronal/sagital dan dikosongkan untuk proyeksi 3D */
     var o = this.el.querySelectorAll('.orient');
     var mods = (st.modality || '').toUpperCase();
-    var lbl = (mods === 'CR' || mods === 'DX') ? ['', '', 'R', 'L'] : ['A', 'P', 'R', 'L'];
+    var lbl;
+    if (img.derived && /3D|Volume|Proyeksi/.test(img.derived)) lbl = ['', '', '', ''];
+    else if (/koronal/i.test(img.derived || '')) lbl = ['S', 'I', 'R', 'L'];
+    else if (/sagital/i.test(img.derived || '')) lbl = ['S', 'I', 'A', 'P'];
+    else if (mods === 'CR' || mods === 'DX') lbl = ['', '', 'R', 'L'];
+    else lbl = ['A', 'P', 'R', 'L'];
     var order = [0, 1, 2, 3];
     /* sesuaikan dengan rotasi & flip */
     var rotMap = [[0,1,2,3],[2,3,1,0],[1,0,3,2],[3,2,0,1]];
@@ -483,17 +567,18 @@
         pa.m.pts[2] = [ip[0], ip[1]];
         updateMeas(vp, pa.m);
         App.pendingAngle = null;
+        simpanMeas();
         refreshMeasList();
       }
-      vp.drawAnn();
+      redrawMeas(vp.meas);
       drag = null;
       return;
     } else if (tool === 'probe') {
       drag.meas = newMeas(vp, 'probe', [[ip[0], ip[1]]]);
     } else if (tool === 'note') {
       var txt = prompt('Teks anotasi:', '');
-      if (txt) { var m = newMeas(vp, 'note', [[ip[0], ip[1]]]); m.text = txt; updateMeas(vp, m); }
-      drag = null; vp.drawAnn(); refreshMeasList(); return;
+      if (txt) { var m = newMeas(vp, 'note', [[ip[0], ip[1]]]); m.text = txt; updateMeas(vp, m); simpanMeas(); }
+      drag = null; redrawMeas(vp.meas); refreshMeasList(); return;
     }
 
     window.addEventListener('pointermove', onMove);
@@ -507,7 +592,8 @@
     if (drag.meas) {
       var i = drag.vp.meas.indexOf(drag.meas);
       if (i !== -1) drag.vp.meas.splice(i, 1);
-      drag.vp.drawAnn();
+      simpanMeas();
+      redrawMeas(drag.vp.meas);
     }
     drag = null;
     lepasListenerDrag();
@@ -573,9 +659,10 @@
         var a = m.pts[0], b = m.pts[m.pts.length - 1];
         if (Math.hypot(b[0] - a[0], b[1] - a[1]) < 3) {
           vp.meas.splice(vp.meas.indexOf(m), 1);
-          vp.drawAnn();
         }
       }
+      simpanMeas();
+      redrawMeas(vp.meas);
       refreshMeasList();
     }
     drag = null;
@@ -606,8 +693,14 @@
     } else { out.textContent = '—'; posOut.textContent = '—'; }
   }
 
+  /* Satuan nilai piksel setelah rescale. Diambil dari citra yang
+     sedang dibuka — bukan dari modalitas studi — supaya studi lokal
+     yang berisi beberapa modalitas tetap benar. */
   function unitOf(img) {
-    return (App.study && (App.study.modality === 'CT')) ? ' HU' : '';
+    var rt = img && img.rescaleType;
+    if (rt && rt !== 'US' && rt !== 'OD') return ' ' + (rt === 'HOUNSFIELD' ? 'HU' : rt);
+    var mod = (img && img.modality) || (App.study && App.study.modality) || '';
+    return mod.toUpperCase() === 'CT' ? ' HU' : '';
   }
 
   function onWheel(vp, e) {
@@ -716,7 +809,7 @@
     K.qsa('#measList .meas-item .x').forEach(function (b) {
       b.addEventListener('click', function () {
         var i = +b.closest('.meas-item').dataset.mi;
-        vp.meas.splice(i, 1); vp.drawAnn(); refreshMeasList();
+        vp.meas.splice(i, 1); simpanMeas(); redrawMeas(vp.meas); refreshMeasList();
       });
     });
     K.qsa('#measList .meas-item').forEach(function (n) {
@@ -762,8 +855,18 @@
     if (c.playing) {
       c.timer = setInterval(function () {
         var vp = App.viewports[App.active];
-        if (!vp || !vp.series || vp.series.count < 2) return;
-        gotoIndex(vp, (vp.index + 1) % vp.series.count);
+        /* Bila viewport aktif punya tumpukan, majukan dari sana — gotoIndex
+           yang menyebarkan indeks ke viewport lain saat sinkron aktif.
+           Bila tidak, dan sinkron aktif, majukan setiap viewport yang punya
+           tumpukan sendiri agar cine tidak diam tanpa sebab yang jelas. */
+        if (vp && vp.series && vp.series.count > 1) {
+          gotoIndex(vp, (vp.index + 1) % vp.series.count);
+          return;
+        }
+        if (!App.sync) return;
+        App.viewports.slice(0, visibleCount()).forEach(function (o) {
+          if (o.series && o.series.count > 1) gotoIndex(o, (o.index + 1) % o.series.count);
+        });
       }, 1000 / c.fps);
     }
     document.getElementById('cinePlay').innerHTML = c.playing
@@ -920,10 +1023,11 @@
     if (!st) { host.innerHTML = ''; return; }
 
     host.innerHTML = st.series.map(function (s, i) {
-      return '<div class="series-item" data-si="' + i + '">' +
+      return '<div class="series-item' + (s.derived ? ' derived' : '') + '" data-si="' + i + '">' +
         '<canvas class="thumb" width="120" height="120"></canvas>' +
         '<div class="meta"><b>' + esc(s.desc) + '</b>' +
-        '<span>#' + s.number + ' · ' + s.count + ' citra</span></div></div>';
+        '<span>' + (s.derived ? 'turunan' : '#' + s.number) + ' · ' + s.count +
+        (s.derived && /3D|Volume/.test(s.desc) ? ' sudut' : ' citra') + '</span></div></div>';
     }).join('');
 
     st.series.forEach(function (s, i) {
@@ -1070,6 +1174,29 @@
   function mountStudy(study) {
     if (!study || !study.series.length) { K.toast('Studi kosong atau tidak terbaca.', 'err'); return; }
     App.study = study;
+    /* kunci stabil per seri: dipakai untuk menautkan pengukuran yang
+       disimpan. Seri turunan (MPR/MIP/3D) sudah membawa kuncinya sendiri. */
+    study.series.forEach(function (s, i) {
+      if (!s.key) s.key = 'S' + (s.number || i + 1) + '#' + i;
+    });
+    App.vol = null;
+    App.pendingAngle = null;
+    App.viewports.forEach(function (vp) { vp.series = null; vp.meas = []; });
+    muatMeasStore();
+    /* studi baru: volume dan permukaan lama tidak berlaku lagi */
+    App.mesh = null;
+    ['surfBox'].forEach(function (id) {
+      var n = document.getElementById(id);
+      if (n) n.classList.add('hide');
+    });
+    ['volInfo', 'meshInfo'].forEach(function (id) {
+      var n = document.getElementById(id);
+      if (n) { n.textContent = ''; n.classList.add('hide'); }
+    });
+    ['btnStl', 'btnObj', 'btnPrisma'].forEach(function (id) {
+      var n = document.getElementById(id);
+      if (n) n.disabled = true;
+    });
     document.getElementById('hPatient').textContent = study.patient.name || '—';
     document.getElementById('hStudy').textContent =
       study.modality + ' · ' + study.desc + ' · ' + K.fmtDate(study.date) + ' · ' + study.series.length + ' seri';
@@ -1091,6 +1218,182 @@
       }
     });
   }
+
+  /* ==========================================================
+     Volume 3D — MPR, MIP, dan proyeksi
+     ----------------------------------------------------------
+     Hasilnya tidak memerlukan jalur render tersendiri: setiap
+     bentukan dibungkus sebagai "seri" biasa lalu ditambahkan ke
+     panel seri, sehingga alat ukur, window/level, peta warna,
+     cine, dan tata letak berlaku persis seperti pada seri asli.
+     ========================================================== */
+  function seriAsliAktif() {
+    var vp = App.viewports[App.active];
+    if (vp && vp.series && !vp.series.derived) return vp.series;
+    /* jatuh ke seri asli terpanjang di studi ini */
+    var kandidat = (App.study ? App.study.series : []).filter(function (s) { return !s.derived; });
+    kandidat.sort(function (a, b) { return b.count - a.count; });
+    return kandidat[0] || null;
+  }
+
+  function bangunVolume() {
+    if (!window.VOLUME) { K.toast('Modul volume tidak termuat.', 'err'); return; }
+    var seri = seriAsliAktif();
+    if (!seri) { K.toast('Belum ada seri yang bisa dijadikan volume.', 'warn'); return; }
+
+    var btn = document.getElementById('btnBangun3D');
+    btn.disabled = true;
+    loader(true, 'Membaca irisan…');
+
+    window.VOLUME.bangun(seri, {
+      lapor: function (n, total) {
+        loader(true, 'Membaca irisan ' + n + '/' + total + '…');
+      }
+    }).then(function (vol) {
+      loader(true, 'Menyiapkan MPR, MIP, dan proyeksi…');
+      App.vol = vol;
+
+      /* ganti seri turunan lama supaya tidak menumpuk */
+      App.study.series = App.study.series.filter(function (s) { return !s.derived; });
+
+      var tebal = 20;
+      App.study.series.push(
+        vol.seriMPR('coronal'),
+        vol.seriMPR('sagittal'),
+        vol.seriMIP('axial', tebal),
+        vol.seriMIP('coronal', tebal),
+        vol.seriMIP('sagittal', tebal),
+        vol.seriProyeksi({ mode: 'maks', jumlah: 24, ukuran: 256 }),
+        vol.seriProyeksi({
+          mode: 'komposit', jumlah: 24, ukuran: 256,
+          windowCenter: vol.windowCenter, windowWidth: vol.windowWidth
+        })
+      );
+
+      renderSeries();
+      markSeries();
+      var info = document.getElementById('volInfo');
+      if (info) { info.textContent = vol.info(); info.classList.remove('hide'); }
+      var pr = document.getElementById('btnPrisma');
+      if (pr) pr.disabled = false;
+
+      /* siapkan panel rekonstruksi permukaan dengan ambang yang masuk akal */
+      if (window.MESH) {
+        document.getElementById('surfBox').classList.remove('hide');
+        document.getElementById('inAmbang').value = window.MESH.ambangSaran(vol);
+        document.getElementById('ambangSat').textContent =
+          (vol.modality || '').toUpperCase() === 'CT' ? 'HU' : 'nilai';
+      }
+
+      loader(false);
+      btn.disabled = false;
+      btn.textContent = 'Bangun ulang 3D';
+      K.toast('Volume ' + vol.nz + ' irisan siap — 7 seri turunan ditambahkan ke panel seri.');
+    }).catch(function (err) {
+      loader(false);
+      btn.disabled = false;
+      K.toast('Gagal menyusun volume: ' + (err && err.message ? err.message : err), 'err');
+    });
+  }
+
+  document.getElementById('btnBangun3D').addEventListener('click', bangunVolume);
+
+  /* ==========================================================
+     Rekonstruksi permukaan
+     ----------------------------------------------------------
+     Isosurface pada satu ambang, dirender sebagai seri berputar —
+     lagi-lagi lewat pembungkus seri, jadi tidak ada jalur render baru.
+     ========================================================== */
+  function bangunPermukaan() {
+    if (!App.vol) { K.toast('Bangun volume 3D terlebih dahulu.', 'warn'); return; }
+    if (!window.MESH) { K.toast('Modul permukaan tidak termuat.', 'err'); return; }
+
+    var ambang = parseFloat(document.getElementById('inAmbang').value);
+    if (!isFinite(ambang)) { K.toast('Nilai ambang tidak sah.', 'warn'); return; }
+    if (ambang <= App.vol.min || ambang >= App.vol.max) {
+      K.toast('Ambang harus di antara ' + Math.round(App.vol.min) +
+        ' dan ' + Math.round(App.vol.max) + '.', 'warn');
+      return;
+    }
+
+    var btn = document.getElementById('btnPermukaan');
+    btn.disabled = true;
+    loader(true, 'Menelusuri isosurface…');
+
+    /* diberi satu putaran agar loader tampil sebelum perhitungan berat */
+    setTimeout(function () {
+      try {
+        var mesh = window.MESH.dari(App.vol, { ambang: ambang });
+        App.mesh = mesh;
+
+        if (mesh.kosong()) {
+          loader(false);
+          btn.disabled = false;
+          K.toast('Tidak ada permukaan pada ambang ' + Math.round(ambang) +
+            '. Coba nilai lain.', 'warn');
+          return;
+        }
+
+        /* ganti seri permukaan lama, biarkan MPR/MIP/proyeksi apa adanya */
+        App.study.series = App.study.series.filter(function (s) {
+          return !(s.key && s.key.indexOf('SURF#') === 0);
+        });
+        App.study.series.push(mesh.seriPermukaan({ jumlah: 24, ukuran: 256 }));
+
+        renderSeries();
+        markSeries();
+
+        var info = document.getElementById('meshInfo');
+        info.textContent = mesh.info();
+        info.classList.remove('hide');
+        document.getElementById('btnStl').disabled = false;
+        document.getElementById('btnObj').disabled = false;
+
+        loader(false);
+        btn.disabled = false;
+        K.toast(mesh.jumlahSegitiga().toLocaleString('id-ID') +
+          ' segitiga — seri "Permukaan 3D" ditambahkan.' +
+          (mesh.terpotong ? ' Dipotong karena mencapai batas segitiga.' : ''));
+      } catch (err) {
+        loader(false);
+        btn.disabled = false;
+        K.toast('Gagal merekonstruksi permukaan: ' +
+          (err && err.message ? err.message : err), 'err');
+      }
+    }, 30);
+  }
+
+  document.getElementById('btnPermukaan').addEventListener('click', bangunPermukaan);
+
+  function unduh(isi, jenis, ekstensi) {
+    var blob = new Blob([isi], { type: jenis });
+    var a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'kaca-' + (App.study ? String(App.study.id).replace(/[^\w.-]/g, '_') : 'permukaan') +
+      '-' + Math.round(App.mesh.ambang) + '.' + ekstensi;
+    a.click();
+    setTimeout(function () { URL.revokeObjectURL(a.href); }, 4000);
+  }
+
+  document.getElementById('btnStl').addEventListener('click', function () {
+    if (!App.mesh) return;
+    unduh(App.mesh.stl(App.study ? App.study.desc : ''), 'model/stl', 'stl');
+    K.toast('STL diunduh — satuannya milimeter.');
+  });
+  document.getElementById('btnObj').addEventListener('click', function () {
+    if (!App.mesh) return;
+    unduh(App.mesh.obj(App.study ? App.study.desc : ''), 'text/plain', 'obj');
+    K.toast('OBJ diunduh — satuannya milimeter.');
+  });
+
+  document.getElementById('btnPrisma').addEventListener('click', function () {
+    var params = new URLSearchParams(location.search);
+    var q = params.get('local') ? 'local=' + encodeURIComponent(params.get('local'))
+          : 'demo=' + encodeURIComponent(params.get('demo') || (App.study ? App.study.id : ''));
+    var seri = seriAsliAktif();
+    var idx = seri && App.study ? App.study.series.indexOf(seri) : 0;
+    location.href = 'prisma.html?' + q + '&seri=' + Math.max(0, idx);
+  });
 
   /* ==========================================================
      Kontrol UI
@@ -1125,6 +1428,9 @@
   document.getElementById('btnFlipH').addEventListener('click', function () {
     withActive(function (vp) { vp.flipH = !vp.flipH; vp.draw(); });
   });
+  document.getElementById('btnFlipV').addEventListener('click', function () {
+    withActive(function (vp) { vp.flipV = !vp.flipV; vp.draw(); });
+  });
   document.getElementById('btnFit').addEventListener('click', function () { withActive(function (vp) { vp.fit(); syncPanels(); }); });
   document.getElementById('btnReset').addEventListener('click', function () { withActive(function (vp) { vp.reset(); syncPanels(); }); });
   document.getElementById('btnClearMeas').addEventListener('click', clearMeas);
@@ -1133,8 +1439,14 @@
     var vp = App.viewports[App.active];
     if (!vp) return;
     App.pendingAngle = null;
-    vp.meas = []; vp.drawAnn(); refreshMeasList();
-    K.toast('Pengukuran dihapus.');
+    if (!vp.meas.length) { K.toast('Tidak ada pengukuran pada viewport aktif.', 'warn'); return; }
+    /* dikosongkan di tempat, bukan diganti array baru, agar tautan
+       ke daftar milik seri (dan viewport lain) tetap utuh */
+    vp.meas.length = 0;
+    simpanMeas();
+    redrawMeas(vp.meas);
+    refreshMeasList();
+    K.toast('Pengukuran pada seri ini dihapus.');
   }
 
   /* batalkan sudut yang belum selesai dibuat */
@@ -1144,7 +1456,8 @@
     var i = pa.vp.meas.indexOf(pa.m);
     if (i !== -1) pa.vp.meas.splice(i, 1);
     App.pendingAngle = null;
-    pa.vp.drawAnn();
+    simpanMeas();
+    redrawMeas(pa.vp.meas);
     refreshMeasList();
   }
   document.getElementById('btnHideOvl').addEventListener('click', function () {
@@ -1339,8 +1652,12 @@
     files.forEach(function (f) {
       var fr = new FileReader();
       fr.onload = function () {
-        try {
-          var ds = window.DICOM.parse(fr.result);
+        /* parseAsync agar berkas Deflated Explicit VR LE juga terbuka */
+        window.DICOM.parseAsync(fr.result).then(pakai, function () {
+          if (++done === files.length) finish();
+        });
+
+        function pakai(ds) {
           if (ds.has('00280010')) {
             recs.push({
               studyUID: ds.string('0020000D') || 'LOCAL',
@@ -1356,11 +1673,11 @@
               bodyPart: ds.string('00180015') || '—',
               date: ds.string('00080020') || '', time: ds.string('00080030') || '',
               accession: ds.string('00080050') || '—',
-              buf: fr.result, _ds: ds
+              buf: ds.buffer, _ds: ds
             });
           }
-        } catch (err) {}
-        if (++done === files.length) finish();
+          if (++done === files.length) finish();
+        }
       };
       fr.onerror = function () { if (++done === files.length) finish(); };
       fr.readAsArrayBuffer(f);
@@ -1368,7 +1685,7 @@
     function finish() {
       loader(false);
       if (!recs.length) { K.toast('Tidak ada berkas DICOM valid yang bisa dibaca.', 'err'); return; }
-      App.viewports.forEach(function (vp) { vp.series = null; vp.img = null; vp.meas = []; });
+      App.viewports.forEach(function (vp) { vp.img = null; });
       mountStudy(buildLocalStudy(recs));
       K.toast(recs.length + ' citra dimuat dari berkas lokal.');
     }
@@ -1392,6 +1709,36 @@
 
   function reportKey() { return 'report.' + (App.study ? App.study.id : 'none'); }
   function studyId() { return App.study ? String(App.study.id).replace(/[/\\]/g, '_') : 'none'; }
+
+  /* Kunci yang dipakai worklist untuk status baca. Harus sama persis
+     dengan yang dibentuk di assets/js/worklist.js, jika tidak status
+     laporan tidak akan pernah terlihat di antrian. */
+  function worklistKey() {
+    if (!App.study) return null;
+    var id = String(App.study.id);
+    return App.study.source === 'local' ? 'local:' + id : id;
+  }
+
+  /* Status laporan menentukan status baca di antrian:
+     Final → Selesai, selain itu → Sedang dibaca. */
+  function terapkanStatusBaca(statusLaporan) {
+    var key = worklistKey();
+    if (!key) return;
+    var baru = statusLaporan === 'Final' ? 'Selesai' : 'Sedang dibaca';
+    var peta = K.store.get('wl.status', {});
+    if (!peta || typeof peta !== 'object') peta = {};
+    if (peta[key] === baru) return;
+    peta[key] = baru;
+    K.store.set('wl.status', peta);
+
+    var fb = App.sesi && App.sesi.fb;
+    if (fb && fb.user) {
+      fb.simpanStatus(key, baru).catch(function (err) {
+        K.toast('Status antrian tersimpan lokal, gagal sinkron: ' + fb.pesanGalat(err), 'warn');
+      });
+    }
+    return baru;
+  }
 
   function isiFormLaporan(r) {
     document.getElementById('repClinical').value = (r && r.clinical) || '';
@@ -1441,13 +1788,15 @@
       by: namaPembaca()
     };
     K.store.set(reportKey(), data);
+    var statusBaca = terapkanStatusBaca(data.status);
 
     var fb = App.sesi && App.sesi.fb;
     if (fb && fb.user) {
       var btn = this;
       btn.disabled = true; btn.textContent = 'Menyimpan…';
       fb.simpanLaporan(studyId(), data).then(function () {
-        K.toast('Laporan tersimpan dan tersinkron ke akun Anda.');
+        K.toast('Laporan tersimpan dan tersinkron ke akun Anda.' +
+          (statusBaca ? ' Studi ditandai "' + statusBaca + '".' : ''));
         tandaiLaporan(true, data);
       }).catch(function (err) {
         K.toast('Tersimpan lokal, gagal sinkron: ' + fb.pesanGalat(err), 'warn');
@@ -1456,7 +1805,8 @@
         btn.disabled = false; btn.textContent = 'Simpan Laporan';
       });
     } else {
-      K.toast('Laporan tersimpan di peramban ini.');
+      K.toast('Laporan tersimpan di peramban ini.' +
+        (statusBaca ? ' Studi ditandai "' + statusBaca + '".' : ''));
     }
   });
 
@@ -1500,6 +1850,7 @@
       return;
     }
     if (k === 'i') { document.getElementById('btnInvert').click(); return; }
+    if (k === 'v') { document.getElementById('btnFlipV').click(); return; }
     if (k === 'f') { document.getElementById('btnFit').click(); return; }
     if (k === 'h') { document.getElementById('btnHideOvl').click(); return; }
     if (k === '0') { document.getElementById('btnReset').click(); return; }

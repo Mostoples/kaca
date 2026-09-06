@@ -95,7 +95,10 @@
         images: 0,
         seriesSet: {},
         series: 0,
-        status: statusOverride['local:' + uid] || 'Berkas lokal',
+        /* Studi lokal memakai status baca yang sama dengan studi PACS
+           supaya ikut terhitung di filter "belum dibaca / sedang dibaca /
+           selesai". Asalnya tetap dibedakan lewat r.source. */
+        status: statusOverride['local:' + uid] || 'Belum dibaca',
         accession: rec.accession || '—',
         studyUID: uid
       };
@@ -156,8 +159,11 @@
       if (va === vb) return 0;
       return (va > vb ? 1 : -1) * dir;
     });
-    /* cito selalu di atas */
-    rows.sort(function (a, b) { return (b.urgent ? 1 : 0) - (a.urgent ? 1 : 0); });
+    /* Cito selalu di atas — kecuali bila pengguna memang sedang mengurutkan
+       kolom cito, karena kalau tidak urutan pilihannya akan selalu ditimpa. */
+    if (by !== 'urgent') {
+      rows.sort(function (a, b) { return (b.urgent ? 1 : 0) - (a.urgent ? 1 : 0); });
+    }
 
     state.rows = rows;
     tbody.innerHTML = rows.map(function (r) {
@@ -184,6 +190,10 @@
 
     updateCounts();
     document.getElementById('btnOpen').disabled = !state.selected;
+
+    var terpilih = rows.filter(function (r) { return r.key === state.selected; })[0];
+    var btnDel = document.getElementById('btnDelStudy');
+    if (btnDel) btnDel.disabled = !(terpilih && terpilih.source === 'local');
   }
 
   function fmtAge(a) {
@@ -270,16 +280,38 @@
     state.dateRange = e.target.value; render();
   });
 
+  /* Tandai kolom yang sedang dipakai untuk mengurutkan. Dipanggil juga saat
+     halaman dibuka, supaya panah cocok dengan urutan awal (tanggal, terbaru
+     dulu) dan klik pertama tidak terasa berlawanan arah. */
+  function tandaiArah() {
+    K.qsa('table.wl thead th .arw').forEach(function (a) { a.remove(); });
+    K.qsa('table.wl thead th[data-sort]').forEach(function (th) {
+      th.setAttribute('aria-sort', th.dataset.sort === state.sort.by
+        ? (state.sort.dir > 0 ? 'ascending' : 'descending') : 'none');
+    });
+    var aktif = K.qs('table.wl thead th[data-sort="' + state.sort.by + '"]');
+    if (aktif) {
+      aktif.insertAdjacentHTML('beforeend',
+        '<span class="arw">' + (state.sort.dir > 0 ? '▲' : '▼') + '</span>');
+    }
+  }
+
   K.qsa('table.wl thead th[data-sort]').forEach(function (th) {
-    th.addEventListener('click', function () {
+    th.setAttribute('role', 'columnheader');
+    th.setAttribute('tabindex', '0');
+    function urut() {
       var by = th.dataset.sort;
       if (state.sort.by === by) state.sort.dir *= -1;
-      else state.sort = { by: by, dir: 1 };
-      K.qsa('table.wl thead th .arw').forEach(function (a) { a.remove(); });
-      th.insertAdjacentHTML('beforeend', '<span class="arw">' + (state.sort.dir > 0 ? '▲' : '▼') + '</span>');
+      else state.sort = { by: by, dir: by === 'date' ? -1 : 1 };
+      tandaiArah();
       render();
+    }
+    th.addEventListener('click', urut);
+    th.addEventListener('keydown', function (e) {
+      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); urut(); }
     });
   });
+  tandaiArah();
 
   tbody.addEventListener('click', function (e) {
     var tr = e.target.closest('tr'); if (!tr) return;
@@ -331,14 +363,18 @@
 
   document.getElementById('btnOpen').addEventListener('click', openSelected);
   document.getElementById('btnRefresh').addEventListener('click', function () {
-    refreshLocalFromDB().then(function () { buildModFilters(); render(); K.toast('Worklist disegarkan.'); });
+    refreshLocalFromDB().then(function () {
+      buildModFilters(); render(); segarkanInfoCache();
+      K.toast('Worklist disegarkan.');
+    });
   });
 
   function openSelected() {
     var r = state.rows.filter(function (x) { return x.key === state.selected; })[0];
     if (!r) { K.toast('Pilih satu studi terlebih dahulu.', 'warn'); return; }
+    /* membuka studi yang belum dibaca langsung menandainya sedang dibaca */
+    if (r.status === 'Belum dibaca') setStatus(r.key, 'Sedang dibaca');
     if (r.source === 'demo') {
-      if (r.status === 'Belum dibaca') setStatus(r.key, 'Sedang dibaca');
       location.href = 'viewer.html?demo=' + encodeURIComponent(r.key);
     } else {
       location.href = 'viewer.html?local=' + encodeURIComponent(r.studyUID);
@@ -365,33 +401,63 @@
   ['dragleave', 'drop'].forEach(function (ev) {
     drop.addEventListener(ev, function () { drop.classList.remove('hot'); });
   });
+  /* Telusuri satu entry FileSystem menjadi daftar File.
+     readEntries() mengembalikan entri per batch (umumnya 100 per panggilan)
+     dan harus dipanggil berulang sampai batch kosong — kalau hanya dipanggil
+     sekali, folder besar akan terpotong tanpa pemberitahuan. */
+  function bacaEntry(entry, depth) {
+    return new Promise(function (res) {
+      if (!entry || depth > 12) return res([]);
+
+      if (entry.isFile) {
+        entry.file(function (f) { res([f]); }, function () { res([]); });
+        return;
+      }
+      if (!entry.isDirectory) return res([]);
+
+      var rd = entry.createReader(), anak = [];
+      (function batch() {
+        rd.readEntries(function (ents) {
+          if (!ents.length) {
+            Promise.all(anak.map(function (en) { return bacaEntry(en, depth + 1); }))
+              .then(function (hasil) { res(gabung(hasil)); });
+            return;
+          }
+          anak = anak.concat(Array.prototype.slice.call(ents));
+          batch();
+        }, function () { res([]); });
+      })();
+    });
+  }
+  function gabung(daftarDaftar) {
+    return daftarDaftar.reduce(function (a, x) { return a.concat(x); }, []);
+  }
+
   drop.addEventListener('drop', function (e) {
     e.preventDefault();
     var items = e.dataTransfer.items;
-    if (items && items.length && items[0].webkitGetAsEntry) {
-      var files = [], pending = 0, done = false;
-      function walk(entry, path) {
-        if (entry.isFile) {
-          pending++;
-          entry.file(function (f) { files.push(f); if (--pending === 0 && done) ingest(files); });
-        } else if (entry.isDirectory) {
-          pending++;
-          var rd = entry.createReader();
-          rd.readEntries(function (ents) {
-            ents.forEach(function (en) { walk(en, path + '/' + en.name); });
-            if (--pending === 0 && done) ingest(files);
-          });
-        }
-      }
-      for (var i = 0; i < items.length; i++) {
-        var en = items[i].webkitGetAsEntry();
-        if (en) walk(en, '');
-      }
-      done = true;
-      setTimeout(function () { if (pending === 0 && files.length) ingest(files); }, 60);
-    } else {
+    if (!(items && items.length && items[0].webkitGetAsEntry)) {
       ingest(e.dataTransfer.files);
+      return;
     }
+    /* webkitGetAsEntry() harus dipanggil sinkron, sebelum event selesai */
+    var entries = [];
+    for (var i = 0; i < items.length; i++) {
+      var en = items[i].webkitGetAsEntry();
+      if (en) entries.push(en);
+    }
+    if (!entries.length) { ingest(e.dataTransfer.files); return; }
+
+    var adaFolder = entries.some(function (en) { return en.isDirectory; });
+    if (adaFolder) K.toast('Menelusuri folder…');
+
+    Promise.all(entries.map(function (en) { return bacaEntry(en, 0); }))
+      .then(function (hasil) {
+        var files = gabung(hasil);
+        if (!files.length) { K.toast('Tidak ada berkas di dalam yang dijatuhkan.', 'warn'); return; }
+        ingest(files);
+      })
+      .catch(function () { K.toast('Gagal membaca folder yang dijatuhkan.', 'err'); });
   });
 
   function ingest(fileList) {
@@ -403,7 +469,7 @@
     var i = 0;
     function next() {
       if (i >= files.length) {
-        buildModFilters(); render();
+        buildModFilters(); render(); segarkanInfoCache();
         K.toast(ok + ' citra dimuat' + (fail ? ', ' + fail + ' berkas dilewati (bukan DICOM valid)' : '') + '.',
           fail && !ok ? 'err' : '');
         return;
@@ -414,41 +480,108 @@
 
       var fr = new FileReader();
       fr.onload = function () {
-        try {
-          var ds = window.DICOM.parse(fr.result);
-          if (!ds.has('00280010')) throw new Error('bukan citra');
-          var rec = {
-            studyUID: ds.string('0020000D') || ('NOUID-' + (f.webkitRelativePath || f.name).split('/')[0]),
-            seriesUID: ds.string('0020000E') || 'S1',
-            instance: parseInt(ds.string('00200013') || '0', 10) || 0,
-            seriesNumber: parseInt(ds.string('00200011') || '0', 10) || 0,
-            seriesDesc: ds.string('0008103E') || '',
-            name: f.name,
-            size: f.size,
-            patient: K.fmtName(ds.string('00100010')),
-            patientId: ds.string('00100020') || '—',
-            sex: ds.string('00100040') || '',
-            age: ds.string('00101010') || '',
-            modality: (ds.string('00080060') || '??').trim(),
-            studyDesc: ds.string('00081030') || ds.string('0008103E') || 'Studi lokal',
-            bodyPart: ds.string('00180015') || '—',
-            date: ds.string('00080020') || '',
-            time: ds.string('00080030') || '',
-            accession: ds.string('00080050') || '—',
-            buf: fr.result
-          };
-          addLocalRecord(rec);
-          ok++;
-          if (window.KDB) window.KDB.put(rec).catch(function () {});
-        } catch (err) { fail++; }
-        if (ok % 12 === 0) { buildModFilters(); render(); }
-        next();
+        /* parseAsync juga menangani berkas Deflated Explicit VR LE. Yang
+           dikembalikannya adalah dataset di atas buffer yang sudah
+           dikembangkan (ds.buffer), dan buffer itulah yang disimpan —
+           dengan begitu viewer cukup memakai parse() yang sinkron. */
+        window.DICOM.parseAsync(fr.result).then(function (ds) {
+          try {
+            if (!ds.has('00280010')) throw new Error('bukan citra');
+            var rec = {
+              studyUID: ds.string('0020000D') || ('NOUID-' + (f.webkitRelativePath || f.name).split('/')[0]),
+              seriesUID: ds.string('0020000E') || 'S1',
+              instance: parseInt(ds.string('00200013') || '0', 10) || 0,
+              seriesNumber: parseInt(ds.string('00200011') || '0', 10) || 0,
+              seriesDesc: ds.string('0008103E') || '',
+              name: f.name,
+              size: ds.buffer.byteLength,
+              patient: K.fmtName(ds.string('00100010')),
+              patientId: ds.string('00100020') || '—',
+              sex: ds.string('00100040') || '',
+              age: ds.string('00101010') || '',
+              modality: (ds.string('00080060') || '??').trim(),
+              studyDesc: ds.string('00081030') || ds.string('0008103E') || 'Studi lokal',
+              bodyPart: ds.string('00180015') || '—',
+              date: ds.string('00080020') || '',
+              time: ds.string('00080030') || '',
+              accession: ds.string('00080050') || '—',
+              buf: ds.buffer
+            };
+            addLocalRecord(rec);
+            ok++;
+            if (window.KDB) window.KDB.put(rec).catch(function () {});
+          } catch (err) { fail++; }
+          if (ok % 12 === 0) { buildModFilters(); render(); }
+          next();
+        }, function () { fail++; next(); });
       };
       fr.onerror = function () { fail++; next(); };
       fr.readAsArrayBuffer(f);
     }
     next();
   }
+
+  /* ==========================================================
+     Kelola cache berkas lokal
+     ----------------------------------------------------------
+     Berkas DICOM yang dibuka disimpan utuh di IndexedDB supaya
+     viewer bisa membukanya kembali. Tanpa jalan untuk menghapus,
+     ArrayBuffer itu menumpuk tanpa batas — bagian ini menyediakan
+     penghapusan per studi dan pembersihan menyeluruh.
+     ========================================================== */
+  var infoCache = document.getElementById('cacheInfo');
+
+  function segarkanInfoCache() {
+    if (!infoCache) return;
+    if (!window.KDB || !window.KDB.usage) { infoCache.textContent = 'Cache tidak tersedia.'; return; }
+    window.KDB.usage().then(function (u) {
+      infoCache.textContent = u.instances
+        ? u.instances + ' citra dari ' + u.studies + ' studi · ' + K.fmtBytes(u.bytes)
+        : 'Belum ada berkas lokal tersimpan.';
+    }).catch(function () { infoCache.textContent = 'Cache tidak terbaca.'; });
+  }
+
+  /* buang jejak status, laporan, dan pengukuran milik studi lokal */
+  function bersihkanJejakLokal(uid) {
+    delete statusOverride['local:' + uid];
+    K.store.set('wl.status', statusOverride);
+    K.store.del('report.' + uid);
+    K.store.del('vw.meas.' + String(uid).replace(/[/\\]/g, '_'));
+  }
+
+  document.getElementById('btnDelStudy').addEventListener('click', function () {
+    var r = state.rows.filter(function (x) { return x.key === state.selected; })[0];
+    if (!r || r.source !== 'local') { K.toast('Pilih satu studi lokal terlebih dahulu.', 'warn'); return; }
+    if (!confirm('Hapus ' + r.images + ' citra studi "' + r.desc + '" dari cache peramban?\n' +
+                 'Berkas aslinya di komputer Anda tidak tersentuh.')) return;
+
+    window.KDB.deleteStudy(r.studyUID).then(function (n) {
+      bersihkanJejakLokal(r.studyUID);
+      delete localStudies[r.studyUID];
+      if (state.selected === r.key) state.selected = null;
+      buildModFilters(); render(); segarkanInfoCache();
+      K.toast(n + ' citra dihapus dari cache.');
+    }).catch(function (err) {
+      K.toast('Gagal menghapus: ' + (err && err.message ? err.message : 'kesalahan IndexedDB'), 'err');
+    });
+  });
+
+  document.getElementById('btnPurge').addEventListener('click', function () {
+    var jml = Object.keys(localStudies).length;
+    if (!jml) { K.toast('Tidak ada berkas lokal di cache.', 'warn'); return; }
+    if (!confirm('Bersihkan seluruh cache berkas lokal (' + jml + ' studi)?\n' +
+                 'Berkas asli di komputer Anda tidak tersentuh, tetapi studi ini harus dibuka ulang.')) return;
+
+    window.KDB.clear().then(function () {
+      Object.keys(localStudies).forEach(bersihkanJejakLokal);
+      localStudies = {};
+      state.selected = null;
+      buildModFilters(); render(); segarkanInfoCache();
+      K.toast('Cache berkas lokal dibersihkan.');
+    }).catch(function (err) {
+      K.toast('Gagal membersihkan cache: ' + (err && err.message ? err.message : 'kesalahan IndexedDB'), 'err');
+    });
+  });
 
   /* ==========================================================
      Init — pastikan sesi dulu, baru bangun tampilan
@@ -458,7 +591,7 @@
      pernah kosong hanya karena menunggu jaringan. */
   buildModFilters();
   render();
-  refreshLocalFromDB().then(function () { buildModFilters(); render(); });
+  refreshLocalFromDB().then(function () { buildModFilters(); render(); segarkanInfoCache(); });
 
   window.KAUTH.jaga().then(function (ses) {
     sesi = ses;

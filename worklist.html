@@ -19,7 +19,7 @@
     <div class="app-tabs">
       <a href="worklist.html" class="active">Worklist</a>
       <a href="viewer.html">Viewer</a>
-      <a href="index.html">Situs</a>
+      <a href="prisma.html">Prisma</a>
     </div>
     <span class="spacer"></span>
     <button class="btn btn-sm only-mobile" id="btnFilter" aria-expanded="false" aria-controls="wlSide">
@@ -69,6 +69,18 @@
           PACS disimulasikan. Berkas lokal diurai penuh di browser.
         </p>
         <div class="pill pill-ok"><span class="dot"></span> PACS-DEMO tersambung</div>
+      </div>
+
+      <h5>Cache berkas lokal</h5>
+      <div style="padding:0 6px">
+        <p style="font-size:12px;color:var(--muted);line-height:1.5;margin:0 0 10px" id="cacheInfo"
+           aria-live="polite">Menghitung…</p>
+        <button class="btn btn-sm" id="btnDelStudy" style="width:100%;margin-bottom:6px" disabled>
+          Hapus studi lokal terpilih
+        </button>
+        <button class="btn btn-sm btn-danger" id="btnPurge" style="width:100%">
+          Bersihkan seluruh cache
+        </button>
       </div>
     </aside>
 
@@ -121,7 +133,7 @@
         <span id="foot">0 studi</span>
         <span class="sync-dot" id="syncState" aria-live="polite"><i></i>Memeriksa sesi…</span>
         <span class="spacer"></span>
-        <span class="foot-hint">Klik ganda baris untuk membuka viewer · <kbd>Enter</kbd> membuka studi terpilih</span>
+        <span class="foot-hint">Klik ganda baris untuk membuka viewer · <kbd>Enter</kbd> membuka studi terpilih · <kbd>?</kbd> daftar pintasan</span>
       </div>
     </main>
   </div>
@@ -135,6 +147,7 @@
 <script src="assets/js/dicom.js"></script>
 <script src="assets/js/demo.js"></script>
 <script src="assets/js/auth.js"></script>
+<script src="assets/js/bantuan.js"></script>
 <script src="assets/js/worklist.js"></script>
 </body>
 </html>
