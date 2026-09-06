@@ -502,6 +502,56 @@ sebagai phantom sintetis dengan nilai HU yang masuk akal, sehingga preset window
 benar-benar terlihat bedanya. Folder `contoh-dicom/` berisi 20 berkas `.dcm` sungguhan yang
 bisa dibuka lewat tombol **Buka File DICOM** untuk menguji parser.
 
+## Video promo & tutorial
+
+```bash
+node serve.js 8123                  # di terminal lain
+node tools/buat-atlas.js            # supaya adegan atlas punya model
+node video/render-adegan.js         # klip dari data TCIA → video/potongan/
+node video/tangkap.js 8123          # 12 tangkapan halaman → video/tangkapan/
+node video/tangkap.js 8123 atlas    # ulangi sebagian saja
+node video/susun.js                 # → video/kaca-promo.mp4 & kaca-tutorial.mp4
+```
+
+Hasilnya dua berkas 1920×1080 30 fps: **promo ±44 detik** dan **tutorial ±63 detik**.
+
+Bahannya dari dua sumber, keduanya bukan rekaman layar:
+
+- **`render-adegan.js`** merender klip **langsung di Node** — RGB mentah dialirkan ke stdin
+  ffmpeg, memakai `volume.js` dan `mesh.js` apa adanya pada seri CT TCIA sungguhan. Jadi yang
+  terlihat benar-benar keluaran mesinnya, dan tidak perlu encoder PNG.
+- **`tangkap.js`** menangkap halaman sungguhan lewat **Microsoft Edge headless** (bukan
+  Chrome — peramban kerja pemilik proyek tidak disentuh). Keadaan yang butuh interaksi
+  memakai pembungkus di `video/adegan/*.html` yang menekan tombol asli di dalam iframe;
+  `prisma-atlas.html` bahkan mengambil OBJ lewat `fetch` lalu memasangnya ke
+  `<input type="file">` sungguhan melalui `DataTransfer`. Tidak ada tampilan yang dikarang.
+
+`susun.js` menyusun tiap ruas jadi mp4 tersendiri lalu menyambungnya dengan concat demuxer.
+Sengaja begitu: satu `filter_complex` untuk 13 ruas tidak bisa ditelusuri kalau ada yang
+salah. Peralihannya fade per ruas, bukan `xfade`, karena `xfade` menuntut semua ruas masuk
+satu graf sekaligus.
+
+Dua jebakan ffmpeg yang sudah dibereskan, jangan diulang:
+
+- **Jalur Windows mutlak tidak bisa dipakai di dalam string filter.** `C:/x` diurai dua kali
+  — oleh pengurai filtergraph lalu oleh pengurai opsi filter — sehingga titik duanya tetap
+  jadi pemisah opsi betapa pun di-escape. Jalan keluarnya bukan menambah backslash tetapi
+  menghilangkan titik duanya: ffmpeg dijalankan dengan `cwd` di folder kerja dan di dalam
+  filter hanya ada nama berkas polos. Font ikut disalin ke situ.
+- **Teks selalu lewat `textfile=`**, tidak pernah ditanam di string filter. Titik dua, koma,
+  dan apostrof dalam kalimat Indonesia akan mengacaukan penguraiannya.
+
+Tidak ada musik: tidak ada trek yang lisensinya jelas. Jalur audio senyap tetap ditambahkan
+karena beberapa pemutar dan pengimpor (termasuk CapCut) memperlakukan berkas tanpa audio
+secara aneh.
+
+**CapCut CLI tidak dipakai untuk merender.** `capcut` v0.17.2 hanya menulis *draft* CapCut,
+bukan video — perenderan tetap ffmpeg. Draft-nya berguna kalau ingin menyunting lanjut
+secara manual, bukan sebagai bagian pipeline.
+
+Seluruh isi `video/` dikecualikan dari deploy dan dari git kecuali skripnya: tangkapan, klip,
+dan video akhirnya bisa dibuat ulang kapan saja.
+
 ## Catatan
 
 Ini prototipe antarmuka, **bukan perangkat medis**. Seluruh data pasien fiktif dan citra

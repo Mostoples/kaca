@@ -26,6 +26,11 @@ const ROOT = path.join(__dirname, '..');
 const KELUAR = path.join(__dirname, 'tangkapan');
 const PORT = process.argv[2] || '8123';
 const DASAR = 'http://localhost:' + PORT;
+/* Argumen setelah port menyaring adegan mana yang ditangkap, cocok
+   sebagian nama. `node video/tangkap.js 8123 atlas` hanya mengulang
+   adegan atlas — menangkap semuanya butuh menit, dan biasanya yang
+   perlu diperbaiki cuma satu. */
+const SARING = process.argv.slice(3).map((s) => s.toLowerCase());
 
 const EDGE_KANDIDAT = [
   'C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe',
@@ -58,9 +63,11 @@ const ADEGAN = [
   { n: '05-hologram-panel',    u: tamu('/prisma.html?demo=ST-2409-0143'),       w: 45000 },
   { n: '06-hologram-penuh',    u: tamu('/video/adegan/prisma-panggung.html'),   w: 50000 },
   { n: '07-hologram-permukaan',u: tamu('/video/adegan/prisma-permukaan.html'),  w: 85000 },
-  { n: '08-viewer',            u: tamu('/viewer.html?demo=ST-2409-0143'),       w: 22000 },
-  { n: '09-viewer-3d',         u: tamu('/video/adegan/viewer-3d.html'),         w: 95000 },
-  { n: '10-uji',               u: '/tests/',                                    w: 30000 }
+  { n: '08-atlas-panel',       u: tamu('/video/adegan/prisma-atlas.html?panel=1'), w: 95000 },
+  { n: '09-atlas-hologram',    u: tamu('/video/adegan/prisma-atlas.html'),      w: 95000 },
+  { n: '10-viewer',            u: tamu('/viewer.html?demo=ST-2409-0143'),       w: 22000 },
+  { n: '11-viewer-3d',         u: tamu('/video/adegan/viewer-3d.html'),         w: 95000 },
+  { n: '12-uji',               u: '/tests/',                                    w: 30000 }
 ];
 
 function tangkap(a) {
@@ -110,13 +117,22 @@ function serverHidup() {
     process.exit(1);
   }
 
+  const daftar = SARING.length
+    ? ADEGAN.filter((a) => SARING.some((s) => a.n.toLowerCase().indexOf(s) >= 0))
+    : ADEGAN;
+  if (!daftar.length) {
+    console.error('Tidak ada adegan yang cocok dengan: ' + SARING.join(', '));
+    console.error('Tersedia: ' + ADEGAN.map((a) => a.n).join(', '));
+    process.exit(1);
+  }
+
   fs.mkdirSync(KELUAR, { recursive: true });
-  console.log('Menangkap ' + ADEGAN.length + ' adegan lewat Edge headless');
+  console.log('Menangkap ' + daftar.length + ' dari ' + ADEGAN.length + ' adegan lewat Edge headless');
   console.log('Ukuran jendela ' + L + '×' + T + ' (halaman panjang lebih tinggi)  ·  ' + DASAR);
   console.log('');
 
   let gagal = 0;
-  for (const a of ADEGAN) {
+  for (const a of daftar) {
     process.stdout.write('  ' + a.n.padEnd(22));
     const h = tangkap(a);
     if (h.ok) {

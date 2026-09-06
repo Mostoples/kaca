@@ -364,6 +364,43 @@ tumpang-tindih antar sisi. Sudah dibetulkan.
 ditambahkan bersama `model.js`/`uji-model.js`. `TextDecoder`/`TextEncoder` ditambahkan ke
 sandbox `node-runner.js`.
 
+## Video promo & tutorial (selesai)
+
+`video/susun.js` → `video/kaca-promo.mp4` (±44 s) dan `video/kaca-tutorial.mp4` (±63 s),
+1920×1080 30 fps. Bahan: `video/potongan/*.mp4` (dirender native di Node dari TCIA) +
+`video/tangkapan/*.png` (12 tangkapan Edge headless).
+
+**Jebakan ffmpeg yang mahal waktunya, jangan diulang:**
+- **Jalur Windows mutlak TIDAK BISA dipakai di dalam string filter.** `C:/x` diurai dua kali
+  (filtergraph, lalu opsi filter) sehingga titik duanya tetap jadi pemisah opsi betapa pun
+  di-escape — `C\:` maupun `C\\:` sama-sama gagal. Jalan keluarnya menghilangkan titik duanya:
+  ffmpeg dijalankan dengan `cwd` di `video/tmp/susun/`, di dalam filter hanya nama berkas
+  polos, dan font disalin ke situ lebih dulu. Jalur mutlak tetap aman untuk `-i` & keluaran.
+- **Teks selalu lewat `textfile=`.** Titik dua, koma, dan apostrof dalam kalimat Indonesia
+  mengacaukan pengurai filter.
+- Koma di dalam ekspresi (`min(a\,b)`, `mod(t\,x)`) wajib di-escape `\,`.
+- Tiap ruas dijadikan mp4 tersendiri lalu disambung concat demuxer. `filter_complex` untuk 13
+  ruas tidak bisa ditelusuri saat gagal. Peralihan = fade per ruas, bukan `xfade` (xfade
+  menuntut semua ruas dalam satu graf).
+- Jalur audio senyap ditambahkan karena pemutar & pengimpor (CapCut) aneh tanpa audio.
+- **CapCut CLI hanya menulis draft, tidak merender video.** Perenderan tetap ffmpeg.
+
+`video/tangkap.js` menerima saringan nama adegan: `node video/tangkap.js 8123 atlas` hanya
+mengulang adegan atlas. Menangkap semuanya butuh menit dan biasanya cuma satu yang salah.
+
+**Bug yang ditemukan lewat tangkapan (bukan lewat uji):**
+- `prisma-panggung.html` memakai `ST-2409-0146` (CT kepala). MIP kepala = siluet tengkorak
+  putih penuh, bentuknya hilang. Diganti `ST-2409-0143` (CT toraks).
+- Data demo toraks hanya **24 irisan**, jadi MIP-nya bergaris seperti kerai (sampling
+  nearest-neighbour). Klip "cantik" karena itu diambil dari TCIA lewat `render-adegan.js`,
+  bukan dari studi demo. Jangan mengharap tangkapan halaman demo terlihat mulus.
+- **`video/**` ternyata ikut ter-deploy ke situs publik** (~4 MB tangkapan + klip + pembungkus
+  iframe). Sudah dikecualikan di `firebase.json`; sudah diverifikasi 404 setelah deploy ulang.
+  Ingat: `firebase deploy` mengunggah dari direktori kerja, jadi berkas yang tidak dilacak git
+  pun terunggah kalau tidak masuk daftar `ignore`.
+
+`video/*.mp4`, `video/potongan/`, `video/tangkapan/`, `video/tmp/` dikecualikan git.
+
 ## Masih tersisa
 
 - **JPEG Lossless, JPEG-LS, JPEG 2000, RLE** masih ditandai perlu dekoder tambahan.

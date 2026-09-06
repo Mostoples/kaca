@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<title>Adegan — Atlas anatomi di panggung hologram</title>
+<style>
+  html,body{margin:0;height:100%;background:#000;overflow:hidden}
+  iframe{border:0;width:100vw;height:100vh;display:block}
+</style>
+</head>
+<body>
+<!--
+  Pembungkus adegan: mode Atlas dengan model organ termuat dan satu organ
+  tersorot.
+
+  Berkas dimuat lewat <input type="file"> yang SUNGGUHAN — teks OBJ diambil
+  dengan fetch lalu dibungkus jadi File dan dipasang lewat DataTransfer,
+  persis seperti pengguna menjatuhkan berkas ke pemilih. Tidak ada jalan
+  pintas ke fungsi dalam prisma.js, jadi yang tertangkap adalah alur
+  aplikasi apa adanya.
+
+  Perlu `node tools/buat-atlas.js` lebih dulu supaya berkas OBJ-nya ada.
+-->
+<iframe id="app" src="../../prisma.html"></iframe>
+<script>
+(function () {
+  'use strict';
+  var f = document.getElementById('app');
+  var siap = false;
+  var OBJ = '../../contoh-dicom/atlas/atlas-contoh.obj';
+  function d() { return f.contentDocument; }
+  function w() { return f.contentWindow; }
+
+  function tunggu(uji, lanjut, batas) {
+    var t0 = Date.now();
+    (function cek() {
+      var v = null;
+      try { v = uji(); } catch (e) {}
+      if (v) return lanjut(v);
+      if (Date.now() - t0 > (batas || 60000)) { siap = true; document.title = 'batas'; return; }
+      setTimeout(cek, 150);
+    })();
+  }
+
+  f.addEventListener('load', function () {
+    /* tunggu prisma.js selesai memasang kontrol */
+    tunggu(function () { return d().getElementById('modelInput'); }, mulai);
+  });
+
+  function mulai() {
+    fetch(OBJ).then(function (r) {
+      if (!r.ok) throw new Error('OBJ tidak ada (' + r.status + ')');
+      return r.text();
+    }).then(function (teks) {
+      var W = w();
+      var berkas = new W.File([teks], 'atlas-contoh.obj', { type: 'model/obj' });
+      var dt = new W.DataTransfer();
+      dt.items.add(berkas);
+      var masukan = d().getElementById('modelInput');
+      masukan.files = dt.files;
+      masukan.dispatchEvent(new W.Event('change'));
+
+      /* tunggu prarender atlas selesai */
+      tunggu(function () {
+        var r = d().getElementById('renderInfo');
+        var a = d().getElementById('atlasInfo');
+        return (r && /sudut/.test(r.textContent) && a && /bagian/.test(a.textContent)) ? true : null;
+      }, sorotOrgan, 120000);
+    }).catch(function (e) {
+      document.title = 'galat: ' + e.message;
+      siap = true;
+    });
+  }
+
+  var adaPanel = /[?&]panel=/.test(location.search);
+
+  function sorotOrgan() {
+    /* Dengan panel terlihat, seluruh organ dibiarkan terang supaya daftar
+       organ dan warnanya terbaca. Tanpa panel, satu organ disorot supaya
+       yang tertangkap adalah mekanisme isolasinya. */
+    if (adaPanel) return selesaikan();
+
+    var tombol = d().querySelectorAll('#daftarOrgan [data-organ]');
+    var pilih = null;
+    for (var i = 0; i < tombol.length; i++) {
+      if (/jantung/i.test(tombol[i].textContent)) { pilih = tombol[i]; break; }
+    }
+    if (pilih) pilih.click();
+
+    tunggu(function () {
+      var r = d().getElementById('renderInfo');
+      return (r && /sudut/.test(r.textContent)) ? true : null;
+    }, selesaikan, 120000);
+  }
+
+  function selesaikan() {
+    setTimeout(function () {
+      if (!adaPanel) {
+        var b = d().getElementById('btnPanel');
+        if (b) b.click();
+      }
+      setTimeout(function () { siap = true; document.title = 'siap'; }, 900);
+    }, 600);
+  }
+
+  window.adeganSiap = function () { return siap; };
+})();
+</script>
+</body>
+</html>

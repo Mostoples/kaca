@@ -28,7 +28,8 @@
       "tools/buat-contoh.js",
       "tools/buat-atlas.js",
       "tools/unduh-contoh.js",
-      "tools/unduh-volume.js"
+      "tools/unduh-volume.js",
+      "video/**"
     ],
     "cleanUrls": false,
     "trailingSlash": false,

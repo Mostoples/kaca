@@ -44,3 +44,7 @@ contoh-dicom/atlas/
 video/potongan/
 video/tangkapan/
 video/tmp/
+
+# Video akhir hasil `node video/susun.js` — puluhan megabita dan bisa
+# disusun ulang dari tangkapan + klip kapan saja.
+video/*.mp4
