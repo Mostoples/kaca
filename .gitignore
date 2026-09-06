@@ -6,6 +6,9 @@ node_modules/
 Thumbs.db
 desktop.ini
 
+# Cache deploy Firebase (dibuat ulang setiap deploy)
+.firebase/
+
 # Editor
 .vscode/
 .idea/
