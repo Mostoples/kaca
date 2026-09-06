@@ -37,7 +37,7 @@ volume), `worklist.html` (daftar studi), `masuk.html` (auth), `index.html` (land
 ## Aturan tak tertulis yang harus diikuti
 
 1. **Satu berkas JS = satu IIFE = satu global.** `KACA` (dialias `K`), `DICOM`, `VOLUME`,
-   `MESH`, `DEMO`, `KDB`, `KAUTH`, `KACA_BANTUAN`. Gaya ES5 (`var`, `function`), bukan ES6+ —
+   `MESH`, `MODEL`, `KENDALI`, `DEMO`, `KDB`, `KAUTH`, `KACA_BANTUAN`. Gaya ES5 (`var`, `function`), bukan ES6+ —
    kecuali `assets/js/firebase-init.js`, satu-satunya ES module, yang memakai `KFB`.
    Skrip di `tools/` dan `tests/` berjalan di Node, jadi di sana ES6+ boleh.
 2. **Bahasa Indonesia** untuk komentar, nama fungsi/variabel internal, pesan UI, dan commit.
@@ -63,14 +63,16 @@ volume), `worklist.html` (daftar studi), `masuk.html` (auth), `index.html` (land
 
 ```bash
 node serve.js                   # http://localhost:8080
-node tests/node-runner.js       # 66 uji parser/volume/permukaan, exit 1 bila gagal
+node tests/node-runner.js       # 127 uji parser/volume/permukaan/model/kendali
 node tests/periksa-contoh.js    # buka 20 berkas .dcm sungguhan
 node tests/periksa-volume.js    # bangun volume dari demo & berkas nyata + ukur waktu
 node tests/periksa-mesh.js      # rekonstruksi permukaan (perlu tools/buat-contoh.js dulu)
+node tests/periksa-atlas.js     # atlas anatomi (perlu tools/buat-atlas.js dulu)
 
-node tests/asap-halaman.js      # 57 uji asap skrip halaman di tiruan DOM
+node tests/asap-halaman.js      # 79 uji asap skrip halaman di tiruan DOM
 
 node tools/buat-contoh.js       # 4 seri volumetrik 64 irisan → contoh-dicom/volume/
+node tools/buat-atlas.js        # 13 organ contoh → contoh-dicom/atlas/
 node tools/unduh-contoh.js      # 20 berkas uji parser → contoh-dicom/unduhan/
 node tools/unduh-volume.js      # seri volumetrik TCIA → contoh-dicom/tcia/
 ```
@@ -276,6 +278,91 @@ Penulis DICOM diperbaiki: `[].concat(typedArray)` **tidak** membentangkan isinya
 Ditambahkan juga ke `ENCAPSULATED`: HTJ2K (`.201`–`.203`) dan **Deflated Image Frame
 Compression (`1.2.840.10008.1.2.8.1`)** — jangan tertukar dengan Deflated Explicit VR LE
 (`1.2.840.10008.1.2.1.99`) yang DIDUKUNG lewat `parseAsync()`.
+
+## Atlas anatomi (sesi lanjutan)
+
+Permintaannya: "kombinasikan repo `thebuggeddev/anatomy`". **Repo itu tidak digabungkan, dan
+tidak boleh digabungkan.** Alasannya dicatat di sini supaya tidak dibongkar ulang:
+
+1. **Tidak ada lisensi.** API GitHub: `"license": null`, dan tidak ada berkas `LICENSE` di
+   akar. Berarti hak cipta penuh — boleh dilihat & di-fork, **tidak boleh** disalin ke proyek
+   lain lalu dipublikasikan. Kaca berlisensi MIT dan ter-deploy publik.
+2. **Tumpukan bertabrakan.** `package.json`-nya: Next 16.2.6, React 19.2.6, three.js 0.185.1,
+   Drizzle ORM, Tailwind 4, Vite 8, Wrangler/vinext, TypeScript. Nama repo aslinya
+   `site-creator-vinext-starter`. Ini kebalikan aturan #1 di atas.
+3. **Model 3D-nya dihasilkan AI.** Chunk JSON di `public/models/*.glb` memuat nama node
+   `tripo_node_<uuid>` / `tripo_material_<uuid>` (Tripo), digenerate dari prompt seperti
+   `anatomical+heart+3d+model` (terlihat di nama tekstur), lalu dioptimalkan
+   `glTF-Transform v4.4.2` dengan `EXT_meshopt_compression` + `KHR_mesh_quantization`.
+   Jadi: tidak divalidasi anatomis, asalnya tidak jelas, DAN butuh dekoder WASM untuk dibaca.
+   **Cara memeriksanya:** unduh 300 KB pertama `.glb` lewat header `Range`, baca chunk JSON
+   glTF (offset 20, panjang di offset 12), lihat `asset.generator` dan nama node.
+
+Yang dibangun sebagai gantinya — kemampuannya, bukan kodenya:
+
+**`assets/js/model.js`** (baru) — bebas DOM, bisa diuji headless.
+- `MODEL.dariOBJ` / `dariSTL` / `muat(nama, data)`. Melengkapi arah yang selama ini satu
+  jalan: `mesh.js` hanya bisa MENGEKSPOR STL/OBJ, sekarang keduanya bisa DIBACA MASUK.
+- OBJ: indeks negatif (relatif), poligon dipecah kipas, `vn` dipakai bila ada. `o`/`g`
+  memisahkan organ; `usemtl` jadi pengganti bila keduanya tidak ada. **Indeks OBJ itu
+  global untuk seluruh berkas**, jadi wajah dikumpulkan per kelompok dulu lalu titiknya
+  dipadatkan & dipetakan ulang per bagian.
+- STL: biner dikenali dari **panjang berkas** (`84 + n*50`), **bukan** dari kata `solid` —
+  80 byte judul STL biner boleh saja diawali kata itu. Ada uji regresinya. Titik **dilas**
+  per posisi (dibulatkan ke mikrometer) lalu normal per titik dihitung ulang; normal facet
+  dari berkas diabaikan karena tidak bisa menghasilkan bayangan mulus.
+- **glTF/GLB ditolak dengan sengaja** — pesannya menyebut WASM & menyarankan konversi.
+- Normal per titik: normal segitiga dijumlahkan **tanpa dinormalkan lebih dulu**, sehingga
+  besar vektor silang (= 2× luas) berlaku sebagai bobot.
+
+**`MODEL.Adegan`** — banyak bagian, **satu z-buffer bersama** + **satu buffer ID per piksel**.
+- Buffer ID itu kunci mekanisme pilih-organ: tidak perlu ray-casting, cukup baca ID di piksel
+  yang diklik. Rasterisasi CPU sudah jalan, informasinya tinggal disimpan.
+- Bagian beralfa < 0,5 **tidak menulis ID**, jadi klik tidak menangkap organ yang dipudarkan.
+- Buram digambar dulu (tulis z); tembus cahaya menyusul diurutkan jauh→dekat dan hanya
+  MENGUJI z tanpa menulisnya — tanpa itu dua lapis transparan saling menghapus.
+- `isolasi()` memudarkan yang lain, **tidak menyembunyikannya**, supaya letak organ terpilih
+  di dalam tubuh tetap terbaca. `ledak()` memakai `kotakAsli()` (tanpa geser) sebagai acuan
+  supaya pemanggilan berulang tidak menumpuk.
+- `seriAtlas()` mengikuti pola pembungkus seri yang sama dengan volume.js & mesh.js.
+
+**`prisma.html` mode Atlas** — satu-satunya mode yang jalan **tanpa `App.vol`**. Buffer ID
+disimpan **per sudut** (`App.atlasId[]`) karena yang tampil di panggung adalah bingkai
+prarender, bukan hasil render saat itu; ~6 MB untuk 24 sudut 256², jauh lebih murah daripada
+render ulang tiap klik. `organDiTitik()` membalik transformasi sisi prisma
+(translate → rotate → cermin → drawImage) untuk mengubah klik jadi koordinat piksel citra.
+Menyorot organ mengubah piksel, jadi **memilih organ memicu prarender penuh** — sama seperti
+mengubah ambang isosurface.
+
+**`kendali.js`** dapat kosakata organ (`perintah: 'organ'`) plus `pisah`/`satukan`/`semua`.
+Dua pelajaran: (a) `'tulang'` TIDAK dipakai sebagai nama organ karena sudah jadi padanan mode
+permukaan, dan yang terdaftar lebih dulu menang bila panjang katanya sama; (b) `'semuanya'`
+sebagai pemicu tunggal membuat "selamat pagi semuanya" tertangkap sebagai perintah — uji
+`Suara: ucapan tanpa perintah menghasilkan null` yang menangkapnya, jadi pemicunya wajib
+dua kata. Nama organ ditulis tetap, bukan diambil dari model, karena pengenal suara jauh
+lebih baik pada kosakata tertutup dan nama bagian di OBJ sering berupa kode (`FJ6297`).
+
+**`tools/buat-atlas.js`** — 13 organ sebagai bola UV yang dilengkungkan sinus, deterministik,
+satuan mm, sumbu DICOM (+x kiri pasien, +y posterior, +z superior). **Bukan anatomi
+sungguhan**; ada supaya fitur atlas bisa diuji tanpa unduhan pihak ketiga dan tanpa
+pertanyaan lisensi. Keluarannya dikecualikan git. Diperiksa `tests/periksa-atlas.js`, yang
+antara lain memastikan **setiap organ bisa diklik di salah satu dari 8 sudut** — kalau ada
+organ yang selalu tertutup, mekanisme pilih jadi bohong.
+
+**Model sungguhan** yang lisensinya sudah diverifikasi: BodyParts3D (CC BY-SA 2.1 JP, kredit
+wajib "BodyParts3D, © The Database Center for Life Science licensed under CC Attribution-Share
+Alike 2.1 Japan", ada cermin STL di `Kevin-Mattheus-Moerman/BodyParts3D`) dan Z-Anatomy
+(CC BY-SA 4.0). Share-alike mengikat modelnya, bukan kode MIT Kaca. Cermin BodyParts3D itu
+menamai berkasnya `BP<angka>.stl` sementara daftar namanya memakai `FMA<id>` di
+`parts_list_e.txt` — pemetaan keduanya belum ditelusuri, jadi **belum ada pengunduh otomatis**.
+
+Bug lama yang tersingkap: `jalankanPerintah` case `reset` mengembalikan `rSkala` ke **0,36**,
+padahal bawaannya sudah diperbaiki jadi 0,30 — artinya "atur ulang" justru memunculkan lagi
+tumpang-tindih antar sisi. Sudah dibetulkan.
+
+`tests/index.html` sebelumnya tidak memuat `kendali.js`/`uji-kendali.js` sama sekali; sudah
+ditambahkan bersama `model.js`/`uji-model.js`. `TextDecoder`/`TextEncoder` ditambahkan ke
+sandbox `node-runner.js`.
 
 ## Masih tersisa
 

@@ -42,11 +42,12 @@ adalah ES module, dan `http.server` bawaan Python di Windows mengirimkannya seba
 ## Menjalankan uji
 
 ```bash
-node tests/node-runner.js       # 66 uji parser, volume, & permukaan — keluar 1 bila gagal
-node tests/asap-halaman.js      # 57 uji asap skrip halaman di tiruan DOM
+node tests/node-runner.js       # 127 uji parser, volume, permukaan, model, kendali
+node tests/asap-halaman.js      # 79 uji asap skrip halaman di tiruan DOM
 node tests/periksa-contoh.js    # buka 20 berkas .dcm di contoh-dicom/
 node tests/periksa-volume.js    # bangun volume dari data demo & berkas nyata, ukur waktunya
 node tests/periksa-mesh.js      # rekonstruksi permukaan dari seri volumetrik
+node tests/periksa-atlas.js     # muat atlas contoh, periksa normal & pemilihan organ
 ```
 
 **Semuanya berjalan di Node — tidak ada peramban yang dipakai, tidak ada jaringan.**
@@ -153,6 +154,7 @@ assets/css/prisma.css   Gaya halaman prisma hologram
 assets/js/dicom.js      Parser DICOM Part-10 (ditulis dari nol)
 assets/js/volume.js     Volume 3D: MPR, MIP, proyeksi ray-cast
 assets/js/mesh.js       Rekonstruksi permukaan: isosurface + perender + STL/OBJ
+assets/js/model.js      Pemuat OBJ/STL + adegan atlas anatomi (buffer ID)
 assets/js/prisma.js     Panggung prisma hologram
 assets/js/demo.js       Generator phantom sintetis untuk data demo
 assets/js/firebase-init.js  Jembatan Firebase (satu-satunya ES module)
@@ -167,6 +169,7 @@ assets/js/viewer.js     Mesin viewer (render, alat, pengukuran)
 
 tools/tulis-dicom.js    Penulis DICOM minimal (uji + pembuat contoh)
 tools/buat-contoh.js    Pembuat seri volumetrik sintetis
+tools/buat-atlas.js     Pembuat atlas anatomi contoh (OBJ, 13 organ)
 tools/unduh-contoh.js   Pengunduh berkas uji parser (pydicom-data)
 tools/unduh-volume.js   Pengunduh seri volumetrik sungguhan (TCIA)
 
@@ -175,11 +178,13 @@ tests/node-runner.js    Penjalan uji tanpa peramban
 tests/uji-dicom.js      Berkas uji parser
 tests/uji-volume.js     Berkas uji volume 3D
 tests/uji-mesh.js       Berkas uji rekonstruksi permukaan
+tests/uji-model.js      Berkas uji pemuat OBJ/STL & adegan atlas
 tests/dom-tiruan.js     Tiruan DOM & canvas untuk Node
 tests/asap-halaman.js   Uji asap skrip halaman tanpa peramban
 tests/periksa-contoh.js Pemeriksa berkas contoh-dicom/
 tests/periksa-volume.js Pemeriksa volume dari data sungguhan
 tests/periksa-mesh.js   Pemeriksa rekonstruksi dari seri volumetrik
+tests/periksa-atlas.js  Pemeriksa atlas contoh (normal, ID, pisahkan)
 
 firebase.json           Konfigurasi Hosting + Firestore
 firestore.rules         Aturan keamanan Firestore
@@ -367,7 +372,7 @@ sudah cukup untuk semuanya: tiap sisi hanya membaca indeks yang bergeser N/4. Su
 di-*prarender* sekali — ray-cast di CPU berat, 24 sudut pada 256² butuh 1–4 detik — lalu
 animasinya cuma memutar-ulang bingkai yang sudah ada, jadi putarannya mulus di 60 fps.
 
-Yang bisa disetel: mode (MIP / volume / rerata / **permukaan**), peta warna, window/level,
+Yang bisa disetel: mode (MIP / volume / rerata / **permukaan** / **atlas**), peta warna, window/level,
 kepadatan dan gamma untuk mode volume, ambang untuk mode permukaan, elevasi, jumlah sudut,
 resolusi, rapat sinar, lalu ukuran sisi, jarak ke pusat, kecepatan, cermin, dan arah putar
 untuk menyesuaikan dengan prisma yang Anda punya.
@@ -377,6 +382,81 @@ dari *transfer function* sehingga perlu render ulang — tombolnya berkedip saat
 Cara pakai: letakkan puncak prisma di penanda tengah layar, matikan lampu ruangan, dan pakai
 layar mendatar (tablet atau monitor direbahkan). Nyalakan **Cermin** bila citranya terbaca
 terbalik — arah pantulan berbeda antar model prisma.
+
+## Atlas anatomi
+
+Mode **Atlas** di panggung hologram menampilkan model organ dari berkas **OBJ atau STL**,
+tanpa DICOM sama sekali. Ini satu-satunya mode yang jalan tanpa volume.
+
+`assets/js/model.js` melengkapi arah yang selama ini hanya satu jalan: `mesh.js` sudah bisa
+mengekspor STL/OBJ, sekarang keduanya juga bisa **dibaca masuk**.
+
+- **OBJ** — indeks negatif (relatif), poligon dipecah jadi segitiga secara kipas, `vn`
+  dipakai bila ada dan dihitung dari geometri bila tidak. Penanda `o`/`g` memisahkan organ
+  menjadi bagian tersendiri; `usemtl` dipakai sebagai gantinya bila keduanya tidak ada.
+- **STL** biner dan teks. Biner dikenali dari panjang berkas (`84 + n × 50`), **bukan** dari
+  kata `solid` — 80 byte judul STL biner boleh saja diawali kata itu. Karena STL tidak punya
+  titik bersama, titiknya **dilas** berdasarkan posisi (dibulatkan ke mikrometer) lalu normal
+  per titik dihitung ulang; tanpa itu permukaannya berfaset dan memorinya tiga kali lipat.
+- **glTF/GLB ditolak dengan sengaja.** Berkas glTF modern memakai
+  `EXT_meshopt_compression` dan `KHR_mesh_quantization` yang butuh dekoder WASM. Itu
+  melanggar aturan tanpa dependensi, jadi pesannya menyarankan konversi ke OBJ/STL.
+
+`MODEL.Adegan` menggambar banyak bagian dengan **satu z-buffer bersama** plus **satu buffer
+ID per piksel**. Buffer ID itu yang membuat pemilihan organ tidak perlu ray-casting: klik di
+panggung dibalikkan melalui transformasi sisi prisma yang sama, lalu ID-nya dibaca langsung.
+Bagian yang sedang dipudarkan (alfa < 0,5) tidak menulis ID, jadi klik tidak menangkap organ
+yang sengaja disamarkan.
+
+Bagian buram digambar lebih dulu sambil menulis z; bagian tembus cahaya menyusul, diurutkan
+dari jauh ke dekat dan hanya **menguji** z tanpa menulisnya — tanpa itu dua lapisan
+transparan saling menghapus tergantung urutan gambar.
+
+Yang bisa dilakukan: menyalakan/mematikan organ satu per satu, menyorot satu organ (yang
+lain jadi tembus cahaya, bukan hilang, supaya letaknya di dalam tubuh tetap terbaca),
+memisahkan seluruh organ dari pusat tubuh, dan memilih organ dengan **klik pada panggung**
+atau **suara**: sebut nama organ, atau ucapkan *pisahkan*, *satukan*, *tampilkan semua*.
+
+Buffer ID disimpan **per sudut** karena yang tampil di panggung adalah bingkai prarender,
+bukan hasil render saat itu. Ongkosnya sekitar 6 MB untuk 24 sudut pada 256² — jauh lebih
+murah daripada merender ulang setiap kali diklik.
+
+### Atlas contoh
+
+```bash
+node tools/buat-atlas.js        # → contoh-dicom/atlas/atlas-contoh.obj (13 organ)
+node tests/periksa-atlas.js     # muat, periksa arah normal & pemilihan organ
+```
+
+**Bentuknya bukan anatomi sungguhan** — elipsoid berlekuk dengan letak kasar, dibangkitkan
+dari rumus di `tools/buat-atlas.js` supaya fitur atlas bisa diuji tanpa bergantung pada
+unduhan pihak ketiga dan tanpa pertanyaan lisensi. Jangan dipakai untuk klinis maupun
+pendidikan. Keluarannya dikecualikan git karena deterministik.
+
+### Model anatomi sungguhan
+
+Kaca memuat OBJ/STL apa pun, jadi model sungguhan tinggal dimuat. Dua sumber berlisensi
+terbuka:
+
+| Sumber | Lisensi | Catatan |
+|---|---|---|
+| [BodyParts3D / Anatomography](https://lifesciencedb.jp/bp3d/) | CC BY-SA 2.1 Japan | Dari data pencitraan sungguhan; per organ; ada [cermin STL di GitHub](https://github.com/Kevin-Mattheus-Moerman/BodyParts3D) |
+| [Z-Anatomy](https://github.com/Z-Anatomy/Models-of-human-anatomy) | CC BY-SA 4.0 | Turunan BodyParts3D yang lebih rapi, berbasis Blender |
+
+Keduanya menuntut **atribusi** dan bersifat *share-alike*. Kredit yang diminta BodyParts3D:
+
+> BodyParts3D, © The Database Center for Life Science licensed under
+> CC Attribution-Share Alike 2.1 Japan
+
+Share-alike itu mengikat modelnya, bukan kode Kaca yang berlisensi MIT. Model tidak
+disertakan di repo ini — muat sendiri, dan sertakan atribusinya bila Anda
+mendistribusikannya kembali.
+
+**Hati-hati pada model 3D anatomi tanpa keterangan asal.** Banyak yang kini dihasilkan
+generator 3D-dari-teks (Tripo, Meshy, dan sejenisnya) dari prompt seperti *"anatomical heart
+3d model"*. Bentuknya meyakinkan tapi tidak divalidasi siapa pun, dan pada sistem pencitraan
+medis itu berbahaya: orang bisa membacanya sebagai rujukan anatomi. Periksa metadata `.glb`
+(`asset.generator`, nama node) sebelum memakainya.
 
 ### Pintasan papan ketik
 

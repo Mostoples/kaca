@@ -270,9 +270,16 @@
   Mesh.prototype.kosong = function () { return this.tri.length === 0; };
 
   Mesh.prototype.info = function () {
-    return this.jumlahSegitiga().toLocaleString('id-ID') + ' segitiga · ' +
-      this.jumlahTitik().toLocaleString('id-ID') + ' titik · ambang ' +
-      Math.round(this.ambang) + (this.langkah > 1 ? ' · langkah ' + this.langkah : '') +
+    var dasar = this.jumlahSegitiga().toLocaleString('id-ID') + ' segitiga · ' +
+      this.jumlahTitik().toLocaleString('id-ID') + ' titik';
+    /* mesh yang DIMUAT dari berkas luar tidak punya ambang isosurface —
+       menampilkan "ambang 0" hanya akan menyesatkan */
+    if (this.dimuat) {
+      return dasar + (this.sumberBerkas ? ' · ' + this.sumberBerkas : '') +
+        (this.terpotong ? ' · DIPOTONG (batas segitiga)' : '');
+    }
+    return dasar + ' · ambang ' + Math.round(this.ambang) +
+      (this.langkah > 1 ? ' · langkah ' + this.langkah : '') +
       (this.terpotong ? ' · DIPOTONG (batas segitiga)' : '');
   };
 

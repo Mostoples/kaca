@@ -300,6 +300,91 @@ async function ujiViewer() {
   periksa('menghapus pengukuran tidak melempar', !ukurGalat, ukurGalat);
 }
 
+/* ----------------------------------------------------------
+   Atlas anatomi di panggung prisma
+   ----------------------------------------------------------
+   Berkas dipalsukan pada tingkat `input.files`, bukan lewat DOM
+   sungguhan: yang perlu diuji adalah rantai muatModel → MODEL.muat
+   → Adegan → daftar organ → prarender, dan rantai itu hanya butuh
+   objek dengan .name dan .text().
+   ---------------------------------------------------------- */
+async function ujiAtlas(win, dok) {
+  periksa('MODEL tersedia di prisma', !!win.MODEL);
+
+  /* dua kubus sebagai dua organ dalam satu OBJ */
+  const kubus = (cx, nama, geser) => {
+    const h = 8, t = [
+      [cx - h, -h, -h], [cx + h, -h, -h], [cx + h, h, -h], [cx - h, h, -h],
+      [cx - h, -h, h], [cx + h, -h, h], [cx + h, h, h], [cx - h, h, h]
+    ];
+    const sisi = [[5, 6, 7, 8], [1, 4, 3, 2], [1, 2, 6, 5], [4, 8, 7, 3], [1, 5, 8, 4], [2, 3, 7, 6]];
+    const b = [`o ${nama}`];
+    t.forEach((p) => b.push(`v ${p[0]} ${p[1]} ${p[2]}`));
+    sisi.forEach((q) => {
+      b.push(`f ${q[0] + geser} ${q[1] + geser} ${q[2] + geser}`);
+      b.push(`f ${q[0] + geser} ${q[2] + geser} ${q[3] + geser}`);
+    });
+    return b.join('\n');
+  };
+  const objTeks = kubus(-20, 'jantung', 0) + '\n' + kubus(20, 'hati', 8) + '\n';
+
+  const masukan = dok.getElementById('modelInput');
+  masukan.files = [{ name: 'organ.obj', text: () => Promise.resolve(objTeks) }];
+  masukan.dispatchEvent(new win.Event('change'));
+  await tunggu(win, 600);
+
+  const info = dok.getElementById('atlasInfo');
+  periksa('atlas termuat dari OBJ',
+    info && /2 bagian/.test(info.textContent), info && info.textContent);
+
+  periksa('mode berpindah ke atlas',
+    dok.querySelector('#modeGrid button[data-mode="atlas"]').classList.contains('on'));
+
+  periksa('panel kendali atlas terbuka',
+    !dok.getElementById('atlasKendali').classList.contains('hide'));
+
+  const daftar = dok.querySelectorAll('#daftarOrgan [data-organ]');
+  periksa('daftar organ terisi', daftar.length === 2, `${daftar.length} entri`);
+  periksa('nama organ terbaca dari kelompok OBJ',
+    /jantung/.test(dok.getElementById('daftarOrgan').innerHTML));
+
+  const render = dok.getElementById('renderInfo');
+  periksa('atlas ikut diprarender',
+    render && /sudut/.test(render.textContent), render && render.textContent);
+
+  /* memilih organ → tersorot, dan yang lain dipudarkan */
+  dok.querySelector('#daftarOrgan [data-organ="1"]').click();
+  await tunggu(win, 600);
+  periksa('organ terpilih ditandai',
+    dok.querySelector('#daftarOrgan [data-organ="1"]').getAttribute('aria-pressed') === 'true');
+
+  /* mata → sembunyikan */
+  dok.querySelector('#daftarOrgan [data-mata="0"]').click();
+  await tunggu(win, 600);
+  periksa('organ bisa disembunyikan dari daftar',
+    dok.querySelector('#daftarOrgan [data-organ="0"]').classList.contains('mati'));
+
+  dok.getElementById('btnAtlasSemua').click();
+  await tunggu(win, 600);
+  periksa('tampilkan semua mengembalikan organ',
+    !dok.querySelector('#daftarOrgan [data-organ="0"]').classList.contains('mati'));
+
+  /* pisahkan lalu atur ulang */
+  const sLedak = dok.getElementById('rLedak');
+  sLedak.value = '0.6';
+  sLedak.dispatchEvent(new win.Event('input'));
+  dok.getElementById('btnRender').click();
+  await tunggu(win, 600);
+  periksa('penggeser pisahkan tidak melempar',
+    dok.getElementById('rLedakVal').textContent === '60%',
+    dok.getElementById('rLedakVal').textContent);
+
+  dok.getElementById('btnAtlasUlang').click();
+  await tunggu(win, 600);
+  periksa('atur ulang atlas mengembalikan penggeser',
+    dok.getElementById('rLedakVal').textContent === '0%');
+}
+
 /* ==========================================================
    3. Prisma
    ========================================================== */
@@ -359,7 +444,7 @@ async function ujiPrisma() {
 
   /* kontrol */
   let modeGalat = null;
-  for (const m of ['rerata', 'komposit', 'permukaan', 'maks']) {
+  for (const m of ['rerata', 'komposit', 'permukaan', 'atlas', 'maks']) {
     try { dok.querySelector(`#modeGrid button[data-mode="${m}"]`).click(); }
     catch (e) { modeGalat = `${m}: ${e.message}`; break; }
   }
@@ -398,6 +483,37 @@ async function ujiPrisma() {
   } catch (e) { kunciGalat = e.message; }
   periksa('pintasan panggung tidak melempar', !kunciGalat, kunciGalat);
 
+  /* Kendali tanpa sentuh: di Node tidak ada kamera maupun mikrofon,
+     jadi ini menguji jalur kegagalannya — harus melapor rapi, mematikan
+     sakelarnya sendiri, dan tidak melempar. */
+  let kendaliGalat = null;
+  try {
+    for (const id of ['swGestur', 'swSuara']) {
+      const s = dok.getElementById(id);
+      s.checked = true;
+      s.dispatchEvent(new Peristiwa('change', { target: s }));
+    }
+  } catch (e) { kendaliGalat = e.message; }
+  periksa('menyalakan gestur & suara tanpa perangkat tidak melempar', !kendaliGalat, kendaliGalat);
+  periksa('sakelar dimatikan sendiri saat perangkat tidak ada',
+    !dok.getElementById('swGestur').checked && !dok.getElementById('swSuara').checked);
+  periksa('alasannya dijelaskan ke pengguna',
+    /tidak menyediakan|gagal/i.test(dok.getElementById('kendaliStatus').textContent),
+    dok.getElementById('kendaliStatus').textContent);
+
+  let matiGalat = null;
+  try {
+    for (const id of ['swGestur', 'swSuara', 'swGesturSkala', 'swGerakSaja']) {
+      const s = dok.getElementById(id);
+      s.checked = false;
+      s.dispatchEvent(new Peristiwa('change', { target: s }));
+    }
+    const h = dok.getElementById('rHalus');
+    h.value = '0.5';
+    h.dispatchEvent(new Peristiwa('input', { target: h }));
+  } catch (e) { matiGalat = e.message; }
+  periksa('mematikan kendali & menggeser kehalusan tidak melempar', !matiGalat, matiGalat);
+
   /* berpindah studi lewat pemilih harus menyusun ulang volume */
   const kunciLain = Array.from(selStudi.querySelectorAll('option'))
     .map((o) => o.getAttribute('value'))
@@ -426,6 +542,11 @@ async function ujiPrisma() {
   const mesh = dok.getElementById('meshInfo');
   periksa('mode permukaan menghasilkan isosurface', !ulangGalat &&
     mesh && /segitiga/.test(mesh.textContent), ulangGalat || (mesh && mesh.textContent));
+
+  /* atlas dijalankan paling akhir: memuat model berpindah mode dan
+     mengosongkan tanda "perlu render", jadi kalau ditaruh di tengah ia
+     akan merusak pemeriksaan di atasnya */
+  await ujiAtlas(win, dok);
 }
 
 /* ==========================================================

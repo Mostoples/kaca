@@ -39,6 +39,7 @@ const sandbox = {
   CompressionStream: global.CompressionStream,
   DecompressionStream: global.DecompressionStream,
   console, Math, JSON, Date, URL,
+  TextDecoder, TextEncoder,
   setTimeout, clearTimeout
 };
 sandbox.window = sandbox;
@@ -54,10 +55,14 @@ function muat(rel) {
 muat('assets/js/dicom.js');
 muat('assets/js/volume.js');
 muat('assets/js/mesh.js');
+muat('assets/js/model.js');
+muat('assets/js/kendali.js');
 muat('tools/tulis-dicom.js');
 muat('tests/uji-dicom.js');
 muat('tests/uji-volume.js');
 muat('tests/uji-mesh.js');
+muat('tests/uji-model.js');
+muat('tests/uji-kendali.js');
 
 /* ---------- jalankan ---------- */
 const daftar = (sandbox.UJI && sandbox.UJI.daftar) || [];

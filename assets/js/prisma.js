@@ -24,6 +24,8 @@
     vol: null,
     mesh: null,
     meshAmbang: null,
+    atlas: null,       /* MODEL.Adegan — atlas anatomi, tanpa DICOM */
+    atlasId: [],       /* buffer ID per sudut, supaya klik bisa memilih organ */
     seri: null,
     judul: '',
     imgs: [],          /* objek img hasil ray-cast per sudut */
@@ -45,13 +47,20 @@
       ww: null,
       wc: null,
       ambang: 300,
-      /* tata letak prisma */
-      skala: 0.36,
+      ledak: 0,        /* seberapa jauh organ dipisahkan dari pusat */
+      /* Tata letak prisma. jarak = skala membuat tepi atas keempat sisi
+         bertemu TEPAT di titik pusat. Kalau jarak < skala, sisi-sisinya
+         saling tindih dan bagian tengah jadi gumpalan tak terbaca. */
+      skala: 0.30,
       jarak: 0.30,
       cermin: false,
       arah: 1,
       kecepatan: 6,
-      pusat: true
+      pusat: true,
+      /* kendali tanpa sentuh */
+      halus: 0.25,
+      gesturSkala: true,
+      gerakSaja: false
     }
   };
 
@@ -242,18 +251,56 @@
     });
   }
 
+  /* ----------------------------------------------------------
+     Window/level yang pantas untuk tiap mode
+     ----------------------------------------------------------
+     Jendela dari header dibuat untuk SATU IRISAN. Dipakai apa adanya
+     pada MIP, hasilnya jenuh: MIP mengambil nilai tertinggi sepanjang
+     sinar, jadi jendela otak (wc 40 / ww 90) membuat seluruh tengkorak
+     putih penuh dan bentuknya hilang. Karena itu jendelanya dipilih per
+     mode, bukan diwarisi.
+     ---------------------------------------------------------- */
+  function wlUntukMode(vol, mode) {
+    var ct = (vol.modality || '').toUpperCase() === 'CT';
+    var rentang = Math.max(1, vol.max - vol.min);
+    var tengah = (vol.max + vol.min) / 2;
+
+    if (mode === 'maks') {
+      /* MIP: perlu jendela lebar yang mencakup tulang tanpa menjenuhkan */
+      return ct ? { wc: 350, ww: 1600 }
+                : { wc: tengah + rentang * 0.15, ww: rentang * 0.9 };
+    }
+    if (mode === 'rerata') {
+      /* proyeksi rerata mirip radiograf: jendela lebar, pusat agak rendah */
+      return ct ? { wc: 40, ww: 900 } : { wc: tengah, ww: rentang };
+    }
+    /* komposit memakai jendela sebagai transfer function; yang bagus
+       adalah menyingkirkan jaringan lunak dan menyisakan yang padat */
+    return ct ? { wc: 250, ww: 900 } : { wc: tengah + rentang * 0.1, ww: rentang * 0.8 };
+  }
+
+  function terapkanWL(vol, mode) {
+    var w = wlUntukMode(vol, mode);
+    App.opsi.wc = Math.round(w.wc);
+    App.opsi.ww = Math.round(w.ww);
+    var sWW = el('rWW'), sWL = el('rWL');
+    /* jaga agar nilainya tetap berada dalam rentang penggeser */
+    if (App.opsi.ww > +sWW.max) sWW.max = App.opsi.ww;
+    if (App.opsi.wc < +sWL.min) sWL.min = App.opsi.wc;
+    if (App.opsi.wc > +sWL.max) sWL.max = App.opsi.wc;
+    sWW.value = App.opsi.ww; sWL.value = App.opsi.wc;
+    el('rWWVal').textContent = App.opsi.ww;
+    el('rWLVal').textContent = App.opsi.wc;
+  }
+
   /* rentang penggeser mengikuti nilai voxel yang benar-benar ada */
   function setelRentang(vol) {
     var rentang = Math.max(1, vol.max - vol.min);
     var sWW = el('rWW'), sWL = el('rWL');
-    sWW.min = 1; sWW.max = Math.round(rentang * 2);
-    sWL.min = Math.round(vol.min - rentang * 0.5);
-    sWL.max = Math.round(vol.max + rentang * 0.5);
-    App.opsi.ww = Math.round(vol.windowWidth);
-    App.opsi.wc = Math.round(vol.windowCenter);
-    sWW.value = App.opsi.ww; sWL.value = App.opsi.wc;
-    el('rWWVal').textContent = App.opsi.ww;
-    el('rWLVal').textContent = App.opsi.wc;
+    sWW.min = 1; sWW.max = Math.round(Math.max(rentang * 2, 2400));
+    sWL.min = Math.round(Math.min(vol.min - rentang * 0.5, -1200));
+    sWL.max = Math.round(Math.max(vol.max + rentang * 0.5, 1600));
+    terapkanWL(vol, App.opsi.mode);
 
     var sAmb = el('rAmbang');
     sAmb.min = Math.round(vol.min + 1);
@@ -349,6 +396,21 @@
     var i = 0;
     var mulai = performance.now();
     var permukaan = o.mode === 'permukaan';
+    var atlas = o.mode === 'atlas';
+
+    /* Atlas berdiri sendiri: modelnya berasal dari berkas OBJ/STL, bukan
+       dari volume DICOM. Jadi mode ini satu-satunya yang boleh jalan
+       tanpa App.vol — dan sebaliknya, mode lain tidak bisa tanpa volume. */
+    if (atlas) {
+      App.atlasId = new Array(n);
+      if (!App.atlas || !App.atlas.bagian.length) {
+        pesan('Belum ada model atlas', 'Tekan "Buka model OBJ/STL…" di panel.');
+        return Promise.resolve();
+      }
+    } else if (!App.vol) {
+      pesan('Belum ada volume', 'Pilih studi lalu seri di panel.');
+      return Promise.resolve();
+    }
 
     /* Mode permukaan perlu isosurface dulu. Jaringnya disimpan dan
        hanya dibangun ulang kalau ambangnya berubah — ekstraksi jauh
@@ -382,7 +444,9 @@
         /* render beberapa sudut per giliran, tetapi selalu lepaskan
            kendali sebelum 100 ms agar bilah kemajuan tetap bergerak */
         do {
-          App.imgs[i] = permukaan
+          App.imgs[i] = atlas
+            ? renderAtlasSudut(i, n)
+            : permukaan
             ? App.mesh.render({
                 azimut: i / n * Math.PI * 2,
                 elevasi: o.elevasi * Math.PI / 180,
@@ -413,6 +477,221 @@
       }
       setTimeout(langkah, 0);
     });
+  }
+
+  /* ==========================================================
+     Atlas anatomi
+     ----------------------------------------------------------
+     Model organ dimuat dari berkas OBJ/STL, bukan dihasilkan dari
+     volume. Bagiannya bisa dinyalakan, dipudarkan, dipisahkan, dan
+     dipilih dengan klik.
+
+     Buffer ID DISIMPAN PER SUDUT. Alasannya: yang tampil di panggung
+     adalah bingkai prarender, bukan hasil render saat itu, jadi ID
+     dari render terakhir tidak mewakili apa yang sedang dilihat.
+     Ongkosnya n × ukuran² × 4 byte (24 sudut 256² ≈ 6 MB) — jauh
+     lebih murah daripada merender ulang setiap kali diklik.
+     ========================================================== */
+  function renderAtlasSudut(i, n) {
+    var o = App.opsi;
+    var img = App.atlas.render({
+      azimut: i / n * Math.PI * 2,
+      elevasi: o.elevasi * Math.PI / 180,
+      ukuran: o.ukuran
+    });
+    App.atlasId[i] = App.atlas._id;
+    /* _id dipegang ulang oleh Adegan pada render berikutnya, jadi yang
+       disimpan harus salinannya, bukan rujukannya */
+    App.atlas._id = null;
+    return img;
+  }
+
+  function muatModel(fileList) {
+    var files = Array.prototype.slice.call(fileList || []);
+    if (!files.length) return;
+    if (!window.MODEL) { pesan('Modul model tidak termuat'); return; }
+
+    pesan('Membaca model…', '0 / ' + files.length);
+    el('bar').style.width = '0%';
+
+    var bagian = [];
+    var catatan = [];
+    var galat = [];
+    var selesai = 0;
+
+    /* Berkas dibaca berurutan. Satu berkas OBJ bisa memuat banyak organ
+       sebagai kelompok "o"/"g"; satu berkas STL selalu satu organ. */
+    function berikutnya() {
+      if (selesai >= files.length) return rampung();
+      var f = files[selesai];
+      var teks = /\.obj$/i.test(f.name);
+      var baca = teks ? f.text() : f.arrayBuffer();
+      return baca.then(function (data) {
+        try {
+          var h = window.MODEL.muat(f.name, data);
+          h.bagian.forEach(function (b) {
+            /* nama berkas dipakai bila kelompok di dalamnya tak bernama */
+            if (!b.nama || b.nama === 'model') b.nama = bersih(f.name);
+            b.warna = window.MODEL.warnaOrgan(b.nama, bagian.length);
+            bagian.push(b);
+          });
+          (h.catatan || []).forEach(function (c) {
+            if (catatan.indexOf(c) < 0) catatan.push(c);
+          });
+        } catch (e) {
+          galat.push(f.name + ': ' + (e && e.message ? e.message : e));
+        }
+        selesai++;
+        el('statusSub').textContent = selesai + ' / ' + files.length;
+        el('bar').style.width = (selesai / files.length * 100) + '%';
+        return berikutnya();
+      }, function (e) {
+        galat.push(f.name + ': gagal dibaca (' + (e && e.message) + ')');
+        selesai++;
+        return berikutnya();
+      });
+    }
+
+    function rampung() {
+      if (!bagian.length) {
+        pesan('Tidak ada model yang bisa dibaca', galat.join(' · ') || 'Format tidak dikenali.');
+        el('bar').style.width = '0%';
+        return;
+      }
+      App.atlas = new window.MODEL.Adegan(bagian);
+      App.opsi.ledak = 0;
+      var sLedak = el('rLedak');
+      if (sLedak) { sLedak.value = '0'; el('rLedakVal').textContent = '0%'; }
+
+      el('atlasKendali').classList.remove('hide');
+      el('atlasInfo').textContent = App.atlas.info() +
+        (galat.length ? ' · ' + galat.length + ' berkas gagal' : '');
+      el('atlasInfo').title = catatan.concat(galat).join('\n');
+      isiDaftarOrgan();
+
+      el('hJudul').textContent = 'Atlas anatomi';
+      el('hSub').textContent = App.atlas.bagian.length + ' bagian dari berkas Anda';
+
+      /* pindah ke mode atlas kalau belum, lalu render */
+      var tombol = document.querySelector('#modeGrid button[data-mode="atlas"]');
+      if (tombol && App.opsi.mode !== 'atlas') tombol.click();
+      prarender();
+    }
+
+    berikutnya();
+  }
+
+  function bersih(nama) {
+    return String(nama || '').replace(/^.*[\\/]/, '')
+      .replace(/\.[a-z0-9]+$/i, '').replace(/[_+]+/g, ' ').trim();
+  }
+
+  function isiDaftarOrgan() {
+    var ul = el('daftarOrgan');
+    if (!ul || !App.atlas) return;
+    ul.innerHTML = App.atlas.bagian.map(function (b, i) {
+      var w = 'rgb(' + b.warna[0] + ',' + b.warna[1] + ',' + b.warna[2] + ')';
+      return '<li>' +
+        '<button type="button" data-organ="' + i + '"' +
+        ' class="' + (b.tampil ? '' : 'mati') + '"' +
+        ' aria-pressed="' + (App.atlas.pilih === i ? 'true' : 'false') + '">' +
+        '<span class="oswatch" style="background:' + w + '"></span>' +
+        '<span class="onama">' + esc(b.nama) + '</span>' +
+        '<span class="otri">' + Math.round(b.mesh.jumlahSegitiga() / 1000) + 'k</span>' +
+        '<span class="organ-mata" data-mata="' + i + '" role="img"' +
+        ' aria-label="' + (b.tampil ? 'Sembunyikan' : 'Tampilkan') + '">' +
+        (b.tampil ? '◉' : '○') + '</span>' +
+        '</button></li>';
+    }).join('');
+  }
+
+  /* Sorot satu organ. Menyorot mengubah piksel, jadi seluruh sudut harus
+     dirender ulang — sama halnya dengan mengubah ambang isosurface. */
+  function pilihOrgan(idx, tanpaRender) {
+    if (!App.atlas) return;
+    if (idx < 0 || idx >= App.atlas.bagian.length) {
+      App.atlas.pilih = -1;
+      for (var i = 0; i < App.atlas.bagian.length; i++) App.atlas.bagian[i].alfa = 1;
+    } else if (App.atlas.pilih === idx) {
+      App.atlas.pilih = -1;                       /* klik lagi = batal sorot */
+      for (var j = 0; j < App.atlas.bagian.length; j++) App.atlas.bagian[j].alfa = 1;
+    } else {
+      App.atlas.isolasi(idx);
+    }
+    isiDaftarOrgan();
+    var b = App.atlas.pilih >= 0 ? App.atlas.bagian[App.atlas.pilih] : null;
+    el('hSub').textContent = b
+      ? b.nama + ' · ' + b.mesh.info()
+      : App.atlas.bagian.length + ' bagian dari berkas Anda';
+    if (!tanpaRender) prarender();
+  }
+
+  /* ----------------------------------------------------------
+     Klik pada panggung → organ
+     ----------------------------------------------------------
+     gambar() menempatkan tiap sisi dengan translate → rotate →
+     (cermin) → drawImage. Di sini urutan itu dibalik supaya
+     koordinat klik kembali ke ruang piksel citra hasil render.
+     ---------------------------------------------------------- */
+  function organDiTitik(clientX, clientY) {
+    if (App.opsi.mode !== 'atlas' || !App.atlas || !App.kanvas.length) return -1;
+    var kotak = kanvasUtama.getBoundingClientRect();
+    if (!kotak.width || !kotak.height) return -1;
+    var X = (clientX - kotak.left) * (kanvasUtama.width / kotak.width);
+    var Y = (clientY - kotak.top) * (kanvasUtama.height / kotak.height);
+
+    var S = kanvasUtama.width, o = App.opsi;
+    var cx = S / 2, cy = kanvasUtama.height / 2;
+    var sisiPx = S * o.skala, jarakPx = S * o.jarak;
+    var n = App.kanvas.length;
+
+    for (var k = 0; k < SISI.length; k++) {
+      var s = SISI[k];
+      var px = X - (cx + s.dx * jarakPx);
+      var py = Y - (cy + s.dy * jarakPx);
+      /* kebalikan rotate(rot) */
+      var c = Math.cos(s.rot), sn = Math.sin(s.rot);
+      var u = px * c + py * sn;
+      var v = -px * sn + py * c;
+      if (o.cermin) u = -u;
+      /* drawImage(src, -sisiPx/2, -sisiPx, sisiPx, sisiPx) */
+      var fx = (u + sisiPx / 2) / sisiPx;
+      var fy = (v + sisiPx) / sisiPx;
+      if (fx < 0 || fx >= 1 || fy < 0 || fy >= 1) continue;
+
+      var idx = Math.round(App.fase + o.arah * k * n / 4);
+      idx = ((idx % n) + n) % n;
+      var id = App.atlasId[idx];
+      if (!id) continue;
+      var lebar = App.imgs[idx] ? App.imgs[idx].cols : 0;
+      var tinggi = App.imgs[idx] ? App.imgs[idx].rows : 0;
+      if (!lebar || !tinggi) continue;
+
+      var ix = Math.floor(fx * lebar), iy = Math.floor(fy * tinggi);
+      var organ = bacaID(id, lebar, tinggi, ix, iy, 6);
+      if (organ >= 0) return organ;
+    }
+    return -1;
+  }
+
+  /* pembacaan ID dengan radius: organ kecil sulit dikenai tepat */
+  function bacaID(id, lebar, tinggi, x, y, radius) {
+    if (x >= 0 && y >= 0 && x < lebar && y < tinggi) {
+      var l = id[y * lebar + x];
+      if (l >= 0) return l;
+    }
+    for (var d = 1; d <= radius; d++) {
+      for (var dy = -d; dy <= d; dy++) {
+        for (var dx = -d; dx <= d; dx++) {
+          if (Math.max(Math.abs(dx), Math.abs(dy)) !== d) continue;
+          var qx = x + dx, qy = y + dy;
+          if (qx < 0 || qy < 0 || qx >= lebar || qy >= tinggi) continue;
+          var v = id[qy * lebar + qx];
+          if (v >= 0) return v;
+        }
+      }
+    }
+    return -1;
   }
 
   /* img → canvas siap pakai (window/level & peta warna diterapkan di sini
@@ -559,11 +838,75 @@
         App.opsi.mode = b.dataset.mode;
         el('barisKomposit').classList.toggle('hide', b.dataset.mode !== 'komposit');
         el('barisPermukaan').classList.toggle('hide', b.dataset.mode !== 'permukaan');
+        el('barisAtlas').classList.toggle('hide', b.dataset.mode !== 'atlas');
+        /* setiap mode butuh jendela yang berbeda; MIP dengan jendela
+           irisan akan jenuh, jadi disetel ulang saat mode berganti */
+        if (App.vol && b.dataset.mode !== 'permukaan' && b.dataset.mode !== 'atlas') {
+          terapkanWL(App.vol, b.dataset.mode);
+        }
         tandaiPerluRender();
       });
     });
 
     pasangSlider('rAmbang', 'ambang', Math.round, tandaiPerluRender);
+
+    /* ---------- atlas anatomi ---------- */
+    el('btnBukaModel').addEventListener('click', function () { el('modelInput').click(); });
+    el('modelInput').addEventListener('change', function (e) {
+      muatModel(e.target.files);
+      e.target.value = '';                       /* berkas sama bisa dimuat lagi */
+    });
+
+    pasangSlider('rLedak', 'ledak', function (v) { return Math.round(v * 100) + '%'; }, function () {
+      if (!App.atlas) return;
+      App.atlas.ledak(App.opsi.ledak);
+      tandaiPerluRender();
+    });
+
+    el('btnAtlasSemua').addEventListener('click', function () {
+      if (!App.atlas) return;
+      App.atlas.bagian.forEach(function (b) { b.tampil = true; b.alfa = 1; });
+      App.atlas.pilih = -1;
+      isiDaftarOrgan();
+      prarender();
+    });
+
+    el('btnAtlasUlang').addEventListener('click', function () {
+      if (!App.atlas) return;
+      App.atlas.kembalikan();
+      App.opsi.ledak = 0;
+      el('rLedak').value = '0';
+      el('rLedakVal').textContent = '0%';
+      isiDaftarOrgan();
+      prarender();
+    });
+
+    /* satu pendengar untuk seluruh daftar: isinya diganti setiap
+       penyegaran, jadi memasang per tombol akan bocor */
+    el('daftarOrgan').addEventListener('click', function (e) {
+      if (!App.atlas) return;
+      var mata = e.target.closest ? e.target.closest('[data-mata]') : null;
+      if (mata) {
+        var im = parseInt(mata.dataset.mata, 10);
+        var b = App.atlas.bagian[im];
+        if (b) {
+          b.tampil = !b.tampil;
+          if (!b.tampil && App.atlas.pilih === im) App.atlas.pilih = -1;
+          isiDaftarOrgan();
+          prarender();
+        }
+        return;
+      }
+      var tombol = e.target.closest ? e.target.closest('[data-organ]') : null;
+      if (tombol) pilihOrgan(parseInt(tombol.dataset.organ, 10));
+    });
+
+    /* klik pada panggung memilih organ yang tertunjuk */
+    kanvasUtama.addEventListener('click', function (e) {
+      if (App.opsi.mode !== 'atlas' || !App.atlas) return;
+      var idx = organDiTitik(e.clientX, e.clientY);
+      if (idx >= 0) pilihOrgan(idx);
+    });
 
     /* peta warna */
     K.qsa('#cmapGrid button').forEach(function (b) {
@@ -615,7 +958,8 @@
       this.setAttribute('aria-pressed', App.jalan ? 'true' : 'false');
     });
     el('btnRender').addEventListener('click', function () {
-      if (!App.vol) return;
+      /* mode atlas tidak butuh volume; mode lain butuh */
+      if (App.opsi.mode === 'atlas' ? !App.atlas : !App.vol) return;
       prarender();
     });
     el('btnPenuh').addEventListener('click', function () {
@@ -668,10 +1012,268 @@
   }
 
   /* ==========================================================
+     Kendali tanpa sentuh: gestur tangan & perintah suara
+     ----------------------------------------------------------
+     Gestur memetakan posisi tangan ke fase putaran dan kedekatan
+     tangan ke ukuran sisi. Nilainya dihaluskan lebih dulu, kalau
+     tidak hologram akan bergetar mengikuti getaran titik berat.
+
+     Suara memakai Web Speech API. Perintah diterjemahkan oleh
+     KENDALI.bacaPerintah() lalu dijalankan lewat kontrol yang sama
+     dengan yang dipakai tombol — jadi tidak ada jalur logika kedua
+     yang bisa menyimpang.
+     ========================================================== */
+  var gerak = null, suara = null;
+  var halusFase = null, halusSkala = null;
+  var ctxPratinjau = null;
+
+  function statusKendali(teks, kelas) {
+    var n = el('kendaliStatus');
+    if (!n) return;
+    n.textContent = teks;
+    n.classList.remove('kendali-nyala', 'kendali-galat');
+    if (kelas) n.classList.add(kelas);
+  }
+
+  /* gambar kotak pelacakan supaya pengguna tahu tangannya terbaca */
+  function gambarPratinjau(bingkai, jejak) {
+    var cv = el('gesturPratinjau');
+    if (!cv) return;
+    if (!ctxPratinjau) ctxPratinjau = cv.getContext('2d');
+    var c = ctxPratinjau;
+    if (bingkai) c.putImageData(bingkai, 0, 0);
+    else { c.fillStyle = '#000'; c.fillRect(0, 0, cv.width, cv.height); }
+    if (!jejak) return;
+    var k = jejak.kotak;
+    c.strokeStyle = '#2fd4bd';
+    c.lineWidth = 2;
+    c.strokeRect(k.x0, k.y0, k.x1 - k.x0, k.y1 - k.y0);
+    c.fillStyle = '#2fd4bd';
+    c.beginPath();
+    c.arc(jejak.x * cv.width, jejak.y * cv.height, 3, 0, Math.PI * 2);
+    c.fill();
+  }
+
+  function mulaiGestur() {
+    if (!window.KENDALI) { statusKendali('Modul kendali tidak termuat.', 'kendali-galat'); return; }
+
+    halusFase = new window.KENDALI.Halus(App.opsi.halus);
+    halusSkala = new window.KENDALI.Halus(App.opsi.halus);
+
+    gerak = new window.KENDALI.Gerak({
+      fps: 15,
+      lacak: { hanyaGerak: !!App.opsi.gerakSaja },
+      onStatus: function (s) { statusKendali('Gestur: ' + s, 'kendali-nyala'); },
+      onGalat: function (err) {
+        statusKendali('Gestur gagal: ' + (err && err.message ? err.message : err), 'kendali-galat');
+        el('swGestur').checked = false;
+        el('gesturKotak').classList.add('hide');
+      },
+      onJejak: function (jejak, bingkai) {
+        gambarPratinjau(bingkai, jejak);
+        if (!jejak || !App.kanvas.length) return;
+
+        var m = window.KENDALI.petakan(jejak, {
+          skalaMin: 0.16, skalaMax: 0.46
+        });
+        if (!m) return;
+
+        /* putaran dikendalikan tangan, jadi putaran otomatis dijeda */
+        App.jalan = false;
+        el('btnPutar').textContent = 'Putar';
+
+        var n = App.kanvas.length;
+        var fase = halusFase.masuk(m.fase);
+        App.fase = ((fase * n) % n + n) % n;
+
+        if (App.opsi.gesturSkala) {
+          var s = halusSkala.masuk(m.skala);
+          App.opsi.skala = s;
+          el('rSkala').value = s.toFixed(3);
+          el('rSkalaVal').textContent = Math.round(s * 100) + '%';
+        }
+        gambar();
+      }
+    });
+
+    if (!gerak.dukung()) {
+      statusKendali('Peramban ini tidak menyediakan akses kamera.', 'kendali-galat');
+      el('swGestur').checked = false;
+      return;
+    }
+    el('gesturKotak').classList.remove('hide');
+    gerak.mulai().catch(function () {});
+  }
+
+  function hentiGestur() {
+    if (gerak) { gerak.henti(); gerak = null; }
+    halusFase = halusSkala = null;
+    el('gesturKotak').classList.add('hide');
+    gambarPratinjau(null, null);
+    statusKendali(suara && suara.jalan ? 'Suara aktif, gestur mati.' : 'Keduanya mati.');
+  }
+
+  /* satu perintah suara → satu tindakan, memakai kontrol yang sudah ada */
+  function jalankanPerintah(p) {
+    var kotak = el('kendaliDengar');
+    if (kotak) kotak.textContent = 'Perintah: ' + p.cocok;
+
+    switch (p.perintah) {
+      case 'putar':
+        if (!App.jalan) el('btnPutar').click();
+        break;
+      case 'jeda':
+        if (App.jalan) el('btnPutar').click();
+        break;
+      case 'arah':
+        el('swArah').checked = !el('swArah').checked;
+        el('swArah').dispatchEvent(new Event('change'));
+        break;
+      case 'cermin':
+        el('swCermin').checked = !el('swCermin').checked;
+        el('swCermin').dispatchEvent(new Event('change'));
+        break;
+      case 'skala':
+        geserSlider('rSkala', p.nilai * 0.05);
+        break;
+      case 'cepat':
+        geserSlider('rKecepatan', p.nilai * 3);
+        break;
+      case 'geser': {
+        var n = App.kanvas.length || 1;
+        App.jalan = false;
+        el('btnPutar').textContent = 'Putar';
+        App.fase = (App.fase + p.nilai + n) % n;
+        gambar();
+        break;
+      }
+      case 'mode': {
+        var b = document.querySelector('#modeGrid button[data-mode="' + p.nilai + '"]');
+        if (b) { b.click(); prarender(); }
+        break;
+      }
+
+      /* ---------- atlas anatomi ---------- */
+      case 'organ': {
+        if (!App.atlas) { statusKendali('Belum ada model atlas.', 'kendali-galat'); break; }
+        var io = App.atlas.indeksNama(p.nilai);
+        if (io < 0) {
+          statusKendali('Tidak ada bagian bernama "' + p.nilai + '".', 'kendali-galat');
+          break;
+        }
+        /* menyebut organ yang sedang tersorot tidak boleh membatalkannya —
+           itu perilaku klik, bukan perilaku suara */
+        if (App.atlas.pilih === io) break;
+        pilihOrgan(io);
+        break;
+      }
+      case 'pisah':
+        if (!App.atlas) break;
+        geserSlider('rLedak', 0.3);
+        el('btnRender').click();
+        break;
+      case 'satukan':
+        if (!App.atlas) break;
+        el('rLedak').value = '0';
+        el('rLedak').dispatchEvent(new Event('input'));
+        el('btnRender').click();
+        break;
+      case 'semua':
+        if (!App.atlas) break;
+        el('btnAtlasSemua').click();
+        break;
+      case 'penuh': el('btnPenuh').click(); break;
+      case 'panel': el('btnPanel').click(); break;
+      case 'reset':
+        /* 0,30 — sama dengan nilai bawaan penggeser. Sebelumnya di sini
+           tertulis 0,36 sehingga "atur ulang" justru mengembalikan
+           tumpang-tindih antar sisi yang sudah diperbaiki. */
+        [['rSkala', 0.30], ['rJarak', 0.30], ['rKecepatan', 6]].forEach(function (s) {
+          var n2 = el(s[0]);
+          n2.value = String(s[1]);
+          n2.dispatchEvent(new Event('input'));
+        });
+        App.fase = 0;
+        if (!App.jalan) el('btnPutar').click();
+        gambar();
+        break;
+    }
+  }
+
+  function geserSlider(id, delta) {
+    var s = el(id);
+    var min = parseFloat(s.min), maks = parseFloat(s.max);
+    var v = parseFloat(s.value) + delta;
+    s.value = String(Math.max(min, Math.min(maks, v)));
+    s.dispatchEvent(new Event('input'));
+  }
+
+  function mulaiSuara() {
+    if (!window.KENDALI) return;
+    suara = new window.KENDALI.Suara({
+      bahasa: 'id-ID',
+      onStatus: function (s) { statusKendali('Suara: ' + s, 'kendali-nyala'); },
+      onGalat: function (err) {
+        statusKendali('Suara gagal: ' + (err && err.message ? err.message : err), 'kendali-galat');
+        el('swSuara').checked = false;
+        el('suaraPeringatan').style.display = 'none';
+      },
+      onDengar: function (teks, akhir) {
+        var n = el('kendaliDengar');
+        if (n && !akhir) n.textContent = '“' + teks.trim() + '”';
+      },
+      onPerintah: jalankanPerintah
+    });
+
+    if (!suara.dukung()) {
+      statusKendali('Peramban ini tidak menyediakan pengenalan suara.', 'kendali-galat');
+      el('swSuara').checked = false;
+      return;
+    }
+    el('suaraPeringatan').style.display = '';
+    suara.mulai();
+  }
+
+  function hentiSuara() {
+    if (suara) { suara.henti(); suara = null; }
+    el('suaraPeringatan').style.display = 'none';
+    var n = el('kendaliDengar');
+    if (n) n.textContent = '';
+    statusKendali(gerak && gerak.jalan ? 'Gestur aktif, suara mati.' : 'Keduanya mati.');
+  }
+
+  function pasangKendali() {
+    el('swGestur').addEventListener('change', function (e) {
+      if (e.target.checked) mulaiGestur(); else hentiGestur();
+    });
+    el('swSuara').addEventListener('change', function (e) {
+      if (e.target.checked) mulaiSuara(); else hentiSuara();
+    });
+    el('swGesturSkala').addEventListener('change', function (e) {
+      App.opsi.gesturSkala = e.target.checked;
+    });
+    el('swGerakSaja').addEventListener('change', function (e) {
+      App.opsi.gerakSaja = e.target.checked;
+      if (gerak) gerak.opsiLacak = { hanyaGerak: e.target.checked };
+    });
+    pasangSlider('rHalus', 'halus', function (v) { return v.toFixed(2); }, function () {
+      if (halusFase) halusFase.bobot = App.opsi.halus;
+      if (halusSkala) halusSkala.bobot = App.opsi.halus;
+    });
+
+    /* kamera & mikrofon dilepas saat halaman ditutup */
+    window.addEventListener('pagehide', function () {
+      if (gerak) gerak.henti();
+      if (suara) suara.henti();
+    });
+  }
+
+  /* ==========================================================
      Boot
      ========================================================== */
   ukurKanvas();
   pasangKontrol();
+  pasangKendali();
   App.rafId = requestAnimationFrame(loop);
 
   pesan('Memeriksa sesi…');
