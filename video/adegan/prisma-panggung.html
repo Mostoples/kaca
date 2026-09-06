@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<title>Adegan — Panggung hologram tanpa panel</title>
+<style>
+  html,body{margin:0;height:100%;background:#000;overflow:hidden}
+  iframe{border:0;width:100vw;height:100vh;display:block}
+</style>
+</head>
+<body>
+<!--
+  Pembungkus adegan: panggung hologram dengan panel disembunyikan,
+  supaya tangkapan layarnya penuh hologram. Menekan tombol "Panel"
+  yang sebenarnya, sama seperti pengguna menekan huruf P.
+-->
+<iframe id="app" src="../../prisma.html?demo=ST-2409-0146"></iframe>
+<script>
+(function () {
+  'use strict';
+  var f = document.getElementById('app');
+  var siap = false;
+  function d() { return f.contentDocument; }
+
+  f.addEventListener('load', function () {
+    var t0 = Date.now();
+    (function cek() {
+      var r = null;
+      try { r = d().getElementById('renderInfo'); } catch (e) {}
+      if (r && /sudut/.test(r.textContent)) {
+        var b = d().getElementById('btnPanel');
+        if (b) b.click();
+        setTimeout(function () { siap = true; document.title = 'siap'; }, 900);
+        return;
+      }
+      if (Date.now() - t0 > 90000) { siap = true; return; }
+      setTimeout(cek, 150);
+    })();
+  });
+
+  window.adeganSiap = function () { return siap; };
+})();
+</script>
+</body>
+</html>

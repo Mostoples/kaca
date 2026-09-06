@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<title>Adegan — Panggung hologram mode permukaan</title>
+<style>
+  html,body{margin:0;height:100%;background:#000;overflow:hidden}
+  iframe{border:0;width:100vw;height:100vh;display:block}
+</style>
+</head>
+<body>
+<!--
+  Pembungkus adegan: panggung hologram dialihkan ke mode Permukaan lalu
+  dirender ulang, memakai tombol yang sama seperti pengguna.
+-->
+<iframe id="app" src="../../prisma.html?demo=ST-2409-0146"></iframe>
+<script>
+(function () {
+  'use strict';
+  var f = document.getElementById('app');
+  var siap = false;
+  function d() { return f.contentDocument; }
+
+  function tunggu(cocok, batas, lalu) {
+    var t0 = Date.now();
+    (function cek() {
+      var n = null;
+      try { n = cocok(); } catch (e) {}
+      if (n) return lalu(n);
+      if (Date.now() - t0 > batas) return lalu(null);
+      setTimeout(cek, 150);
+    })();
+  }
+
+  f.addEventListener('load', function () {
+    tunggu(function () {
+      var r = d().getElementById('renderInfo');
+      return r && /sudut/.test(r.textContent) ? r : null;
+    }, 90000, function () {
+      var b = d().querySelector('#modeGrid button[data-mode="permukaan"]');
+      if (b) b.click();
+      var amb = d().getElementById('rAmbang');
+      if (amb) {
+        amb.value = '300';
+        amb.dispatchEvent(new (f.contentWindow.Event)('input'));
+      }
+      var r = d().getElementById('btnRender');
+      if (r) r.click();
+      tunggu(function () {
+        var m = d().getElementById('meshInfo');
+        return m && /segitiga/.test(m.textContent) ? m : null;
+      }, 120000, function () {
+        setTimeout(function () { siap = true; document.title = 'siap'; }, 800);
+      });
+    });
+  });
+
+  window.adeganSiap = function () { return siap; };
+})();
+</script>
+</body>
+</html>

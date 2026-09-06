@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<title>Adegan — masuk sebagai tamu lalu teruskan</title>
+<style>html,body{margin:0;height:100%;background:#080b10}</style>
+</head>
+<body>
+<!--
+  Pembuka untuk penangkapan video.
+
+  Halaman apps dijaga KAUTH.jaga(): tanpa sesi, semuanya dialihkan ke
+  masuk.html. Halaman ini menyetel mode tamu di localStorage — sama
+  seperti pengguna menekan "Lanjut sebagai tamu" — lalu meneruskan ke
+  halaman tujuan. Karena asalnya sama (localhost), localStorage-nya
+  memang localStorage yang sama.
+
+  Dipakai sebagai:  /video/adegan/tamu.html?ke=<url-encoded tujuan>
+-->
+<script>
+(function () {
+  'use strict';
+  try { localStorage.setItem('kaca.sesi.tamu', 'true'); } catch (e) {}
+
+  var p = new URLSearchParams(location.search);
+  var ke = p.get('ke') || '/prisma.html';
+  /* hanya izinkan tujuan internal */
+  if (!/^\/[\w./-]*(\?[^#]*)?$/.test(ke)) ke = '/prisma.html';
+  location.replace(ke);
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<title>Adegan — Viewer dengan volume 3D</title>
+<style>
+  html,body{margin:0;height:100%;background:#080b10;overflow:hidden}
+  iframe{border:0;width:100vw;height:100vh;display:block}
+</style>
+</head>
+<body>
+<!--
+  Pembungkus adegan untuk video.
+
+  Halaman ini memuat viewer.html YANG SEBENARNYA di dalam iframe, lalu
+  menekan tombol yang sama seperti pengguna: "Bangun 3D & MPR" lalu
+  "Rekonstruksi permukaan". Jadi tangkapan layarnya menampilkan keadaan
+  aplikasi asli, bukan tiruan.
+
+  Sama-asal (localhost), jadi isi iframe boleh disentuh.
+-->
+<iframe id="app" src="../../viewer.html?demo=ST-2409-0146"></iframe>
+<script>
+(function () {
+  'use strict';
+  var f = document.getElementById('app');
+  var langkah = 0;
+
+  function w() { return f.contentWindow; }
+  function d() { return f.contentDocument; }
+
+  function tunggu(cocok, batas) {
+    return new Promise(function (res) {
+      var t0 = Date.now();
+      (function cek() {
+        var n = null;
+        try { n = cocok(); } catch (e) {}
+        if (n) return res(n);
+        if (Date.now() - t0 > (batas || 20000)) return res(null);
+        setTimeout(cek, 120);
+      })();
+    });
+  }
+
+  f.addEventListener('load', function () {
+    /* tunggu studi termuat, lalu bangun volume & permukaan */
+    tunggu(function () {
+      var t = d().getElementById('hPatient');
+      return t && t.textContent.trim().length > 1 ? t : null;
+    }).then(function () {
+      var b = d().getElementById('btnBangun3D');
+      if (b) b.click();
+      langkah = 1;
+      return tunggu(function () {
+        var i = d().getElementById('volInfo');
+        return i && /voxel/.test(i.textContent) ? i : null;
+      }, 60000);
+    }).then(function () {
+      /* buka salah satu seri MPR agar viewport menampilkan hasil turunan */
+      var s = d().querySelectorAll('#seriesList .series-item.derived');
+      if (s && s[0]) s[0].click();
+      var b = d().getElementById('btnPermukaan');
+      if (b) b.click();
+      langkah = 2;
+      return tunggu(function () {
+        var i = d().getElementById('meshInfo');
+        return i && /segitiga/.test(i.textContent) ? i : null;
+      }, 90000);
+    }).then(function () {
+      langkah = 3;
+      document.title = 'siap';
+    });
+  });
+
+  /* dipakai skrip penangkap untuk tahu adegan sudah siap */
+  window.adeganSiap = function () { return langkah >= 3; };
+})();
+</script>
+</body>
+</html>
