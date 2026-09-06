@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Viewer — Kaca</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='8' fill='%232fd4bd'/><text x='16' y='22' font-size='17' font-family='sans-serif' font-weight='bold' text-anchor='middle' fill='%2304211d'>K</text></svg>">
+<link rel="stylesheet" href="assets/css/base.css">
+<link rel="stylesheet" href="assets/css/app.css">
+</head>
+<body class="app">
+
+<div class="app-shell">
+
+  <!-- ====== TOP BAR ====== -->
+  <header class="app-bar">
+    <a class="brand" href="index.html"><span class="mark">K</span><span>Kaca</span></a>
+    <div class="app-tabs">
+      <a href="worklist.html">Worklist</a>
+      <a href="viewer.html" class="active">Viewer</a>
+    </div>
+
+    <div style="margin-left:14px;min-width:0" id="studyHead">
+      <div style="font-size:13.5px;font-weight:650;line-height:1.2" id="hPatient">—</div>
+      <div style="font-size:11.5px;color:var(--muted);line-height:1.2;font-family:var(--mono)" id="hStudy">Belum ada studi dimuat</div>
+    </div>
+
+    <span class="spacer"></span>
+
+    <div class="row" style="gap:4px">
+      <button class="btn btn-sm" data-layout="1x1" title="Tata letak 1×1">1×1</button>
+      <button class="btn btn-sm" data-layout="1x2" title="Tata letak 1×2">1×2</button>
+      <button class="btn btn-sm" data-layout="2x2" title="Tata letak 2×2">2×2</button>
+      <button class="btn btn-sm" data-layout="1x3" title="Tata letak 1×3">1×3</button>
+    </div>
+    <button class="btn btn-sm" id="btnOpenLocal">Buka File</button>
+    <input type="file" id="fileInput" multiple hidden>
+    <button class="btn btn-sm" id="btnFull" title="Layar penuh">⤢</button>
+    <div class="user-chip"><span class="avatar">RA</span>
+      <span><span class="nm">dr. Rizky Aditama</span><span class="rl">Radiolog</span></span></div>
+  </header>
+
+  <!-- ====== BODY ====== -->
+  <div class="vw-body">
+
+    <!-- toolbar -->
+    <nav class="toolrail" id="toolrail">
+      <button class="trbtn on" data-tool="wwwc" data-tip="Window / Level (W)"><span class="kbd">W</span>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><path d="M12 3a9 9 0 0 0 0 18z" fill="currentColor" stroke="none"/></svg></button>
+      <button class="trbtn" data-tool="pan" data-tip="Geser (P)"><span class="kbd">P</span>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M12 3v18M3 12h18"/><path d="m8 7 4-4 4 4M8 17l4 4 4-4M7 8l-4 4 4 4M17 8l4 4-4 4"/></svg></button>
+      <button class="trbtn" data-tool="zoom" data-tip="Perbesar (Z)"><span class="kbd">Z</span>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5M8 11h6M11 8v6"/></svg></button>
+      <button class="trbtn" data-tool="stack" data-tip="Gulir irisan (S)"><span class="kbd">S</span>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="m12 3 9 5-9 5-9-5 9-5z"/><path d="m3 13 9 5 9-5"/></svg></button>
+
+      <div class="trsep"></div>
+
+      <button class="trbtn" data-tool="length" data-tip="Ukur panjang (L)"><span class="kbd">L</span>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 15 15 3l6 6L9 21z"/><path d="m7 11 2 2M10 8l2 2M13 5l2 2"/></svg></button>
+      <button class="trbtn" data-tool="angle" data-tip="Ukur sudut (A)"><span class="kbd">A</span>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M4 20h16M4 20 16 5"/><path d="M9 20a7 7 0 0 0 1.6-4.4"/></svg></button>
+      <button class="trbtn" data-tool="rect" data-tip="ROI persegi (R)"><span class="kbd">R</span>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="4" y="5" width="16" height="14" rx="2"/></svg></button>
+      <button class="trbtn" data-tool="ellipse" data-tip="ROI elips (E)"><span class="kbd">E</span>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><ellipse cx="12" cy="12" rx="8" ry="6"/></svg></button>
+      <button class="trbtn" data-tool="probe" data-tip="Probe nilai piksel (D)"><span class="kbd">D</span>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M12 3v6M12 15v6M3 12h6M15 12h6"/><circle cx="12" cy="12" r="2"/></svg></button>
+      <button class="trbtn" data-tool="note" data-tip="Anotasi teks (T)"><span class="kbd">T</span>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M5 6h14M9 6v13"/></svg></button>
+
+      <div class="trsep"></div>
+
+      <button class="trbtn" id="btnInvert" data-tip="Inversi (I)"><span class="kbd">I</span>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><path d="M12 3v18a9 9 0 0 0 0-18z" fill="currentColor" stroke="none"/></svg></button>
+      <button class="trbtn" id="btnRotate" data-tip="Putar 90°">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M21 12a9 9 0 1 1-3-6.7"/><path d="M21 3v6h-6"/></svg></button>
+      <button class="trbtn" id="btnFlipH" data-tip="Cermin horizontal">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M12 3v18"/><path d="M9 7 4 12l5 5zM15 7l5 5-5 5z"/></svg></button>
+      <button class="trbtn" id="btnFit" data-tip="Pas ke layar (F)"><span class="kbd">F</span>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg></button>
+      <button class="trbtn" id="btnReset" data-tip="Reset tampilan (0)"><span class="kbd">0</span>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M3 12a9 9 0 1 0 3-6.7"/><path d="M3 3v6h6"/></svg></button>
+
+      <div class="trsep"></div>
+
+      <button class="trbtn" id="btnClearMeas" data-tip="Hapus semua pengukuran">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13"/></svg></button>
+      <button class="trbtn" id="btnHideOvl" data-tip="Sembunyikan overlay (H)"><span class="kbd">H</span>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg></button>
+      <button class="trbtn" id="btnSnap" data-tip="Simpan PNG">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M4 8h3l2-3h6l2 3h3v12H4z"/><circle cx="12" cy="14" r="3.5"/></svg></button>
+    </nav>
+
+    <!-- panel seri -->
+    <aside class="series-panel">
+      <div class="panel-head">Seri <span id="serCount" style="margin-left:auto;font-family:var(--mono)"></span></div>
+      <div class="series-list" id="seriesList"></div>
+    </aside>
+
+    <!-- panggung -->
+    <section class="stage-wrap">
+      <div class="vp-grid l1x1" id="grid"></div>
+      <div class="vw-foot">
+        <div class="cine-ctrl">
+          <button class="iconbtn" id="cinePrev" title="Irisan sebelumnya (←)">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="m14 6-6 6 6 6"/></svg></button>
+          <button class="iconbtn" id="cinePlay" title="Putar / jeda (Spasi)">
+            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg></button>
+          <button class="iconbtn" id="cineNext" title="Irisan berikutnya (→)">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="m10 6 6 6-6 6"/></svg></button>
+          <input type="range" id="frameSlider" min="0" max="0" value="0">
+          <span class="kv"><b id="frameLbl">0/0</b></span>
+        </div>
+        <span class="spacer"></span>
+        <span class="kv">WW <b id="fWW">—</b></span>
+        <span class="kv">WL <b id="fWL">—</b></span>
+        <span class="kv">Zoom <b id="fZoom">—</b></span>
+        <span class="kv">Piksel <b id="fPix">—</b></span>
+        <span class="kv" id="fPos">—</span>
+      </div>
+    </section>
+
+    <!-- panel kanan -->
+    <aside class="side-panel">
+      <div class="tabbar">
+        <button class="on" data-tab="info">Info</button>
+        <button data-tab="wl">W/L</button>
+        <button data-tab="meas">Ukur</button>
+        <button data-tab="tags">Tag</button>
+        <button data-tab="rep">Laporan</button>
+      </div>
+
+      <!-- INFO -->
+      <div class="tabpane on" id="tab-info">
+        <h6 class="grp">Pasien</h6>
+        <table style="width:100%;font-size:12.5px;border-collapse:collapse" id="tblPatient"></table>
+        <h6 class="grp">Studi</h6>
+        <table style="width:100%;font-size:12.5px;border-collapse:collapse" id="tblStudy"></table>
+        <h6 class="grp">Seri &amp; Citra</h6>
+        <table style="width:100%;font-size:12.5px;border-collapse:collapse" id="tblImage"></table>
+      </div>
+
+      <!-- W/L -->
+      <div class="tabpane" id="tab-wl">
+        <h6 class="grp">Preset Window</h6>
+        <div class="preset-grid" id="presets"></div>
+
+        <h6 class="grp">Penyetelan Manual</h6>
+        <div class="ctrl-row">
+          <label>Lebar (WW)</label>
+          <input type="range" id="rWW" min="1" max="4000" value="400">
+          <span class="val" id="vWW">400</span>
+        </div>
+        <div class="ctrl-row">
+          <label>Pusat (WL)</label>
+          <input type="range" id="rWL" min="-1200" max="3000" value="40">
+          <span class="val" id="vWL">40</span>
+        </div>
+        <div class="ctrl-row">
+          <label>Inversi</label>
+          <span class="switch"><input type="checkbox" id="swInvert"><span class="tr"></span></span>
+        </div>
+        <div class="ctrl-row">
+          <label>Interpolasi halus</label>
+          <span class="switch"><input type="checkbox" id="swSmooth" checked><span class="tr"></span></span>
+        </div>
+        <div class="ctrl-row">
+          <label>Sinkron antar viewport</label>
+          <span class="switch"><input type="checkbox" id="swSync"><span class="tr"></span></span>
+        </div>
+
+        <h6 class="grp">Peta Warna</h6>
+        <div class="preset-grid" id="cmaps"></div>
+
+        <h6 class="grp">Kecepatan Cine</h6>
+        <div class="ctrl-row">
+          <label>FPS</label>
+          <input type="range" id="rFps" min="1" max="30" value="10">
+          <span class="val" id="vFps">10</span>
+        </div>
+      </div>
+
+      <!-- UKUR -->
+      <div class="tabpane" id="tab-meas">
+        <div class="row" style="margin-bottom:12px">
+          <span style="font-size:12.5px;color:var(--muted)" id="measHint">Pilih alat ukur di toolbar kiri.</span>
+        </div>
+        <div id="measList"></div>
+        <button class="btn btn-sm btn-danger" id="btnMeasClear" style="width:100%;margin-top:8px">Hapus semua pengukuran</button>
+      </div>
+
+      <!-- TAG -->
+      <div class="tabpane" id="tab-tags">
+        <input class="field tagsearch" id="tagQ" placeholder="Cari tag atau nama atribut…">
+        <div style="overflow:auto">
+          <table class="tags" id="tagTable"></table>
+        </div>
+      </div>
+
+      <!-- LAPORAN -->
+      <div class="tabpane" id="tab-rep">
+        <div class="report-field">
+          <label class="lbl">Klinis / Indikasi</label>
+          <textarea class="field" id="repClinical" rows="2" placeholder="Alasan pemeriksaan…"></textarea>
+        </div>
+        <div class="report-field">
+          <label class="lbl">Temuan</label>
+          <textarea class="field" id="repFindings" placeholder="Deskripsi temuan…"></textarea>
+          <div class="chips" id="chipFindings"></div>
+        </div>
+        <div class="report-field">
+          <label class="lbl">Kesan</label>
+          <textarea class="field" id="repImpression" rows="3" placeholder="Kesimpulan pembacaan…"></textarea>
+        </div>
+        <div class="report-field">
+          <label class="lbl">Status pembacaan</label>
+          <select class="field" id="repStatus">
+            <option>Draf</option>
+            <option>Menunggu verifikasi</option>
+            <option>Final</option>
+          </select>
+        </div>
+        <div class="row">
+          <button class="btn btn-sm btn-primary" id="btnSaveRep">Simpan Laporan</button>
+          <button class="btn btn-sm" id="btnCopyRep">Salin Teks</button>
+        </div>
+        <p style="font-size:11.5px;color:var(--muted);margin-top:12px;line-height:1.5">
+          Laporan disimpan di penyimpanan lokal peramban ini saja. Prototipe — bukan dokumen medis resmi.
+        </p>
+      </div>
+    </aside>
+  </div>
+</div>
+
+<div class="loader hide" id="loader">
+  <div class="box"><div class="spin"></div><p id="loaderMsg">Menyiapkan citra…</p></div>
+</div>
+<div id="toasts"></div>
+
+<script src="assets/js/common.js"></script>
+<script src="assets/js/idb.js"></script>
+<script src="assets/js/dicom.js"></script>
+<script src="assets/js/demo.js"></script>
+<script src="assets/js/viewer.js"></script>
+</body>
+</html>

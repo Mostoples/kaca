@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Kaca — Platform Inspeksi Citra DICOM</title>
+<meta name="description" content="Kaca adalah platform inspeksi dan peninjauan citra medis DICOM berbasis web: worklist terpusat, viewer zero-footprint, pengukuran presisi, dan pelaporan terstruktur.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='8' fill='%232fd4bd'/><text x='16' y='22' font-size='17' font-family='sans-serif' font-weight='bold' text-anchor='middle' fill='%2304211d'>K</text></svg>">
+<link rel="stylesheet" href="assets/css/base.css">
+<link rel="stylesheet" href="assets/css/site.css">
+</head>
+<body>
+
+<!-- ============ NAV ============ -->
+<header class="site-nav">
+  <div class="wrap">
+    <a class="brand" href="index.html">
+      <span class="mark">K</span>
+      <span>Kaca<small>DICOM Inspection</small></span>
+    </a>
+    <nav id="nav">
+      <a href="#fitur">Fitur</a>
+      <a href="#alur">Alur Kerja</a>
+      <a href="#viewer">Viewer</a>
+      <a href="#keamanan">Keamanan</a>
+      <a href="#harga">Harga</a>
+      <a href="#faq">FAQ</a>
+    </nav>
+    <span class="spacer"></span>
+    <a class="btn btn-ghost btn-sm nav-hide" href="worklist.html">Masuk</a>
+    <a class="btn btn-primary btn-sm" href="worklist.html">Buka Aplikasi</a>
+    <button class="nav-toggle" id="navToggle" aria-label="Menu">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
+    </button>
+  </div>
+</header>
+
+<!-- ============ HERO ============ -->
+<section class="hero">
+  <div class="wrap">
+    <div>
+      <span class="pill pill-accent" style="margin-bottom:18px"><span class="dot"></span> Zero-footprint · berjalan penuh di browser</span>
+      <h1>Inspeksi citra <span class="grad">DICOM</span> tanpa instalasi, langsung dari browser.</h1>
+      <p class="lead">
+        Kaca menyatukan worklist, viewer diagnostik, pengukuran presisi, dan pelaporan terstruktur
+        dalam satu antarmuka. Buka file DICOM lokal atau tarik studi dari PACS — semua pemrosesan
+        piksel terjadi di perangkat Anda.
+      </p>
+      <div class="hero-cta">
+        <a class="btn btn-primary" href="worklist.html">Coba Demo Interaktif</a>
+        <a class="btn" href="viewer.html?demo=ST-2409-0143">Buka Viewer Langsung</a>
+      </div>
+      <div class="hero-meta">
+        <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg> Tanpa plugin & tanpa upload</span>
+        <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg> Parser DICOM asli</span>
+        <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg> Multi-frame & multi-seri</span>
+      </div>
+    </div>
+
+    <div class="hero-mock">
+      <div class="bar">
+        <i></i><i></i><i></i><b>KACA VIEWER — ST-2409-0143 · CT TORAKS</b>
+      </div>
+      <div class="stage">
+        <canvas id="heroCanvas" width="640" height="440"></canvas>
+        <div class="ovl tl">WIJAYA, ANDI<br>RM-0092841 · L · 51 Th</div>
+        <div class="ovl tr">CT · SOMATOM go.Top<br>Ax Mediastinum 3mm</div>
+        <div class="ovl bl">W: 1500  L: -500<br>Zoom: 118%</div>
+        <div class="ovl br">Im: <span id="heroIm">12</span>/24<br>3.0 mm</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ LOGOS ============ -->
+<div class="logos">
+  <div class="wrap">
+    <b>Kompatibel dengan</b>
+    <span>DICOM P10</span><span>DICOMweb</span><span>HL7 v2</span>
+    <span>FHIR ImagingStudy</span><span>IHE SWF</span><span>C-FIND / C-MOVE</span>
+  </div>
+</div>
+
+<!-- ============ FITUR ============ -->
+<section class="section" id="fitur">
+  <div class="wrap">
+    <div class="section-head">
+      <span class="eyebrow">Kemampuan</span>
+      <h2>Semua yang dibutuhkan untuk satu siklus pembacaan</h2>
+      <p>Dari saat studi masuk ke worklist sampai laporan diverifikasi — tanpa berpindah aplikasi.</p>
+    </div>
+    <div class="grid-3" id="featGrid"></div>
+  </div>
+</section>
+
+<!-- ============ ALUR KERJA ============ -->
+<section class="section alt" id="alur">
+  <div class="wrap">
+    <div class="section-head">
+      <span class="eyebrow">Alur kerja</span>
+      <h2>Empat langkah, satu layar</h2>
+      <p>Alur baca dirancang mengikuti kebiasaan radiolog: prioritas dulu, gambar besar, laporan menyusul.</p>
+    </div>
+    <div class="steps">
+      <div class="step">
+        <h3>Terima &amp; prioritaskan</h3>
+        <p>Studi masuk otomatis ke worklist, ditandai status baca dan penanda urgensi (cito).</p>
+      </div>
+      <div class="step">
+        <h3>Inspeksi citra</h3>
+        <p>Viewer multi-viewport dengan window/level, zoom, cine, dan sinkronisasi antar seri.</p>
+      </div>
+      <div class="step">
+        <h3>Ukur &amp; anotasi</h3>
+        <p>Panjang, sudut, ROI elips/persegi dengan statistik HU, serta probe nilai piksel.</p>
+      </div>
+      <div class="step">
+        <h3>Laporkan</h3>
+        <p>Template temuan &amp; kesan, tanda tangan pembaca, ekspor sebagai teks atau lampiran.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ VIEWER SPLIT ============ -->
+<section class="section" id="viewer">
+  <div class="wrap split">
+    <div>
+      <span class="eyebrow">Viewer</span>
+      <h2>Dibangun untuk mata yang bekerja delapan jam sehari</h2>
+      <p style="color:var(--text-2)">
+        Rendering dilakukan lewat canvas dengan LUT window/level yang dihitung ulang setiap frame,
+        sehingga geser W/L terasa instan bahkan pada seri ratusan irisan.
+      </p>
+      <ul class="check-list">
+        <li>Preset window bawaan: paru, mediastinum, tulang, otak, abdomen, hati</li>
+        <li>Tata letak 1×1, 1×2, 2×2, dan 1×3 dengan viewport aktif yang jelas</li>
+        <li>Cine playback untuk multi-frame (US, XA) dengan kontrol kecepatan</li>
+        <li>Inversi, rotasi, flip, dan colormap (hot, jet, bone, PET)</li>
+        <li>Pengukuran dalam milimeter memakai Pixel Spacing dari header</li>
+        <li>Inspektur tag DICOM lengkap dengan pencarian cepat</li>
+      </ul>
+      <div class="hero-cta" style="margin-bottom:0">
+        <a class="btn btn-primary" href="viewer.html?demo=ST-2409-0144">Lihat viewer</a>
+        <a class="btn" href="worklist.html">Buka worklist</a>
+      </div>
+    </div>
+    <div class="hero-mock" style="transform:none">
+      <div class="bar"><i></i><i></i><i></i><b>MRI KEPALA — AX T1 MPRAGE</b></div>
+      <div class="stage">
+        <canvas id="heroCanvas2" width="560" height="400"></canvas>
+        <div class="ovl tl">HALIM, MARIA<br>RM-0113507 · P · 37 Th</div>
+        <div class="ovl br">Im: <span id="heroIm2">9</span>/22</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ STATS ============ -->
+<section class="section alt">
+  <div class="wrap">
+    <div class="stats">
+      <div class="stat"><b>&lt; 40 ms</b><span>Waktu render per irisan</span></div>
+      <div class="stat"><b>100%</b><span>Pemrosesan di sisi klien</span></div>
+      <div class="stat"><b>0</b><span>Plugin yang perlu dipasang</span></div>
+      <div class="stat"><b>12+</b><span>Transfer syntax dikenali</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ KEAMANAN ============ -->
+<section class="section" id="keamanan">
+  <div class="wrap split">
+    <div class="card">
+      <span class="pill pill-ok" style="margin-bottom:14px"><span class="dot"></span> Privasi berdasar desain</span>
+      <h3 style="font-size:19px">File tidak pernah meninggalkan perangkat</h3>
+      <p style="color:var(--muted);font-size:14.5px">
+        Pada mode inspeksi lokal, berkas DICOM dibaca lewat File API dan diurai di memori browser.
+        Tidak ada unggahan, tidak ada penyimpanan sementara di server.
+      </p>
+      <table style="width:100%;border-collapse:collapse;font-size:13.5px;margin-top:8px">
+        <tr style="border-top:1px solid var(--line-soft)"><td style="padding:10px 0;color:var(--muted)">Enkripsi transport</td><td style="text-align:right">TLS 1.3</td></tr>
+        <tr style="border-top:1px solid var(--line-soft)"><td style="padding:10px 0;color:var(--muted)">Audit trail</td><td style="text-align:right">Per akses studi</td></tr>
+        <tr style="border-top:1px solid var(--line-soft)"><td style="padding:10px 0;color:var(--muted)">Kontrol akses</td><td style="text-align:right">Berbasis peran</td></tr>
+        <tr style="border-top:1px solid var(--line-soft)"><td style="padding:10px 0;color:var(--muted)">De-identifikasi</td><td style="text-align:right">Profil dasar DICOM PS3.15</td></tr>
+      </table>
+    </div>
+    <div>
+      <span class="eyebrow">Keamanan &amp; kepatuhan</span>
+      <h2>Data pasien tetap di tempat yang seharusnya</h2>
+      <p style="color:var(--text-2)">
+        Kaca memisahkan jalur data citra dari jalur metadata. Integrasi PACS memakai koneksi
+        yang Anda kendalikan sendiri, dan setiap tindakan pembacaan tercatat.
+      </p>
+      <ul class="check-list">
+        <li>Mode lokal sepenuhnya luring — cocok untuk tinjauan cepat dan pengajaran</li>
+        <li>Peran pengguna: radiolog, residen, teknisi, administrator</li>
+        <li>Penanda hasil pembacaan dengan jejak waktu dan identitas pembaca</li>
+        <li>Ekspor gambar dengan opsi menghilangkan overlay identitas</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- ============ HARGA ============ -->
+<section class="section alt" id="harga">
+  <div class="wrap">
+    <div class="section-head">
+      <span class="eyebrow">Harga</span>
+      <h2>Mulai gratis, bayar saat dipakai untuk pembacaan klinis</h2>
+      <p>Semua paket memakai viewer yang sama. Yang berbeda hanya integrasi dan kolaborasi.</p>
+    </div>
+    <div class="grid-3">
+      <div class="price">
+        <h3>Lokal</h3>
+        <div class="amt">Rp 0<small> /pengguna</small></div>
+        <p style="color:var(--muted);font-size:13.5px;margin:0">Untuk tinjauan mandiri &amp; pengajaran.</p>
+        <ul>
+          <li>Buka file &amp; folder DICOM lokal</li>
+          <li>Semua alat ukur &amp; anotasi</li>
+          <li>Inspektur tag DICOM</li>
+          <li>Ekspor PNG</li>
+        </ul>
+        <a class="btn" href="worklist.html">Mulai sekarang</a>
+      </div>
+      <div class="price pop">
+        <h3>Klinik <span class="pill pill-accent" style="margin-left:6px">Populer</span></h3>
+        <div class="amt">Rp 690rb<small> /pengguna/bln</small></div>
+        <p style="color:var(--muted);font-size:13.5px;margin:0">Untuk unit radiologi kecil–menengah.</p>
+        <ul>
+          <li>Semua fitur paket Lokal</li>
+          <li>Worklist terpusat &amp; status baca</li>
+          <li>Koneksi DICOMweb / C-FIND</li>
+          <li>Laporan terstruktur &amp; template</li>
+          <li>Audit trail 12 bulan</li>
+        </ul>
+        <a class="btn btn-primary" href="worklist.html">Coba 14 hari</a>
+      </div>
+      <div class="price">
+        <h3>Rumah Sakit</h3>
+        <div class="amt">Kustom</div>
+        <p style="color:var(--muted);font-size:13.5px;margin:0">Untuk lintas cabang &amp; teleradiologi.</p>
+        <ul>
+          <li>Semua fitur paket Klinik</li>
+          <li>SSO &amp; kontrol akses berbasis peran</li>
+          <li>Integrasi HL7 / FHIR</li>
+          <li>Pemasangan on-premise</li>
+          <li>Dukungan 24/7</li>
+        </ul>
+        <a class="btn" href="#kontak">Hubungi kami</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ FAQ ============ -->
+<section class="section" id="faq">
+  <div class="wrap" style="max-width:860px">
+    <div class="section-head">
+      <span class="eyebrow">FAQ</span>
+      <h2>Pertanyaan yang sering muncul</h2>
+    </div>
+    <div class="faq">
+      <details open>
+        <summary>Apakah file DICOM saya diunggah ke server?</summary>
+        <p>Tidak. Saat Anda membuka file lewat tombol “Buka File DICOM”, berkas dibaca dengan File API
+        dan diurai langsung di browser. Tidak ada permintaan jaringan yang membawa isi berkas.</p>
+      </details>
+      <details>
+        <summary>Transfer syntax apa saja yang didukung?</summary>
+        <p>Parser bawaan menangani Implicit VR Little Endian, Explicit VR Little Endian, dan Explicit VR
+        Big Endian untuk data piksel native 8/16 bit. Pixel data terenkapsulasi JPEG baseline juga bisa
+        ditampilkan. JPEG 2000, JPEG-LS, dan RLE dikenali headernya namun perlu dekoder tambahan.</p>
+      </details>
+      <details>
+        <summary>Apakah ini bisa dipakai untuk diagnosis?</summary>
+        <p>Prototipe ini dibuat untuk demonstrasi alur kerja dan bukan perangkat medis bersertifikat.
+        Untuk penggunaan diagnostik dibutuhkan validasi, kalibrasi monitor, dan izin edar sesuai
+        peraturan yang berlaku di wilayah Anda.</p>
+      </details>
+      <details>
+        <summary>Bagaimana pengukuran dihitung?</summary>
+        <p>Jarak dihitung dalam piksel lalu dikalikan dengan Pixel Spacing (0028,0030) dari header,
+        sehingga hasilnya dalam milimeter. Bila tag tersebut tidak ada, hasil ditampilkan dalam piksel
+        dan diberi tanda peringatan.</p>
+      </details>
+      <details>
+        <summary>Apakah bisa terhubung ke PACS yang sudah ada?</summary>
+        <p>Ya, pada paket Klinik ke atas melalui DICOMweb (QIDO-RS, WADO-RS) atau gateway C-FIND/C-MOVE
+        yang dipasang di jaringan Anda. Pada prototipe ini koneksi tersebut disimulasikan.</p>
+      </details>
+    </div>
+  </div>
+</section>
+
+<!-- ============ CTA ============ -->
+<section class="section" id="kontak">
+  <div class="wrap">
+    <div class="cta-band">
+      <h2>Coba sendiri, sekarang juga</h2>
+      <p>Demo berisi enam studi contoh lengkap dengan seri multi-irisan. Anda juga bisa langsung
+      membuka berkas DICOM milik Anda sendiri.</p>
+      <div class="row" style="justify-content:center;flex-wrap:wrap">
+        <a class="btn btn-primary" href="worklist.html">Buka Worklist Demo</a>
+        <a class="btn" href="viewer.html?demo=ST-2409-0146">Lihat CT Kepala</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ FOOTER ============ -->
+<footer class="site-foot">
+  <div class="wrap">
+    <div class="foot-grid">
+      <div>
+        <a class="brand" href="index.html" style="margin-bottom:14px">
+          <span class="mark">K</span><span>Kaca<small>DICOM Inspection</small></span>
+        </a>
+        <p style="color:var(--muted);font-size:13.5px;max-width:38ch">
+          Platform inspeksi citra medis berbasis web untuk unit radiologi yang ingin bergerak cepat
+          tanpa mengorbankan ketelitian.
+        </p>
+      </div>
+      <div>
+        <h4>Produk</h4>
+        <a href="#fitur">Fitur</a><a href="#viewer">Viewer</a>
+        <a href="#harga">Harga</a><a href="worklist.html">Aplikasi</a>
+      </div>
+      <div>
+        <h4>Sumber Daya</h4>
+        <a href="#faq">FAQ</a><a href="#alur">Alur kerja</a>
+        <a href="#keamanan">Keamanan</a><a href="viewer.html">Dokumentasi viewer</a>
+      </div>
+      <div>
+        <h4>Perusahaan</h4>
+        <a href="#kontak">Kontak</a><a href="#">Kebijakan privasi</a>
+        <a href="#">Syarat layanan</a><a href="#">Status layanan</a>
+      </div>
+    </div>
+    <div class="foot-bottom">
+      <span>© 2026 Kaca. Prototipe antarmuka.</span>
+      <span>Dibangun dengan HTML, CSS, dan JavaScript native.</span>
+    </div>
+    <p class="disclaimer">
+      Perhatian: Kaca adalah prototipe demonstrasi antarmuka dan bukan perangkat medis. Seluruh data
+      pasien yang tampil pada demo adalah fiktif dan citra yang ditampilkan merupakan phantom sintetis.
+      Jangan gunakan untuk pengambilan keputusan klinis.
+    </p>
+  </div>
+</footer>
+
+<script src="assets/js/common.js"></script>
+<script src="assets/js/demo.js"></script>
+<script src="assets/js/dicom.js"></script>
+<script src="assets/js/site.js"></script>
+</body>
+</html>

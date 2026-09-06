@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Worklist — Kaca</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='8' fill='%232fd4bd'/><text x='16' y='22' font-size='17' font-family='sans-serif' font-weight='bold' text-anchor='middle' fill='%2304211d'>K</text></svg>">
+<link rel="stylesheet" href="assets/css/base.css">
+<link rel="stylesheet" href="assets/css/app.css">
+</head>
+<body class="app">
+
+<div class="app-shell">
+
+  <!-- ====== TOP BAR ====== -->
+  <header class="app-bar">
+    <a class="brand" href="index.html"><span class="mark">K</span><span>Kaca</span></a>
+    <div class="app-tabs">
+      <a href="worklist.html" class="active">Worklist</a>
+      <a href="viewer.html">Viewer</a>
+      <a href="index.html">Situs</a>
+    </div>
+    <span class="spacer"></span>
+    <button class="btn btn-sm" id="btnOpenFiles">Buka File DICOM</button>
+    <button class="btn btn-sm" id="btnOpenFolder">Buka Folder</button>
+    <input type="file" id="fileInput" multiple accept=".dcm,.dicom,application/dicom,*/*" hidden>
+    <input type="file" id="dirInput" webkitdirectory directory multiple hidden>
+    <div class="user-chip" title="Pengguna aktif">
+      <span class="avatar">RA</span>
+      <span><span class="nm">dr. Rizky Aditama</span><span class="rl">Radiolog</span></span>
+    </div>
+  </header>
+
+  <!-- ====== BODY ====== -->
+  <div class="wl-body">
+
+    <!-- sidebar filter -->
+    <aside class="wl-side">
+      <h5>Antrian</h5>
+      <div class="side-item active" data-filter="all">
+        <span id="i-inbox"></span><span>Semua studi</span><span class="cnt" id="c-all">0</span>
+      </div>
+      <div class="side-item" data-filter="unread">
+        <span id="i-clock"></span><span>Belum dibaca</span><span class="cnt" id="c-unread">0</span>
+      </div>
+      <div class="side-item" data-filter="reading">
+        <span id="i-user"></span><span>Sedang dibaca</span><span class="cnt" id="c-reading">0</span>
+      </div>
+      <div class="side-item" data-filter="done">
+        <span id="i-check"></span><span>Selesai</span><span class="cnt" id="c-done">0</span>
+      </div>
+      <div class="side-item" data-filter="urgent">
+        <span id="i-flag"></span><span>Cito</span><span class="cnt" id="c-urgent">0</span>
+      </div>
+      <div class="side-item" data-filter="local">
+        <span id="i-file"></span><span>Berkas lokal</span><span class="cnt" id="c-local">0</span>
+      </div>
+
+      <h5>Modalitas</h5>
+      <div id="modFilters"></div>
+
+      <h5>Sumber data</h5>
+      <div style="padding:0 6px">
+        <p style="font-size:12px;color:var(--muted);line-height:1.5;margin:0 0 10px">
+          PACS disimulasikan. Berkas lokal diurai penuh di browser.
+        </p>
+        <div class="pill pill-ok"><span class="dot"></span> PACS-DEMO tersambung</div>
+      </div>
+    </aside>
+
+    <!-- main -->
+    <main class="wl-main">
+      <div class="wl-tools">
+        <div class="search-box">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+          <input class="field" id="q" placeholder="Cari nama pasien, No. RM, accession, atau deskripsi…">
+        </div>
+        <select class="field" id="fDate" style="width:auto;min-width:150px">
+          <option value="all">Semua tanggal</option>
+          <option value="today">Hari ini</option>
+          <option value="7">7 hari terakhir</option>
+          <option value="30">30 hari terakhir</option>
+        </select>
+        <span class="spacer"></span>
+        <button class="btn btn-sm" id="btnRefresh">Segarkan</button>
+        <button class="btn btn-sm btn-primary" id="btnOpen" disabled>Buka di Viewer</button>
+      </div>
+
+      <div class="wl-scroll">
+        <div class="dropzone" id="drop">
+          Tarik berkas <b>.dcm</b> atau satu folder studi ke sini untuk inspeksi lokal —
+          berkas tidak diunggah ke mana pun.
+        </div>
+        <table class="wl">
+          <thead>
+            <tr>
+              <th data-sort="urgent" style="width:34px"></th>
+              <th data-sort="patient">Pasien</th>
+              <th data-sort="modality">Mod.</th>
+              <th data-sort="desc">Deskripsi Studi</th>
+              <th data-sort="bodyPart">Regio</th>
+              <th data-sort="date">Tanggal</th>
+              <th data-sort="images">Citra</th>
+              <th data-sort="status">Status</th>
+              <th data-sort="accession">Accession</th>
+            </tr>
+          </thead>
+          <tbody id="rows"></tbody>
+        </table>
+        <div class="empty hide" id="empty">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M22 12h-6l-2 3h-4l-2-3H2"/><path d="M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"/></svg>
+          <p>Tidak ada studi yang cocok dengan filter saat ini.</p>
+        </div>
+      </div>
+
+      <div class="wl-foot">
+        <span id="foot">0 studi</span>
+        <span class="spacer"></span>
+        <span>Klik ganda baris untuk membuka viewer · <kbd>Enter</kbd> membuka studi terpilih</span>
+      </div>
+    </main>
+  </div>
+</div>
+
+<div id="toasts"></div>
+
+<script src="assets/js/common.js"></script>
+<script src="assets/js/idb.js"></script>
+<script src="assets/js/dicom.js"></script>
+<script src="assets/js/demo.js"></script>
+<script src="assets/js/worklist.js"></script>
+</body>
+</html>

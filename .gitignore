@@ -1,0 +1,22 @@
+# Dependensi
+node_modules/
+
+# Berkas sistem
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Editor
+.vscode/
+.idea/
+*.swp
+
+# Log & sementara
+*.log
+tmp/
+.cache/
+
+# Berkas DICOM pribadi — jangan pernah commit data pasien asli.
+# Folder contoh-dicom/ berisi phantom sintetis dan sengaja dilacak.
+*.dcm
+!contoh-dicom/*.dcm
