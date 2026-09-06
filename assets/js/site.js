@@ -14,12 +14,12 @@
 
   /* ---------- kartu fitur ---------- */
   var FEATURES = [
-    ['inbox', 'Worklist terpusat', 'Antrian baca dengan filter modalitas, status, dan tanggal. Penanda cito naik ke atas otomatis.'],
-    ['layers', 'Viewer multi-seri', 'Bandingkan seri berdampingan pada tata letak 1×2 atau 2×2, dengan viewport aktif yang jelas.'],
-    ['ruler', 'Pengukuran presisi', 'Panjang, sudut, ROI elips dan persegi lengkap dengan rerata serta simpangan baku nilai piksel.'],
-    ['brain', 'Preset window klinis', 'Preset paru, mediastinum, tulang, otak, dan abdomen siap pakai — atau atur W/L dengan seret tetikus.'],
-    ['file', 'Inspektur tag DICOM', 'Telusuri seluruh elemen header, cari berdasarkan nomor tag atau nama atribut.'],
-    ['lock', 'Aman secara bawaan', 'Berkas diurai di browser. Tidak ada unggahan, tidak ada salinan sementara di server.']
+    ['layers', 'Panggung hologram prisma', 'Empat pandangan mengelilingi satu titik pusat, siap dipantulkan prisma kaca. Sudut diprarender lalu diputar mulus 60 fps.'],
+    ['brain', 'Rekonstruksi permukaan 3D', 'Isosurface marching tetrahedra pada ambang pilihan Anda, dinaungi cahaya, bisa diunduh sebagai STL atau OBJ.'],
+    ['zap', 'MIP & volume rendering', 'Intensitas maksimum untuk tulang dan pembuluh, atau ray-cast beropasitas dengan kepadatan dan gamma yang bisa disetel.'],
+    ['ruler', 'MPR & pengukuran', 'Potongan koronal dan sagital dengan proporsi milimeter yang benar, lengkap dengan alat panjang, sudut, dan ROI.'],
+    ['file', 'Parser DICOM sendiri', 'Ditulis dari nol: tiga transfer syntax utama, deflate, palette color, multi-frame, sampai Segmentation 1 bit.'],
+    ['lock', 'Berkas tidak pernah diunggah', 'Volume dan hologram dihitung di CPU perangkat Anda. Yang tersimpan ke akun hanya teks laporan.']
   ];
   var grid = document.getElementById('featGrid');
   if (grid) {
@@ -92,12 +92,162 @@
     }
   }
 
+  /* ==========================================================
+     Pratinjau hologram prisma di hero
+     ----------------------------------------------------------
+     Inti sistem ini adalah hologram, jadi hero-nya menampilkan
+     susunan empat sisi yang sebenarnya — bukan tangkapan layar.
+     Volume disusun dari phantom demo, sudutnya diprarender satu per
+     satu di dalam requestAnimationFrame supaya halaman tidak pernah
+     membeku, lalu diputar-ulang seperti di panggung sungguhan.
+     ========================================================== */
+  var SISI = [
+    { dx: 0, dy: 1, rot: 0 },
+    { dx: -1, dy: 0, rot: Math.PI / 2 },
+    { dx: 0, dy: -1, rot: Math.PI },
+    { dx: 1, dy: 0, rot: -Math.PI / 2 }
+  ];
+
+  function mountHologram(canvasId, opsi) {
+    var cv = document.getElementById(canvasId);
+    if (!cv || !window.DEMO || !window.DICOM || !window.VOLUME) return;
+    var ctx = cv.getContext('2d');
+
+    var SUDUT = opsi.sudut || 16;         /* harus habis dibagi 4 */
+    var PX = opsi.px || 132;
+    var bingkai = [], vol = null, fase = 0, siap = false, mulaiRender = false;
+
+    function latar() {
+      ctx.setTransform(1, 0, 0, 1, 0, 0);
+      ctx.fillStyle = '#000';
+      ctx.fillRect(0, 0, cv.width, cv.height);
+    }
+
+    function tulisKemajuan(n) {
+      latar();
+      ctx.fillStyle = '#2fd4bd';
+      ctx.font = '12px "JetBrains Mono", monospace';
+      ctx.textAlign = 'center';
+      ctx.fillText('menyusun hologram… ' + n + '/' + SUDUT, cv.width / 2, cv.height / 2);
+      /* bilah kemajuan tipis */
+      var w = cv.width * 0.34, x = (cv.width - w) / 2, y = cv.height / 2 + 16;
+      ctx.fillStyle = 'rgba(47,212,189,.22)';
+      ctx.fillRect(x, y, w, 2);
+      ctx.fillStyle = '#2fd4bd';
+      ctx.fillRect(x, y, w * (n / SUDUT), 2);
+      ctx.textAlign = 'left';
+    }
+
+    function gambar() {
+      latar();
+      if (!siap) return;
+      var S = cv.width, cx = S / 2, cy = cv.height / 2;
+      var sisiPx = S * 0.30, jarakPx = S * 0.255;
+
+      /* penanda pusat: tempat puncak prisma diletakkan */
+      ctx.strokeStyle = 'rgba(47,212,189,.30)';
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(cx - S * 0.018, cy); ctx.lineTo(cx + S * 0.018, cy);
+      ctx.moveTo(cx, cy - S * 0.018); ctx.lineTo(cx, cy + S * 0.018);
+      ctx.stroke();
+
+      var n = bingkai.length;
+      SISI.forEach(function (s, k) {
+        var idx = ((Math.round(fase + k * n / 4) % n) + n) % n;
+        var src = bingkai[idx];
+        if (!src) return;
+        ctx.save();
+        ctx.translate(cx + s.dx * jarakPx, cy + s.dy * jarakPx);
+        ctx.rotate(s.rot);
+        ctx.imageSmoothingEnabled = true;
+        ctx.drawImage(src, -sisiPx / 2, -sisiPx, sisiPx, sisiPx);
+        ctx.restore();
+      });
+    }
+
+    /* render satu sudut per bingkai animasi */
+    function renderBertahap() {
+      if (bingkai.length >= SUDUT) {
+        siap = true;
+        putar();
+        return;
+      }
+      var i = bingkai.length;
+      var img = vol.proyeksi({
+        azimut: i / SUDUT * Math.PI * 2,
+        elevasi: opsi.elevasi || 0,
+        mode: 'maks', ukuran: PX, mutu: 0.6
+      });
+      var c = document.createElement('canvas');
+      c.width = img.cols; c.height = img.rows;
+      c.getContext('2d').putImageData(window.DICOM.toImageData(img, {
+        windowCenter: opsi.wc, windowWidth: opsi.ww, colormap: opsi.colormap || null
+      }), 0, 0);
+      bingkai.push(c);
+      tulisKemajuan(bingkai.length);
+      requestAnimationFrame(renderBertahap);
+    }
+
+    var timer = null;
+    function putar() {
+      if (timer) return;
+      timer = setInterval(function () {
+        fase = (fase + 1) % bingkai.length;
+        gambar();
+      }, opsi.jeda || 110);
+    }
+    function henti() { if (timer) { clearInterval(timer); timer = null; } }
+
+    function mulai() {
+      if (mulaiRender) { if (siap) putar(); return; }
+      mulaiRender = true;
+      tulisKemajuan(0);
+      var st = window.DEMO.studies.filter(function (s) { return s.id === opsi.studi; })[0]
+        || window.DEMO.studies[0];
+      var idx = 0;
+      st.series.forEach(function (s, i) { if (s.n > st.series[idx].n) idx = i; });
+      var s = st.series[idx];
+      var cache = null;
+
+      window.VOLUME.bangun({
+        desc: s.desc, number: s.num, modality: st.modality, count: s.n,
+        getImage: function (i) {
+          if (!cache) cache = window.DEMO.buildSeriesImages(st, idx);
+          return Promise.resolve(cache[Math.max(0, Math.min(s.n - 1, i))]);
+        }
+      }).then(function (v) {
+        vol = v;
+        requestAnimationFrame(renderBertahap);
+      }).catch(function () {
+        latar();
+        ctx.fillStyle = '#7e8fa3';
+        ctx.font = '12px system-ui';
+        ctx.textAlign = 'center';
+        ctx.fillText('Pratinjau tidak tersedia', cv.width / 2, cv.height / 2);
+      });
+    }
+
+    latar();
+    var io = new IntersectionObserver(function (ents) {
+      ents.forEach(function (e) {
+        if (e.isIntersecting) mulai();
+        else henti();
+      });
+    }, { threshold: .2 });
+    io.observe(cv);
+  }
+
   var G = window.DEMO ? window.DEMO.generators : null;
+
+  /* hero: hologram sungguhan */
+  mountHologram('heroCanvas', {
+    studi: 'ST-2409-0146', sudut: 16, px: 132,
+    wc: 300, ww: 900, elevasi: 0.18, jeda: 110
+  });
+
+  /* bagian viewer 2D di bawah tetap memakai pratinjau irisan */
   if (G) {
-    mountPreview('heroCanvas', 'heroIm', {
-      total: 24, start: 11, wc: -500, ww: 1500, speed: 240,
-      make: function (i) { return G.ctThorax(320, 320, i, 24, 4242); }
-    });
     mountPreview('heroCanvas2', 'heroIm2', {
       total: 22, start: 8, wc: 380, ww: 760, speed: 300,
       make: function (i) { return G.mrBrain(300, 300, i, 22, 991); }

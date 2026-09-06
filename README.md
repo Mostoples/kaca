@@ -1,11 +1,32 @@
-# Kaca — Platform Inspeksi Citra DICOM
+# Kaca — Viewer Hologram Prisma untuk Citra DICOM
 
 **Live: <https://kaca-id.web.app>**
 
+Inti sistem ini adalah **panggung hologram prisma**: tumpukan irisan CT atau MRI disusun jadi
+volume tiga dimensi, lalu dipancarkan sebagai empat pandangan yang saling berhadapan. Prisma
+kaca yang diletakkan di atas layar memantulkan keempatnya sehingga bertemu sebagai satu bentuk
+yang tampak mengambang — efek *Pepper's ghost*, tanpa kacamata dan tanpa proyektor.
+
+Worklist, viewer 2D, MPR, MIP, pengukuran, dan pelaporan semuanya ada, tetapi kedudukannya
+**pendukung**. Titik masuk utamanya `prisma.html`.
+
 Web apps dengan **HTML, CSS, dan JavaScript native** — tanpa framework, tanpa bundler,
-tanpa proses build. Terdiri dari halaman web (landing), halaman masuk, dan halaman
-aplikasi (worklist + viewer DICOM). Satu-satunya dependensi eksternal adalah SDK Firebase
-yang dimuat langsung dari CDN untuk autentikasi dan penyimpanan laporan.
+tanpa proses build, dan tanpa WebGL. Seluruh perhitungan volume, ray-cast, dan rasterisasi
+permukaan berjalan di CPU lewat canvas 2D. Satu-satunya dependensi eksternal adalah SDK
+Firebase dari CDN untuk autentikasi dan penyimpanan laporan.
+
+## Peta halaman
+
+| Halaman | Kedudukan | Isi |
+|---|---|---|
+| `prisma.html` | **utama** | Panggung hologram: pemilih studi, empat pandangan berputar, semua penyetelan |
+| `viewer.html` | pendukung | Viewer 2D, tempat volume 3D & MPR dibangun, ekspor STL/OBJ |
+| `worklist.html` | pendukung | Daftar studi, buka berkas & folder, kelola cache lokal |
+| `masuk.html` | — | Masuk / daftar / mode tamu |
+| `index.html` | — | Halaman web pengenalan |
+
+Jalur pendek: `/app` dan `/hologram` → panggung hologram, `/viewer`, `/studi`, `/login`.
+Setelah masuk, tujuan bawaannya panggung hologram.
 
 ## Menjalankan secara lokal
 
@@ -247,7 +268,9 @@ firebase deploy --only firestore:rules --project kaca-id
 
 ## Halaman apps
 
-**Worklist** — filter antrian (belum dibaca / sedang dibaca / selesai / cito / berkas lokal),
+**Worklist** — tombol utamanya **Tampilkan Hologram**; *Viewer 2D* jadi jalur kedua, dan klik
+ganda baris juga menuju hologram. Selebihnya: filter antrian
+(belum dibaca / sedang dibaca / selesai / cito / berkas lokal),
 filter modalitas, pencarian, pengurutan kolom, drag-and-drop berkas atau folder. Studi dari
 berkas lokal memakai status baca yang sama dengan studi PACS, jadi ikut terhitung di setiap
 filter. Status baca tersinkron ke akun bila masuk, dan selalu punya salinan lokal.
@@ -327,12 +350,17 @@ untuk kepala, 209 ribu untuk MRI otak; ekstraksi 110–300 ms, render 75–370 m
 pada 256². Pada CT toraks sungguhan dari TCIA (512×512×60, irisan 2,5 mm): 178 ribu segitiga
 pada 300 HU — kosta dan vertebra terbaca jelas.
 
-## Proyeksi prisma hologram
+## Panggung hologram prisma — halaman utama
 
 `prisma.html` menyiapkan tampilan untuk **piramida atau prisma akrilik** yang diletakkan di
 atas layar — efek *Pepper's ghost*. Empat pandangan volume disusun mengelilingi satu titik
 pusat, masing-masing dengan tepi atas menghadap ke tengah, sehingga pantulan pada keempat
 bidang prisma bertemu sebagai satu citra yang tampak mengambang.
+
+Halaman ini **berdiri sendiri**: di panelnya ada pemilih studi yang menyatukan phantom demo,
+berkas lokal yang tersimpan di IndexedDB, dan berkas yang baru dibuka lewat tombol
+**Buka berkas DICOM…** — jadi tidak perlu lewat worklist lebih dulu. Seri yang irisannya di
+bawah empat ditandai *terlalu tipis* dan tidak bisa dipilih.
 
 Karena keempat sisi selalu berjarak tepat 90°, satu set N sudut yang tersebar rata pada 360°
 sudah cukup untuk semuanya: tiap sisi hanya membaca indeks yang bergeser N/4. Sudut-sudut itu

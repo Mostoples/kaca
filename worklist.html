@@ -17,9 +17,9 @@
   <header class="app-bar">
     <a class="brand" href="index.html"><span class="mark">K</span><span>Kaca</span></a>
     <div class="app-tabs">
-      <a href="worklist.html" class="active">Worklist</a>
-      <a href="viewer.html">Viewer</a>
-      <a href="prisma.html">Prisma</a>
+      <a href="prisma.html">Hologram</a>
+      <a href="viewer.html">Viewer 2D</a>
+      <a href="worklist.html" class="active">Studi</a>
     </div>
     <span class="spacer"></span>
     <button class="btn btn-sm only-mobile" id="btnFilter" aria-expanded="false" aria-controls="wlSide">
@@ -99,7 +99,8 @@
         </select>
         <span class="spacer"></span>
         <button class="btn btn-sm" id="btnRefresh">Segarkan</button>
-        <button class="btn btn-sm btn-primary" id="btnOpen" disabled>Buka di Viewer</button>
+        <button class="btn btn-sm" id="btnOpen2D" disabled>Viewer 2D</button>
+        <button class="btn btn-sm btn-primary" id="btnOpen" disabled>Tampilkan Hologram</button>
       </div>
 
       <div class="wl-scroll">
@@ -133,7 +134,7 @@
         <span id="foot">0 studi</span>
         <span class="sync-dot" id="syncState" aria-live="polite"><i></i>Memeriksa sesi…</span>
         <span class="spacer"></span>
-        <span class="foot-hint">Klik ganda baris untuk membuka viewer · <kbd>Enter</kbd> membuka studi terpilih · <kbd>?</kbd> daftar pintasan</span>
+        <span class="foot-hint">Klik ganda baris untuk menampilkan hologram · <kbd>Enter</kbd> membuka studi terpilih · <kbd>?</kbd> daftar pintasan</span>
       </div>
     </main>
   </div>

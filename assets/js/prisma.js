@@ -67,70 +67,269 @@
   function tutupPesan() { el('status').classList.add('hide'); }
 
   /* ==========================================================
-     Mengambil satu seri: demo atau berkas lokal
+     Katalog studi
+     ----------------------------------------------------------
+     Halaman ini berdiri sendiri: ia menyusun sendiri daftar studi
+     yang tersedia (phantom demo + berkas lokal di IndexedDB +
+     berkas yang baru dibuka) sehingga tidak perlu dilempar dari
+     worklist. Hologram adalah tujuan utama, bukan lampiran.
      ========================================================== */
-  function ambilSeri() {
-    var p = new URLSearchParams(location.search);
-    var idxSeri = parseInt(p.get('seri') || '0', 10) || 0;
+  var katalog = [];      /* {kunci, label, sumber, seri: [{label, jumlah, buat()}]} */
 
-    if (p.get('local')) return seriLokal(p.get('local'), idxSeri);
-    return Promise.resolve(seriDemo(p.get('demo'), idxSeri));
+  function katalogDemo() {
+    return (window.DEMO ? window.DEMO.studies : []).map(function (st) {
+      return {
+        kunci: 'demo:' + st.id,
+        label: K.fmtName(st.patient.name) + ' — ' + st.modality + ' ' + st.desc,
+        sumber: 'demo',
+        studi: st,
+        seri: st.series.map(function (s, i) {
+          return {
+            label: s.desc + ' · ' + s.n + ' irisan',
+            jumlah: s.n,
+            buat: function () {
+              var cache = null;
+              return {
+                desc: s.desc, number: s.num, modality: st.modality, count: s.n,
+                getImage: function (k) {
+                  if (!cache) cache = window.DEMO.buildSeriesImages(st, i);
+                  return Promise.resolve(cache[Math.max(0, Math.min(s.n - 1, k))]);
+                }
+              };
+            }
+          };
+        })
+      };
+    });
   }
 
-  function seriDemo(id, idx) {
-    var st = window.DEMO.studies.filter(function (s) { return s.id === id; })[0] || window.DEMO.studies[0];
-    /* pilih seri dengan irisan terbanyak bila indeks tidak menunjuk tumpukan */
-    var urut = st.series.map(function (s, i) { return { s: s, i: i }; })
-      .sort(function (a, b) { return b.s.n - a.s.n; });
-    var pilih = st.series[idx] && st.series[idx].n >= 4 ? idx : urut[0].i;
-    var s = st.series[pilih];
-    var cache = null;
+  /* studi dari berkas yang pernah dibuka, masih tersimpan di IndexedDB */
+  function katalogLokal() {
+    if (!window.KDB) return Promise.resolve([]);
+    return window.KDB.all().then(function (recs) {
+      var perStudi = {};
+      recs.forEach(function (r) {
+        (perStudi[r.studyUID] = perStudi[r.studyUID] || []).push(r);
+      });
+      return Object.keys(perStudi).map(function (uid) {
+        return dariRecord('lokal:' + uid, perStudi[uid], 'lokal');
+      });
+    }).catch(function () { return []; });
+  }
+
+  /* bentuk entri katalog dari kumpulan record berkas */
+  function dariRecord(kunci, recs, sumber) {
+    var perSeri = {};
+    recs.forEach(function (r) {
+      (perSeri[r.seriesUID || 'S1'] = perSeri[r.seriesUID || 'S1'] || []).push(r);
+    });
+    var first = recs[0];
+    var daftarSeri = Object.keys(perSeri)
+      .map(function (k) { return perSeri[k]; })
+      .sort(function (a, b) { return b.length - a.length; })
+      .map(function (items) {
+        items.sort(function (a, b) { return (a.instance || 0) - (b.instance || 0); });
+        var s0 = items[0];
+        return {
+          label: (s0.seriesDesc || 'Seri ' + (s0.seriesNumber || 1)) + ' · ' + items.length + ' irisan',
+          jumlah: items.length,
+          buat: function () {
+            return {
+              desc: s0.seriesDesc || 'Seri lokal', number: s0.seriesNumber || 1,
+              modality: s0.modality, count: items.length,
+              getImage: function (i) {
+                var r = items[Math.max(0, Math.min(items.length - 1, i))];
+                return new Promise(function (res, rej) {
+                  try {
+                    if (!r._ds) r._ds = window.DICOM.parse(r.buf);
+                    res(window.DICOM.readPixels(r._ds, 0));
+                  } catch (e) { rej(e); }
+                });
+              }
+            };
+          }
+        };
+      });
 
     return {
-      judul: K.fmtName(st.patient.name) + ' · ' + st.desc,
-      sub: st.modality + ' · ' + s.desc + ' · ' + s.n + ' irisan',
-      seri: {
-        desc: s.desc, number: s.num, modality: st.modality, count: s.n,
-        getImage: function (i) {
-          if (!cache) cache = window.DEMO.buildSeriesImages(st, pilih);
-          return Promise.resolve(cache[Math.max(0, Math.min(s.n - 1, i))]);
-        }
-      }
+      kunci: kunci, sumber: sumber,
+      label: (first.patient || '—') + ' — ' + (first.modality || '??') + ' ' +
+             (first.studyDesc || 'Studi lokal'),
+      seri: daftarSeri
     };
   }
 
-  function seriLokal(uid, idx) {
-    if (!window.KDB) return Promise.reject(new Error('Penyimpanan lokal tidak tersedia.'));
-    return window.KDB.byStudy(uid).then(function (recs) {
-      if (!recs.length) throw new Error('Berkas lokal untuk studi ini tidak ada lagi di cache.');
+  /* isi kedua <select> dari katalog */
+  function isiPemilih(kunciTerpilih, idxSeri) {
+    var selStudi = el('pilihStudi'), selSeri = el('pilihSeri');
+    selStudi.innerHTML = katalog.map(function (k) {
+      return '<option value="' + esc(k.kunci) + '">' +
+        esc(k.label) + (k.sumber === 'demo' ? ' (demo)' : '') + '</option>';
+    }).join('');
+    if (kunciTerpilih) selStudi.value = kunciTerpilih;
 
-      var perSeri = {};
-      recs.forEach(function (r) { (perSeri[r.seriesUID || 'S1'] = perSeri[r.seriesUID || 'S1'] || []).push(r); });
-      var kunci = Object.keys(perSeri).sort(function (a, b) { return perSeri[b].length - perSeri[a].length; });
-      var pilih = perSeri[kunci[Math.min(idx, kunci.length - 1)]];
-      if (pilih.length < 4) pilih = perSeri[kunci[0]];
+    var st = cariKatalog(selStudi.value);
+    selSeri.innerHTML = st ? st.seri.map(function (s, i) {
+      return '<option value="' + i + '"' + (s.jumlah < 4 ? ' disabled' : '') + '>' +
+        esc(s.label) + (s.jumlah < 4 ? ' — terlalu tipis' : '') + '</option>';
+    }).join('') : '';
+    if (st) {
+      /* pilih seri yang diminta, atau tumpukan paling tebal */
+      var pakai = (idxSeri !== undefined && st.seri[idxSeri] && st.seri[idxSeri].jumlah >= 4)
+        ? idxSeri
+        : st.seri.reduce(function (terbaik, s, i) {
+            return s.jumlah > (st.seri[terbaik] ? st.seri[terbaik].jumlah : 0) ? i : terbaik;
+          }, 0);
+      selSeri.value = String(pakai);
+    }
+  }
 
-      pilih.sort(function (a, b) { return (a.instance || 0) - (b.instance || 0); });
-      var first = pilih[0];
+  function cariKatalog(kunci) {
+    return katalog.filter(function (k) { return k.kunci === kunci; })[0] || null;
+  }
 
-      return {
-        judul: (first.patient || '—') + ' · ' + (first.studyDesc || 'Studi lokal'),
-        sub: (first.modality || '??') + ' · ' + (first.seriesDesc || 'Seri') + ' · ' + pilih.length + ' irisan',
-        seri: {
-          desc: first.seriesDesc || 'Seri lokal', number: first.seriesNumber || 1,
-          modality: first.modality, count: pilih.length,
-          getImage: function (i) {
-            var r = pilih[Math.max(0, Math.min(pilih.length - 1, i))];
-            return new Promise(function (res, rej) {
-              try {
-                if (!r._ds) r._ds = window.DICOM.parse(r.buf);
-                res(window.DICOM.readPixels(r._ds, 0));
-              } catch (e) { rej(e); }
-            });
-          }
-        }
-      };
+  function esc(s) {
+    return String(s === undefined || s === null ? '' : s)
+      .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+  }
+
+  /* ==========================================================
+     Muat studi terpilih → volume → prarender
+     ========================================================== */
+  function muatTerpilih() {
+    var st = cariKatalog(el('pilihStudi').value);
+    if (!st) { pesan('Tidak ada studi yang bisa dibuka'); return Promise.resolve(); }
+    var idx = parseInt(el('pilihSeri').value, 10) || 0;
+    var entri = st.seri[idx];
+    if (!entri) { pesan('Seri tidak ada'); return Promise.resolve(); }
+
+    if (entri.jumlah < 4) {
+      pesan('Seri ini hanya ' + entri.jumlah + ' irisan',
+        'Hologram butuh setidaknya 4 irisan. Pilih seri lain.');
+      return Promise.resolve();
+    }
+
+    /* volume & permukaan lama tidak berlaku lagi */
+    App.vol = null; App.mesh = null; App.meshAmbang = null;
+    App.imgs = []; App.kanvas = [];
+
+    App.seri = entri.buat();
+    el('hJudul').textContent = st.label;
+    el('hSub').textContent = entri.label;
+    el('studiInfo').textContent = st.sumber === 'demo'
+      ? 'Phantom sintetis — bukan data pasien.'
+      : 'Berkas lokal Anda sendiri, diurai di peramban ini.';
+    document.title = st.label + ' — Prisma Kaca';
+
+    pesan('Menyusun volume…', 'membaca irisan');
+    el('bar').style.width = '0%';
+
+    return window.VOLUME.bangun(App.seri, {
+      lapor: function (n, total) {
+        el('statusSub').textContent = n + ' / ' + total + ' irisan';
+        el('bar').style.width = (n / total * 100) + '%';
+      }
+    }).then(function (vol) {
+      App.vol = vol;
+      el('volInfo').textContent = vol.info();
+      setelRentang(vol);
+      return prarender();
+    }).catch(function (err) {
+      var m = (err && err.message) ? err.message : String(err);
+      pesan('Tidak bisa menyiapkan hologram', m);
+      el('bar').style.width = '0%';
+      console.warn('Prisma:', err);
     });
+  }
+
+  /* rentang penggeser mengikuti nilai voxel yang benar-benar ada */
+  function setelRentang(vol) {
+    var rentang = Math.max(1, vol.max - vol.min);
+    var sWW = el('rWW'), sWL = el('rWL');
+    sWW.min = 1; sWW.max = Math.round(rentang * 2);
+    sWL.min = Math.round(vol.min - rentang * 0.5);
+    sWL.max = Math.round(vol.max + rentang * 0.5);
+    App.opsi.ww = Math.round(vol.windowWidth);
+    App.opsi.wc = Math.round(vol.windowCenter);
+    sWW.value = App.opsi.ww; sWL.value = App.opsi.wc;
+    el('rWWVal').textContent = App.opsi.ww;
+    el('rWLVal').textContent = App.opsi.wc;
+
+    var sAmb = el('rAmbang');
+    sAmb.min = Math.round(vol.min + 1);
+    sAmb.max = Math.round(vol.max - 1);
+    App.opsi.ambang = window.MESH ? window.MESH.ambangSaran(vol)
+      : Math.round((vol.min + vol.max) / 2);
+    sAmb.value = App.opsi.ambang;
+    el('rAmbangVal').textContent = App.opsi.ambang;
+  }
+
+  /* ==========================================================
+     Membuka berkas DICOM langsung di halaman ini
+     ========================================================== */
+  function bukaBerkas(fileList) {
+    var files = Array.prototype.slice.call(fileList || []);
+    if (!files.length) return;
+
+    pesan('Membaca ' + files.length + ' berkas…', '0 / ' + files.length);
+    el('bar').style.width = '0%';
+
+    var recs = [], selesai = 0, gagal = 0;
+
+    files.forEach(function (f) {
+      var fr = new FileReader();
+      fr.onload = function () {
+        window.DICOM.parseAsync(fr.result).then(function (ds) {
+          try {
+            if (ds.has('00280010')) {
+              recs.push({
+                studyUID: ds.string('0020000D') || 'LOKAL',
+                seriesUID: ds.string('0020000E') || 'S1',
+                instance: parseInt(ds.string('00200013') || '0', 10) || 0,
+                seriesNumber: parseInt(ds.string('00200011') || '0', 10) || 0,
+                seriesDesc: ds.string('0008103E') || '',
+                patient: K.fmtName(ds.string('00100010')),
+                modality: (ds.string('00080060') || '??').trim(),
+                studyDesc: ds.string('00081030') || 'Studi lokal',
+                buf: ds.buffer, _ds: ds
+              });
+            } else gagal++;
+          } catch (e) { gagal++; }
+          langkahSelesai();
+        }, function () { gagal++; langkahSelesai(); });
+      };
+      fr.onerror = function () { gagal++; langkahSelesai(); };
+      fr.readAsArrayBuffer(f);
+    });
+
+    function langkahSelesai() {
+      selesai++;
+      el('statusSub').textContent = selesai + ' / ' + files.length;
+      el('bar').style.width = (selesai / files.length * 100) + '%';
+      if (selesai < files.length) return;
+
+      if (!recs.length) {
+        pesan('Tidak ada berkas DICOM yang bisa dibaca',
+          gagal + ' berkas dilewati. Pastikan yang dipilih berkas .dcm.');
+        return;
+      }
+
+      /* satu atau beberapa studi sekaligus; semuanya masuk katalog */
+      var perStudi = {};
+      recs.forEach(function (r) { (perStudi[r.studyUID] = perStudi[r.studyUID] || []).push(r); });
+      var baru = Object.keys(perStudi).map(function (uid) {
+        return dariRecord('buka:' + uid, perStudi[uid], 'buka');
+      });
+
+      /* buang entri lama dengan kunci sama, lalu taruh yang baru di atas */
+      var kunciBaru = baru.map(function (b) { return b.kunci; });
+      katalog = baru.concat(katalog.filter(function (k) {
+        return kunciBaru.indexOf(k.kunci) === -1;
+      }));
+
+      isiPemilih(baru[0].kunci);
+      muatTerpilih();
+    }
   }
 
   /* ==========================================================
@@ -341,6 +540,15 @@
   }
 
   function pasangKontrol() {
+    /* pemilih studi & seri */
+    el('pilihStudi').addEventListener('change', function () {
+      isiPemilih(this.value);
+      muatTerpilih();
+    });
+    el('pilihSeri').addEventListener('change', function () { muatTerpilih(); });
+    el('btnBukaFile').addEventListener('click', function () { el('fileInput').click(); });
+    el('fileInput').addEventListener('change', function (e) { bukaBerkas(e.target.files); });
+
     /* mode proyeksi */
     K.qsa('#modeGrid button').forEach(function (b) {
       b.addEventListener('click', function () {
@@ -469,47 +677,25 @@
   pesan('Memeriksa sesi…');
   window.KAUTH.jaga().then(function (ses) {
     window.KAUTH.pasangChip(el('userChip'), ses.pembaca);
-    pesan('Memuat seri…');
-    return ambilSeri();
-  }).then(function (hasil) {
-    App.seri = hasil.seri;
-    el('hJudul').textContent = hasil.judul;
-    el('hSub').textContent = hasil.sub;
-    document.title = hasil.judul + ' — Prisma Kaca';
+    pesan('Menyusun daftar studi…');
+    return katalogLokal();
+  }).then(function (lokal) {
+    /* berkas lokal lebih dulu — itu yang biasanya baru dibuka pengguna */
+    katalog = lokal.concat(katalogDemo());
+    if (!katalog.length) {
+      pesan('Tidak ada studi yang tersedia', 'Buka berkas DICOM lewat panel di samping.');
+      el('statusAksi').classList.remove('hide');
+      return;
+    }
 
-    pesan('Menyusun volume…', 'membaca irisan');
-    return window.VOLUME.bangun(hasil.seri, {
-      lapor: function (n, total) {
-        el('statusSub').textContent = n + ' / ' + total + ' irisan';
-        el('bar').style.width = (n / total * 100) + '%';
-      }
-    });
-  }).then(function (vol) {
-    App.vol = vol;
-    el('volInfo').textContent = vol.info();
+    /* hormati parameter URL bila datang dari worklist atau viewer */
+    var p = new URLSearchParams(location.search);
+    var minta = p.get('local') ? 'lokal:' + p.get('local')
+      : p.get('demo') ? 'demo:' + p.get('demo') : null;
+    var idxSeri = p.get('seri') !== null ? parseInt(p.get('seri'), 10) : undefined;
 
-    /* rentang W/L mengikuti nilai voxel yang sebenarnya ada */
-    var rentang = Math.max(1, vol.max - vol.min);
-    var sWW = el('rWW'), sWL = el('rWL');
-    sWW.min = 1; sWW.max = Math.round(rentang * 2);
-    sWL.min = Math.round(vol.min - rentang * 0.5);
-    sWL.max = Math.round(vol.max + rentang * 0.5);
-    App.opsi.ww = Math.round(vol.windowWidth);
-    App.opsi.wc = Math.round(vol.windowCenter);
-    sWW.value = App.opsi.ww; sWL.value = App.opsi.wc;
-    el('rWWVal').textContent = App.opsi.ww;
-    el('rWLVal').textContent = App.opsi.wc;
-
-    /* ambang isosurface: rentangnya mengikuti nilai voxel yang ada */
-    var sAmb = el('rAmbang');
-    sAmb.min = Math.round(vol.min + 1);
-    sAmb.max = Math.round(vol.max - 1);
-    App.opsi.ambang = window.MESH ? window.MESH.ambangSaran(vol)
-      : Math.round((vol.min + vol.max) / 2);
-    sAmb.value = App.opsi.ambang;
-    el('rAmbangVal').textContent = App.opsi.ambang;
-
-    return prarender();
+    isiPemilih(minta && cariKatalog(minta) ? minta : katalog[0].kunci, idxSeri);
+    return muatTerpilih();
   }).catch(function (err) {
     var m = (err && err.message) ? err.message : String(err);
     pesan('Tidak bisa menyiapkan hologram', m);

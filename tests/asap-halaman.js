@@ -137,8 +137,11 @@ async function ujiWorklist() {
   /* pilih baris lalu urutkan kolom */
   const tr = dok.querySelectorAll('#rows tr')[0];
   tr.dispatchEvent(new Peristiwa('click', { target: tr }));
-  periksa('tombol "Buka di Viewer" aktif setelah baris dipilih',
-    !dok.getElementById('btnOpen').disabled);
+  periksa('tombol hologram & viewer 2D aktif setelah baris dipilih',
+    !dok.getElementById('btnOpen').disabled && !dok.getElementById('btnOpen2D').disabled);
+  periksa('tombol utama mengarah ke hologram',
+    /hologram/i.test(dok.getElementById('btnOpen').textContent),
+    dok.getElementById('btnOpen').textContent);
 
   const th = dok.querySelector('table.wl thead th[data-sort="patient"]');
   th.click(); th.click();
@@ -315,6 +318,20 @@ async function ujiPrisma() {
   /* prarender memakan waktu: 24 sudut ray-cast */
   await tunggu(win, 140);
 
+  /* halaman prisma harus berdiri sendiri: punya pemilih studi & seri */
+  const selStudi = dok.getElementById('pilihStudi');
+  const selSeri = dok.getElementById('pilihSeri');
+  periksa('pemilih studi terisi',
+    selStudi && selStudi.querySelectorAll('option').length >= 5,
+    selStudi && `${selStudi.querySelectorAll('option').length} pilihan`);
+  periksa('pemilih seri terisi',
+    selSeri && selSeri.querySelectorAll('option').length >= 1,
+    selSeri && `${selSeri.querySelectorAll('option').length} pilihan`);
+  periksa('studi dari parameter URL yang dipakai',
+    selStudi && selStudi.value === 'demo:ST-2409-0146', selStudi && selStudi.value);
+  periksa('asal data dijelaskan ke pengguna',
+    dok.getElementById('studiInfo').textContent.length > 10);
+
   const info = dok.getElementById('volInfo');
   periksa('volume tersusun di halaman prisma',
     info && /voxel/.test(info.textContent), info && info.textContent);
@@ -380,6 +397,20 @@ async function ujiPrisma() {
     for (const k of [' ', 'ArrowLeft', 'ArrowRight', 'f', 'p']) tekanKunci(dok, k);
   } catch (e) { kunciGalat = e.message; }
   periksa('pintasan panggung tidak melempar', !kunciGalat, kunciGalat);
+
+  /* berpindah studi lewat pemilih harus menyusun ulang volume */
+  const kunciLain = Array.from(selStudi.querySelectorAll('option'))
+    .map((o) => o.getAttribute('value'))
+    .filter((v) => v !== 'demo:ST-2409-0146')[0];
+  let pindahGalat = null;
+  try {
+    selStudi.value = kunciLain;
+    selStudi.dispatchEvent(new Peristiwa('change', { target: selStudi }));
+    await tunggu(win, 140);
+  } catch (e) { pindahGalat = e.message; }
+  periksa('berpindah studi lewat pemilih menyusun ulang hologram',
+    !pindahGalat && /voxel/.test(dok.getElementById('volInfo').textContent),
+    pindahGalat || `${kunciLain} → ${dok.getElementById('hJudul').textContent}`);
 
   /* mode permukaan benar-benar dirender ulang */
   dok.querySelector('#modeGrid button[data-mode="permukaan"]').click();

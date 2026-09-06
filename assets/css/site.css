@@ -60,6 +60,33 @@
 .hero-mock .ovl.bl{bottom:10px;left:12px}
 .hero-mock .ovl.br{bottom:10px;right:12px;text-align:right;color:#9fb4c9}
 
+/* Mock hologram: panggungnya bujur sangkar dan tanpa perspektif miring,
+   karena susunan empat sisi harus terbaca simetris. */
+.hologram-mock{transform:none}
+.hologram-mock .stage{aspect-ratio:1/1;background:#000}
+
+/* ---------- prinsip hologram ---------- */
+.holo-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:18px;margin-top:28px}
+.holo-step{
+  background:var(--panel);border:1px solid var(--line-soft);border-radius:14px;padding:20px;
+}
+.holo-step .num{
+  font-family:var(--mono);font-size:11px;color:var(--accent);letter-spacing:.1em;
+  display:block;margin-bottom:10px;
+}
+.holo-step h3{font-size:16px;margin:0 0 8px}
+.holo-step p{color:var(--muted);font-size:13.5px;line-height:1.65;margin:0}
+
+/* ---------- kebutuhan perangkat ---------- */
+.alat-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:16px;margin-top:26px}
+.alat{
+  background:var(--panel);border:1px solid var(--line-soft);border-radius:14px;padding:20px;
+  display:flex;flex-direction:column;gap:8px;
+}
+.alat b{font-size:15px}
+.alat .spek{font-family:var(--mono);font-size:12px;color:var(--accent)}
+.alat p{color:var(--muted);font-size:13px;line-height:1.6;margin:0}
+
 /* ---------- logos strip ---------- */
 .logos{padding:22px 0 18px;border-top:1px solid var(--line-soft);border-bottom:1px solid var(--line-soft)}
 .logos .wrap{display:flex;align-items:center;gap:38px;flex-wrap:wrap;justify-content:center;opacity:.62}

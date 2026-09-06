@@ -30,7 +30,10 @@
     "cleanUrls": false,
     "trailingSlash": false,
     "rewrites": [
-      { "source": "/app", "destination": "/worklist.html" },
+      { "source": "/app", "destination": "/prisma.html" },
+      { "source": "/hologram", "destination": "/prisma.html" },
+      { "source": "/viewer", "destination": "/viewer.html" },
+      { "source": "/studi", "destination": "/worklist.html" },
       { "source": "/login", "destination": "/masuk.html" }
     ],
     "headers": [

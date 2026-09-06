@@ -6,9 +6,12 @@
   var K = window.KACA;
   var mode = 'masuk';           /* 'masuk' | 'daftar' */
   var params = new URLSearchParams(location.search);
-  var next = params.get('next') || 'worklist.html';
+  /* Tujuan bawaan setelah masuk adalah panggung hologram — itulah inti
+     sistem ini. Halaman lain tetap dihormati bila diminta lewat next=. */
+  var BAWAAN = 'prisma.html';
+  var next = params.get('next') || BAWAAN;
   /* hanya izinkan pengalihan ke halaman internal */
-  if (!/^[a-z0-9_-]+\.html(\?.*)?$/i.test(next)) next = 'worklist.html';
+  if (!/^[a-z0-9_-]+\.html(\?.*)?$/i.test(next)) next = BAWAAN;
 
   var elAlert = document.getElementById('alert');
   var elKirim = document.getElementById('btnKirim');

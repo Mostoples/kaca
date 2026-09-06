@@ -3,8 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Kaca — Platform Inspeksi Citra DICOM</title>
-<meta name="description" content="Kaca adalah platform inspeksi dan peninjauan citra medis DICOM berbasis web: worklist terpusat, viewer zero-footprint, pengukuran presisi, dan pelaporan terstruktur.">
+<title>Kaca — Viewer Hologram Prisma untuk Citra DICOM</title>
+<meta name="description" content="Kaca mengubah tumpukan irisan CT dan MRI menjadi hologram tiga dimensi yang mengambang di dalam prisma kaca. Berjalan penuh di peramban, tanpa instalasi, tanpa mengunggah berkas.">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='8' fill='%232fd4bd'/><text x='16' y='22' font-size='17' font-family='sans-serif' font-weight='bold' text-anchor='middle' fill='%2304211d'>K</text></svg>">
 <link rel="stylesheet" href="assets/css/base.css">
 <link rel="stylesheet" href="assets/css/site.css">
@@ -17,19 +17,20 @@
   <div class="wrap">
     <a class="brand" href="index.html">
       <span class="mark">K</span>
-      <span>Kaca<small>DICOM Inspection</small></span>
+      <span>Kaca<small>Hologram Prisma DICOM</small></span>
     </a>
     <nav id="nav">
-      <a href="#fitur">Fitur</a>
+      <a href="#hologram">Hologram</a>
+      <a href="#perangkat">Perangkat</a>
       <a href="#alur">Alur Kerja</a>
-      <a href="#viewer">Viewer</a>
+      <a href="#fitur">Fitur</a>
       <a href="#keamanan">Keamanan</a>
       <a href="#harga">Harga</a>
       <a href="#faq">FAQ</a>
     </nav>
     <span class="spacer"></span>
     <a class="btn btn-ghost btn-sm nav-hide" href="masuk.html">Masuk</a>
-    <a class="btn btn-primary btn-sm" href="worklist.html">Buka Aplikasi</a>
+    <a class="btn btn-primary btn-sm" href="prisma.html">Buka Hologram</a>
     <button class="nav-toggle" id="navToggle" aria-label="Menu">
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
     </button>
@@ -40,34 +41,33 @@
 <section class="hero">
   <div class="wrap">
     <div>
-      <span class="pill pill-accent" style="margin-bottom:18px"><span class="dot"></span> Zero-footprint · berjalan penuh di browser</span>
-      <h1>Inspeksi citra <span class="grad">DICOM</span> tanpa instalasi, langsung dari browser.</h1>
+      <span class="pill pill-accent" style="margin-bottom:18px"><span class="dot"></span> Hologram prisma · berjalan penuh di peramban</span>
+      <h1>Citra CT dan MRI yang <span class="grad">mengambang</span> di dalam prisma kaca.</h1>
       <p class="lead">
-        Kaca menyatukan worklist, viewer diagnostik, pengukuran presisi, dan pelaporan terstruktur
-        dalam satu antarmuka. Buka file DICOM lokal atau tarik studi dari PACS — semua pemrosesan
-        piksel terjadi di perangkat Anda.
+        Kaca menyusun tumpukan irisan DICOM menjadi volume tiga dimensi, lalu memancarkannya
+        sebagai empat pandangan yang saling berhadapan. Letakkan prisma kaca di atas layar dan
+        pantulan keempat bidangnya bertemu jadi satu bentuk yang benar-benar tampak melayang —
+        bisa diputar, tanpa kacamata khusus.
       </p>
       <div class="hero-cta">
-        <a class="btn btn-primary" href="worklist.html">Coba Demo Interaktif</a>
-        <a class="btn" href="viewer.html?demo=ST-2409-0143">Buka Viewer Langsung</a>
+        <a class="btn btn-primary" href="prisma.html">Buka Panggung Hologram</a>
+        <a class="btn" href="#perangkat">Prisma apa yang dibutuhkan?</a>
       </div>
       <div class="hero-meta">
-        <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg> Tanpa plugin & tanpa upload</span>
-        <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg> Parser DICOM asli</span>
-        <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg> Multi-frame & multi-seri</span>
+        <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg> Tanpa kacamata &amp; tanpa proyektor</span>
+        <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg> Volume dihitung di perangkat Anda</span>
+        <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg> Berkas tidak pernah diunggah</span>
       </div>
     </div>
 
-    <div class="hero-mock">
+    <div class="hero-mock hologram-mock">
       <div class="bar">
-        <i></i><i></i><i></i><b>KACA VIEWER — ST-2409-0143 · CT TORAKS</b>
+        <i></i><i></i><i></i><b>PANGGUNG HOLOGRAM — 24 SUDUT · MIP</b>
       </div>
       <div class="stage">
-        <canvas id="heroCanvas" width="640" height="440"></canvas>
-        <div class="ovl tl">WIJAYA, ANDI<br>RM-0092841 · L · 51 Th</div>
-        <div class="ovl tr">CT · SOMATOM go.Top<br>Ax Mediastinum 3mm</div>
-        <div class="ovl bl">W: 1500  L: -500<br>Zoom: 118%</div>
-        <div class="ovl br">Im: <span id="heroIm">12</span>/24<br>3.0 mm</div>
+        <canvas id="heroCanvas" width="620" height="620"></canvas>
+        <div class="ovl tl">Susunan empat sisi<br>tepi atas menghadap pusat</div>
+        <div class="ovl br">Letakkan puncak<br>prisma di tengah</div>
       </div>
     </div>
   </div>
@@ -76,11 +76,116 @@
 <!-- ============ LOGOS ============ -->
 <div class="logos">
   <div class="wrap">
-    <b>Kompatibel dengan</b>
-    <span>DICOM P10</span><span>DICOMweb</span><span>HL7 v2</span>
-    <span>FHIR ImagingStudy</span><span>IHE SWF</span><span>C-FIND / C-MOVE</span>
+    <b>Membaca</b>
+    <span>DICOM P10</span><span>CT · MR · US</span><span>Multi-frame</span>
+    <span>Segmentation 1-bit</span><span>Deflate</span><span>Palette Color</span>
   </div>
 </div>
+
+<!-- ============ PRINSIP HOLOGRAM ============ -->
+<section class="section" id="hologram">
+  <div class="wrap">
+    <div class="section-head">
+      <span class="eyebrow">Cara kerjanya</span>
+      <h2>Empat pantulan yang bertemu di satu titik</h2>
+      <p>
+        Ini bukan hologram interferensi laser, melainkan <i>Pepper's ghost</i> — ilusi optik
+        berusia seratus tahun yang memakai pantulan pada kaca bening. Yang baru adalah sumber
+        gambarnya: volume tiga dimensi yang dihitung langsung dari berkas DICOM Anda.
+      </p>
+    </div>
+    <div class="holo-grid">
+      <article class="holo-step">
+        <span class="num">01</span>
+        <h3>Irisan jadi volume</h3>
+        <p>
+          Tumpukan irisan CT atau MRI disusun jadi kisi voxel. Urutan dan jarak antar irisan
+          diambil dari geometri di header — bukan dari nama berkas — sehingga proporsinya benar
+          dalam milimeter.
+        </p>
+      </article>
+      <article class="holo-step">
+        <span class="num">02</span>
+        <h3>Volume jadi sudut pandang</h3>
+        <p>
+          Sinar ditembakkan menembus volume dari puluhan arah yang mengelilingi tubuh. Bisa
+          intensitas maksimum untuk tulang dan pembuluh, opasitas untuk jaringan, atau permukaan
+          bernaung hasil isosurface.
+        </p>
+      </article>
+      <article class="holo-step">
+        <span class="num">03</span>
+        <h3>Empat sisi menghadap pusat</h3>
+        <p>
+          Empat sudut yang berjarak tepat 90° disusun mengelilingi titik tengah layar, masing-masing
+          dengan tepi atas mengarah ke dalam. Sudutnya diprarender sekali lalu diputar-ulang, jadi
+          putarannya mulus.
+        </p>
+      </article>
+      <article class="holo-step">
+        <span class="num">04</span>
+        <h3>Prisma menyatukannya</h3>
+        <p>
+          Tiap bidang prisma memantulkan satu sisi ke arah mata. Karena keempat pantulan bertemu di
+          ruang yang sama, otak membacanya sebagai satu benda padat yang menggantung di dalam kaca.
+        </p>
+      </article>
+    </div>
+  </div>
+</section>
+
+<!-- ============ PERANGKAT ============ -->
+<section class="section alt" id="perangkat">
+  <div class="wrap split">
+    <div>
+      <span class="eyebrow">Yang perlu disiapkan</span>
+      <h2>Satu prisma kaca dan layar yang bisa direbahkan</h2>
+      <p style="color:var(--text-2)">
+        Tidak ada perangkat khusus yang harus dibeli dari kami. Prisma piramida akrilik untuk
+        ponsel dijual luas dan harganya murah; yang penting keempat bidangnya bening dan
+        sudutnya seragam.
+      </p>
+      <ul class="check-list">
+        <li>Ruangan yang bisa digelapkan — pantulan kalah oleh cahaya sekitar</li>
+        <li>Layar mendatar: tablet direbahkan, atau monitor yang bisa dimiringkan penuh</li>
+        <li>Puncak prisma diletakkan tepat pada penanda tengah di panggung</li>
+        <li>Ukuran sisi dan jarak ke pusat disetel sampai keempat pantulan bertumpuk rapi</li>
+        <li>Sakelar <b>Cermin</b> dinyalakan bila citranya terbaca terbalik</li>
+      </ul>
+      <div class="hero-cta" style="margin-bottom:0">
+        <a class="btn btn-primary" href="prisma.html">Coba sekarang tanpa prisma</a>
+      </div>
+      <p style="color:var(--muted);font-size:13px;margin-top:14px">
+        Tanpa prisma pun panggungnya tetap berguna: keempat pandangan berputar bisa dilihat
+        langsung di layar sebagai empat proyeksi bersamaan.
+      </p>
+    </div>
+    <div>
+      <div class="alat-grid">
+        <div class="alat">
+          <b>Prisma piramida</b>
+          <span class="spek">4 sisi · sudut ±45°</span>
+          <p>Akrilik atau kaca bening. Ukuran ponsel cukup untuk tablet 10 inci.</p>
+        </div>
+        <div class="alat">
+          <b>Layar</b>
+          <span class="spek">mendatar · kontras tinggi</span>
+          <p>OLED memberi hitam paling pekat, jadi pantulannya paling bersih.</p>
+        </div>
+        <div class="alat">
+          <b>Peramban</b>
+          <span class="spek">Canvas 2D · ES5</span>
+          <p>Tanpa WebGL, tanpa plugin. Semua perhitungan di CPU perangkat Anda.</p>
+        </div>
+        <div class="alat">
+          <b>Berkas</b>
+          <span class="spek">≥ 4 irisan · idealnya ≥ 60</span>
+          <p>Makin rapat irisannya, makin halus bentuk yang muncul di dalam prisma.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
 
 <!-- ============ FITUR ============ -->
 <section class="section" id="fitur">
@@ -99,25 +204,25 @@
   <div class="wrap">
     <div class="section-head">
       <span class="eyebrow">Alur kerja</span>
-      <h2>Empat langkah, satu layar</h2>
-      <p>Alur baca dirancang mengikuti kebiasaan radiolog: prioritas dulu, gambar besar, laporan menyusul.</p>
+      <h2>Dari berkas ke hologram dalam empat langkah</h2>
+      <p>Panggung hologram adalah tujuan utamanya. Worklist dan viewer 2D ada untuk mendukungnya.</p>
     </div>
     <div class="steps">
       <div class="step">
-        <h3>Terima &amp; prioritaskan</h3>
-        <p>Studi masuk otomatis ke worklist, ditandai status baca dan penanda urgensi (cito).</p>
+        <h3>Pilih studi</h3>
+        <p>Buka berkas DICOM langsung di panggung, atau pilih dari antrian studi. Phantom demo tersedia untuk mencoba.</p>
       </div>
       <div class="step">
-        <h3>Inspeksi citra</h3>
-        <p>Viewer multi-viewport dengan window/level, zoom, cine, dan sinkronisasi antar seri.</p>
+        <h3>Volume tersusun</h3>
+        <p>Irisan diurutkan dari geometri header, jaraknya dihitung, lalu jadi kisi voxel berskala milimeter.</p>
       </div>
       <div class="step">
-        <h3>Ukur &amp; anotasi</h3>
-        <p>Panjang, sudut, ROI elips/persegi dengan statistik HU, serta probe nilai piksel.</p>
+        <h3>Pilih tampilan</h3>
+        <p>MIP, volume rendering beropasitas, proyeksi rerata, atau rekonstruksi permukaan pada ambang pilihan Anda.</p>
       </div>
       <div class="step">
-        <h3>Laporkan</h3>
-        <p>Template temuan &amp; kesan, tanda tangan pembaca, ekspor sebagai teks atau lampiran.</p>
+        <h3>Pasang prisma</h3>
+        <p>Setel ukuran sisi dan jarak ke pusat, gelapkan ruangan, letakkan prisma — bentuknya muncul mengambang.</p>
       </div>
     </div>
   </div>
@@ -127,23 +232,24 @@
 <section class="section" id="viewer">
   <div class="wrap split">
     <div>
-      <span class="eyebrow">Viewer</span>
-      <h2>Dibangun untuk mata yang bekerja delapan jam sehari</h2>
+      <span class="eyebrow">Pendukung</span>
+      <h2>Viewer 2D untuk yang tidak bisa dilihat dari hologram</h2>
       <p style="color:var(--text-2)">
-        Rendering dilakukan lewat canvas dengan LUT window/level yang dihitung ulang setiap frame,
-        sehingga geser W/L terasa instan bahkan pada seri ratusan irisan.
+        Hologram bagus untuk memahami bentuk dan hubungan ruang, tetapi pengukuran dan pembacaan
+        detail tetap butuh irisan datar. Viewer 2D-nya penuh — dan dari sana pula volume 3D
+        dibangun, lengkap dengan MPR koronal serta sagital yang muncul sebagai seri baru.
       </p>
       <ul class="check-list">
-        <li>Preset window bawaan: paru, mediastinum, tulang, otak, abdomen, hati</li>
-        <li>Tata letak 1×1, 1×2, 2×2, dan 1×3 dengan viewport aktif yang jelas</li>
-        <li>Cine playback untuk multi-frame (US, XA) dengan kontrol kecepatan</li>
-        <li>Inversi, rotasi, flip, dan colormap (hot, jet, bone, PET)</li>
-        <li>Pengukuran dalam milimeter memakai Pixel Spacing dari header</li>
+        <li>Tombol <b>Bangun 3D &amp; MPR</b> menambah tujuh seri turunan sekaligus</li>
+        <li>MPR koronal &amp; sagital dengan koreksi piksel tidak bujur sangkar</li>
+        <li>MIP slab tiga bidang, ketebalan dalam milimeter</li>
+        <li>Rekonstruksi permukaan dengan ekspor STL &amp; OBJ</li>
+        <li>Pengukuran milimeter, ROI dengan statistik HU, probe nilai piksel</li>
         <li>Inspektur tag DICOM lengkap dengan pencarian cepat</li>
       </ul>
       <div class="hero-cta" style="margin-bottom:0">
-        <a class="btn btn-primary" href="viewer.html?demo=ST-2409-0144">Lihat viewer</a>
-        <a class="btn" href="worklist.html">Buka worklist</a>
+        <a class="btn btn-primary" href="prisma.html?demo=ST-2409-0144">Lihat sebagai hologram</a>
+        <a class="btn" href="viewer.html?demo=ST-2409-0144">Buka viewer 2D</a>
       </div>
     </div>
     <div class="hero-mock" style="transform:none">
@@ -161,10 +267,10 @@
 <section class="section alt">
   <div class="wrap">
     <div class="stats">
-      <div class="stat"><b>&lt; 40 ms</b><span>Waktu render per irisan</span></div>
-      <div class="stat"><b>100%</b><span>Pemrosesan di sisi klien</span></div>
-      <div class="stat"><b>0</b><span>Plugin yang perlu dipasang</span></div>
-      <div class="stat"><b>12+</b><span>Transfer syntax dikenali</span></div>
+      <div class="stat"><b>4</b><span>Pandangan bertemu di prisma</span></div>
+      <div class="stat"><b>60 fps</b><span>Putaran hologram</span></div>
+      <div class="stat"><b>100%</b><span>Dihitung di perangkat Anda</span></div>
+      <div class="stat"><b>0</b><span>Plugin &amp; kacamata</span></div>
     </div>
   </div>
 </section>
@@ -222,7 +328,7 @@
           <li>Inspektur tag DICOM</li>
           <li>Ekspor PNG</li>
         </ul>
-        <a class="btn" href="worklist.html">Mulai sekarang</a>
+        <a class="btn" href="prisma.html">Mulai sekarang</a>
       </div>
       <div class="price pop">
         <h3>Klinik <span class="pill pill-accent" style="margin-left:6px">Populer</span></h3>
@@ -235,7 +341,7 @@
           <li>Laporan terstruktur &amp; template</li>
           <li>Audit trail 12 bulan</li>
         </ul>
-        <a class="btn btn-primary" href="worklist.html">Coba 14 hari</a>
+        <a class="btn btn-primary" href="prisma.html">Coba 14 hari</a>
       </div>
       <div class="price">
         <h3>Rumah Sakit</h3>
@@ -298,12 +404,13 @@
 <section class="section" id="kontak">
   <div class="wrap">
     <div class="cta-band">
-      <h2>Coba sendiri, sekarang juga</h2>
-      <p>Demo berisi enam studi contoh lengkap dengan seri multi-irisan. Anda juga bisa langsung
-      membuka berkas DICOM milik Anda sendiri.</p>
+      <h2>Lihat hologramnya sekarang</h2>
+      <p>Panggung langsung terbuka dengan phantom demo — tidak perlu masuk, tidak perlu prisma
+      untuk mulai mencoba. Berkas DICOM Anda sendiri bisa dibuka langsung di sana.</p>
       <div class="row" style="justify-content:center;flex-wrap:wrap">
-        <a class="btn btn-primary" href="worklist.html">Buka Worklist Demo</a>
-        <a class="btn" href="viewer.html?demo=ST-2409-0146">Lihat CT Kepala</a>
+        <a class="btn btn-primary" href="prisma.html?demo=ST-2409-0146">Buka Panggung Hologram</a>
+        <a class="btn" href="viewer.html?demo=ST-2409-0146">Viewer 2D</a>
+        <a class="btn" href="worklist.html">Daftar studi</a>
       </div>
     </div>
   </div>
@@ -315,22 +422,22 @@
     <div class="foot-grid">
       <div>
         <a class="brand" href="index.html" style="margin-bottom:14px">
-          <span class="mark">K</span><span>Kaca<small>DICOM Inspection</small></span>
+          <span class="mark">K</span><span>Kaca<small>Hologram Prisma DICOM</small></span>
         </a>
         <p style="color:var(--muted);font-size:13.5px;max-width:38ch">
-          Platform inspeksi citra medis berbasis web untuk unit radiologi yang ingin bergerak cepat
-          tanpa mengorbankan ketelitian.
+          Viewer hologram prisma untuk citra CT dan MRI. Volume dihitung di peramban, berkas tidak
+          pernah meninggalkan perangkat Anda.
         </p>
       </div>
       <div>
         <h4>Produk</h4>
-        <a href="#fitur">Fitur</a><a href="#viewer">Viewer</a>
-        <a href="#harga">Harga</a><a href="worklist.html">Aplikasi</a>
+        <a href="prisma.html">Panggung hologram</a><a href="#hologram">Cara kerja</a>
+        <a href="#perangkat">Perangkat</a><a href="#harga">Harga</a>
       </div>
       <div>
         <h4>Sumber Daya</h4>
         <a href="#faq">FAQ</a><a href="#alur">Alur kerja</a>
-        <a href="#keamanan">Keamanan</a><a href="viewer.html">Dokumentasi viewer</a>
+        <a href="#keamanan">Keamanan</a><a href="viewer.html">Viewer 2D</a>
       </div>
       <div>
         <h4>Perusahaan</h4>
@@ -351,6 +458,7 @@
 </footer>
 
 <script src="assets/js/common.js"></script>
+<script src="assets/js/volume.js"></script>
 <script src="assets/js/demo.js"></script>
 <script src="assets/js/dicom.js"></script>
 <script src="assets/js/site.js"></script>

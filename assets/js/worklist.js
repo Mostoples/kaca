@@ -191,6 +191,8 @@
     updateCounts();
     document.getElementById('btnOpen').disabled = !state.selected;
 
+    document.getElementById('btnOpen2D').disabled = !state.selected;
+
     var terpilih = rows.filter(function (r) { return r.key === state.selected; })[0];
     var btnDel = document.getElementById('btnDelStudy');
     if (btnDel) btnDel.disabled = !(terpilih && terpilih.source === 'local');
@@ -361,7 +363,8 @@
     });
   })();
 
-  document.getElementById('btnOpen').addEventListener('click', openSelected);
+  document.getElementById('btnOpen').addEventListener('click', function () { openSelected(); });
+  document.getElementById('btnOpen2D').addEventListener('click', function () { openSelected('2d'); });
   document.getElementById('btnRefresh').addEventListener('click', function () {
     refreshLocalFromDB().then(function () {
       buildModFilters(); render(); segarkanInfoCache();
@@ -369,16 +372,20 @@
     });
   });
 
-  function openSelected() {
+  /* Tujuan utama sistem ini adalah hologram prisma, jadi itulah yang
+     dibuka tombol utama dan klik ganda. Viewer 2D tetap ada sebagai
+     jalur kedua untuk pengukuran dan pembacaan konvensional. */
+  function openSelected(tujuan) {
     var r = state.rows.filter(function (x) { return x.key === state.selected; })[0];
     if (!r) { K.toast('Pilih satu studi terlebih dahulu.', 'warn'); return; }
     /* membuka studi yang belum dibaca langsung menandainya sedang dibaca */
     if (r.status === 'Belum dibaca') setStatus(r.key, 'Sedang dibaca');
-    if (r.source === 'demo') {
-      location.href = 'viewer.html?demo=' + encodeURIComponent(r.key);
-    } else {
-      location.href = 'viewer.html?local=' + encodeURIComponent(r.studyUID);
-    }
+
+    var halaman = tujuan === '2d' ? 'viewer.html' : 'prisma.html';
+    var param = r.source === 'demo'
+      ? 'demo=' + encodeURIComponent(r.key)
+      : 'local=' + encodeURIComponent(r.studyUID);
+    location.href = halaman + '?' + param;
   }
 
   /* ==========================================================

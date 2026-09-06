@@ -5,15 +5,34 @@ dikerjakan, dan apa yang masih tersisa. Dibaca lebih dulu sebelum mengubah kode.
 
 ## Ringkas
 
-**Kaca** — platform inspeksi citra DICOM berbasis web. Live di <https://kaca-id.web.app>
+**Kaca** — **viewer hologram prisma** untuk citra DICOM. Live di <https://kaca-id.web.app>
 (Firebase project `kaca-id`, Firestore region `asia-southeast2`).
+
+**INTI SISTEM ADALAH PANGGUNG HOLOGRAM PRISMA (`prisma.html`).** Ini ditegaskan sendiri oleh
+pemilik proyek. Worklist, viewer 2D, MPR, MIP, pengukuran, dan pelaporan kedudukannya
+**pendukung** — jangan pernah menaikkannya jadi titik masuk utama lagi. Hierarki yang berlaku:
+
+- tab di semua halaman apps: **Hologram** → Viewer 2D → Studi
+- tombol utama worklist: **Tampilkan Hologram**; klik ganda baris juga ke hologram
+- tujuan bawaan setelah masuk (`masuk.js` → `BAWAAN`): `prisma.html`
+- rewrite Firebase: `/app` dan `/hologram` → `prisma.html`
+- landing page memimpin dengan hologram; hero-nya merender susunan empat sisi sungguhan
+
+Rancangan yang benar-benar diberikan pemilik hanya dua kalimat: hologram prisma memakai media
+kaca prisma dengan pantulan cahaya, dan itulah yang utama. Tidak ada mockup atau spesifikasi
+tata letak. Jangan mengaku "sesuai rancangan" untuk hal di luar dua kalimat itu.
 
 HTML + CSS + JavaScript native. **Tanpa framework, tanpa bundler, tanpa langkah build,
 tanpa `package.json`, tanpa `node_modules`.** Satu-satunya dependensi eksternal adalah SDK
 Firebase dari CDN. Ini disengaja — jangan menambahkan toolchain tanpa diminta.
 
-Lima halaman: `index.html` (landing), `masuk.html` (auth), `worklist.html`, `viewer.html`,
-`prisma.html` (proyeksi hologram).
+Lima halaman: `prisma.html` (**utama** — panggung hologram), `viewer.html` (2D + pembangun
+volume), `worklist.html` (daftar studi), `masuk.html` (auth), `index.html` (landing).
+
+`prisma.html` **berdiri sendiri**: `katalogDemo()` + `katalogLokal()` menyusun katalog studi,
+`isiPemilih()` mengisi dua `<select>`, `muatTerpilih()` menyusun volume dan memprarender,
+`bukaBerkas()` menerima berkas DICOM langsung di halaman itu. Parameter URL `?demo=`/`?local=`
+`&seri=` tetap dihormati bila datang dari worklist atau viewer.
 
 ## Aturan tak tertulis yang harus diikuti
 

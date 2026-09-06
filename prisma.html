@@ -17,9 +17,9 @@
   <header class="prisma-bar">
     <a class="brand" href="index.html"><span class="mark">K</span></a>
     <div class="app-tabs">
-      <a href="worklist.html">Worklist</a>
-      <a href="viewer.html">Viewer</a>
-      <a href="prisma.html" class="active">Prisma</a>
+      <a href="prisma.html" class="active">Hologram</a>
+      <a href="viewer.html">Viewer 2D</a>
+      <a href="worklist.html">Studi</a>
     </div>
     <div class="tit">
       <b id="hJudul">—</b>
@@ -56,6 +56,19 @@
 
     <!-- ====== PANEL ====== -->
     <aside class="prisma-panel">
+
+      <h6>Studi</h6>
+      <div class="prow">
+        <label for="pilihStudi">Studi</label>
+        <select class="field" id="pilihStudi" style="flex:1;min-width:0"></select>
+      </div>
+      <div class="prow">
+        <label for="pilihSeri">Seri</label>
+        <select class="field" id="pilihSeri" style="flex:1;min-width:0"></select>
+      </div>
+      <button class="btn btn-sm" id="btnBukaFile" style="width:100%">Buka berkas DICOM…</button>
+      <input type="file" id="fileInput" multiple hidden>
+      <p class="pnote" id="studiInfo">—</p>
 
       <h6>Cara pakai</h6>
       <p class="pnote">
