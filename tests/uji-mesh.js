@@ -1,5 +1,5 @@
 /* ==========================================================
-   KACA — uji rekonstruksi permukaan 3D
+   MEDIVOX — uji rekonstruksi permukaan 3D
    ----------------------------------------------------------
    Bentuk yang jawabannya diketahui secara analitis dipakai
    sebagai acuan: bola dengan radius tertentu harus menghasilkan

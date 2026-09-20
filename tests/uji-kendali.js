@@ -1,5 +1,5 @@
 /* ==========================================================
-   KACA — uji kendali gestur & suara
+   MEDIVOX — uji kendali gestur & suara
    ----------------------------------------------------------
    Kamera dan mikrofon tidak bisa diuji di Node, tetapi bagian
    yang paling mudah salah justru bukan I/O-nya:

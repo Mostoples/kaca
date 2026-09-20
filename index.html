@@ -3,9 +3,12 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Kaca — Viewer Hologram Prisma untuk Citra DICOM</title>
-<meta name="description" content="Kaca mengubah tumpukan irisan CT dan MRI menjadi hologram tiga dimensi yang mengambang di dalam prisma kaca. Berjalan penuh di peramban, tanpa instalasi, tanpa mengunggah berkas.">
-<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='8' fill='%232fd4bd'/><text x='16' y='22' font-size='17' font-family='sans-serif' font-weight='bold' text-anchor='middle' fill='%2304211d'>K</text></svg>">
+<title>Medivox — Viewer Hologram Prisma untuk Citra DICOM</title>
+<meta name="description" content="Medivox mengubah tumpukan irisan CT dan MRI menjadi hologram tiga dimensi yang mengambang di dalam prisma kaca. Berjalan penuh di peramban, tanpa instalasi, tanpa mengunggah berkas.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><defs><linearGradient id='g' x1='0' y1='0' x2='1' y2='1'><stop offset='0' stop-color='%232f6fd0'/><stop offset='1' stop-color='%235ec9f2'/></linearGradient></defs><rect width='32' height='32' rx='9' fill='url(%23g)'/><path d='M8 23V9l8 8 8-8v14' fill='none' stroke='%23ffffff' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'/></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap">
 <link rel="stylesheet" href="assets/css/base.css">
 <link rel="stylesheet" href="assets/css/site.css">
 </head>
@@ -16,8 +19,8 @@
 <header class="site-nav">
   <div class="wrap">
     <a class="brand" href="index.html">
-      <span class="mark">K</span>
-      <span>Kaca<small>Hologram Prisma DICOM</small></span>
+      <span class="mark">M</span>
+      <span class="wordmark">Medivox<small>See. Speak. Understand.</small></span>
     </a>
     <nav id="nav">
       <a href="#hologram">Hologram</a>
@@ -44,7 +47,7 @@
       <span class="pill pill-accent" style="margin-bottom:18px"><span class="dot"></span> Hologram prisma · berjalan penuh di peramban</span>
       <h1>Citra CT dan MRI yang <span class="grad">mengambang</span> di dalam prisma kaca.</h1>
       <p class="lead">
-        Kaca menyusun tumpukan irisan DICOM menjadi volume tiga dimensi, lalu memancarkannya
+        Medivox menyusun tumpukan irisan DICOM menjadi volume tiga dimensi, lalu memancarkannya
         sebagai empat pandangan yang saling berhadapan. Letakkan prisma kaca di atas layar dan
         pantulan keempat bidangnya bertemu jadi satu bentuk yang benar-benar tampak melayang —
         bisa diputar, tanpa kacamata khusus.
@@ -296,7 +299,7 @@
       <span class="eyebrow">Keamanan &amp; kepatuhan</span>
       <h2>Data pasien tetap di tempat yang seharusnya</h2>
       <p style="color:var(--text-2)">
-        Kaca memisahkan jalur data citra dari jalur metadata. Integrasi PACS memakai koneksi
+        Medivox memisahkan jalur data citra dari jalur metadata. Integrasi PACS memakai koneksi
         yang Anda kendalikan sendiri, dan setiap tindakan pembacaan tercatat.
       </p>
       <ul class="check-list">
@@ -422,7 +425,7 @@
     <div class="foot-grid">
       <div>
         <a class="brand" href="index.html" style="margin-bottom:14px">
-          <span class="mark">K</span><span>Kaca<small>Hologram Prisma DICOM</small></span>
+          <span class="mark">M</span><span class="wordmark">Medivox<small>See. Speak. Understand.</small></span>
         </a>
         <p style="color:var(--muted);font-size:13.5px;max-width:38ch">
           Viewer hologram prisma untuk citra CT dan MRI. Volume dihitung di peramban, berkas tidak
@@ -437,7 +440,7 @@
       <div>
         <h4>Sumber Daya</h4>
         <a href="#faq">FAQ</a><a href="#alur">Alur kerja</a>
-        <a href="#keamanan">Keamanan</a><a href="viewer.html">Viewer 2D</a>
+        <a href="#keamanan">Keamanan</a><a href="viewer.html" data-short="2D">Viewer 2D</a>
       </div>
       <div>
         <h4>Perusahaan</h4>
@@ -446,11 +449,11 @@
       </div>
     </div>
     <div class="foot-bottom">
-      <span>© 2026 Kaca. Prototipe antarmuka.</span>
+      <span>© 2026 Medivox. Prototipe antarmuka.</span>
       <span>Dibangun dengan HTML, CSS, dan JavaScript native.</span>
     </div>
     <p class="disclaimer">
-      Perhatian: Kaca adalah prototipe demonstrasi antarmuka dan bukan perangkat medis. Seluruh data
+      Perhatian: Medivox adalah prototipe demonstrasi antarmuka dan bukan perangkat medis. Seluruh data
       pasien yang tampil pada demo adalah fiktif dan citra yang ditampilkan merupakan phantom sintetis.
       Jangan gunakan untuk pengambilan keputusan klinis.
     </p>

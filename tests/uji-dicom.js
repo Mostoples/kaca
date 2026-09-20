@@ -1,5 +1,5 @@
 /* ==========================================================
-   KACA — uji round-trip parser DICOM
+   MEDIVOX — uji round-trip parser DICOM
    ----------------------------------------------------------
    Setiap uji membuat berkas DICOM sungguhan lewat tests/tulis-dicom.js,
    mengurainya kembali dengan assets/js/dicom.js, lalu membandingkan

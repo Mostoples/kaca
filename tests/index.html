@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Uji Parser DICOM — Kaca</title>
+<title>Uji Parser DICOM — Medivox</title>
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='8' fill='%232fd4bd'/><text x='16' y='22' font-size='17' font-family='sans-serif' font-weight='bold' text-anchor='middle' fill='%2304211d'>K</text></svg>">
 <link rel="stylesheet" href="../assets/css/base.css">
 <style>
@@ -68,7 +68,7 @@
 
   <ol class="hasil" id="hasil"></ol>
 
-  <a class="kembali" href="../index.html">← Kembali ke Kaca</a>
+  <a class="kembali" href="../index.html">← Kembali ke Medivox</a>
 </div>
 
 <script src="../assets/js/dicom.js"></script>
@@ -113,10 +113,10 @@
       '<span>' + lulus + ' lulus</span>' +
       (lewat ? '<span class="tag tag-skip">' + lewat + ' dilewati</span>' : '') +
       '<span style="color:var(--muted)">dari ' + (lulus + gagal + lewat) + ' uji</span>';
-    document.title = (gagal ? '✗ ' + gagal + ' gagal' : '✓ ' + lulus + ' lulus') + ' — Uji Kaca';
+    document.title = (gagal ? '✗ ' + gagal + ' gagal' : '✓ ' + lulus + ' lulus') + ' — Uji Medivox';
     /* ringkasan juga dicetak ke konsol supaya mudah dibaca saat debugging */
     (gagal ? console.error : console.log)(
-      '[Kaca] uji parser DICOM — ' + lulus + ' lulus, ' + gagal + ' gagal, ' + lewat + ' dilewati');
+      '[Medivox] uji parser DICOM — ' + lulus + ' lulus, ' + gagal + ' gagal, ' + lewat + ' dilewati');
   }
 
   var daftar = (window.UJI && window.UJI.daftar) || [];

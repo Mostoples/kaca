@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /* ==========================================================
-   KACA — periksa volume 3D dari data sungguhan
+   MEDIVOX — periksa volume 3D dari data sungguhan
    ----------------------------------------------------------
    Jalankan: node tests/periksa-volume.js
 

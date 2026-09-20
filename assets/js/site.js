@@ -1,9 +1,9 @@
 /* ==========================================================
-   KACA — script halaman web (landing)
+   MEDIVOX — script halaman web (landing)
    ========================================================== */
 (function () {
   'use strict';
-  var K = window.KACA;
+  var K = window.MEDIVOX;
 
   /* ---------- menu mobile ---------- */
   var tg = document.getElementById('navToggle'), nav = document.getElementById('nav');
@@ -125,7 +125,7 @@
 
     function tulisKemajuan(n) {
       latar();
-      ctx.fillStyle = '#2fd4bd';
+      ctx.fillStyle = '#5ec9f2';
       ctx.font = '12px "JetBrains Mono", monospace';
       ctx.textAlign = 'center';
       ctx.fillText('menyusun hologram… ' + n + '/' + SUDUT, cv.width / 2, cv.height / 2);
@@ -133,7 +133,7 @@
       var w = cv.width * 0.34, x = (cv.width - w) / 2, y = cv.height / 2 + 16;
       ctx.fillStyle = 'rgba(47,212,189,.22)';
       ctx.fillRect(x, y, w, 2);
-      ctx.fillStyle = '#2fd4bd';
+      ctx.fillStyle = '#5ec9f2';
       ctx.fillRect(x, y, w * (n / SUDUT), 2);
       ctx.textAlign = 'left';
     }

@@ -1,8 +1,8 @@
 /* ==========================================================
-   KACA — tiruan DOM & canvas untuk pengujian tanpa peramban
+   MEDIVOX — tiruan DOM & canvas untuk pengujian tanpa peramban
    ----------------------------------------------------------
    Bukan implementasi DOM lengkap, dan tidak berusaha jadi itu.
-   Cakupannya persis sebatas yang dipakai skrip halaman Kaca:
+   Cakupannya persis sebatas yang dipakai skrip halaman Medivox:
    pohon elemen yang dibangun dari berkas HTML sungguhan, subset
    selector CSS yang benar-benar muncul di kode, dan konteks
    canvas 2D yang mencatat panggilan alih-alih menggambar.
@@ -126,7 +126,7 @@ function pindai(html, buatElemen, buatTeks) {
 }
 
 /* ==========================================================
-   Selector: subset CSS yang benar-benar dipakai kode Kaca
+   Selector: subset CSS yang benar-benar dipakai kode Medivox
    ========================================================== */
 function pecahSederhana(teks) {
   const b = { tag: null, id: null, kelas: [], atr: [], bukan: [] };

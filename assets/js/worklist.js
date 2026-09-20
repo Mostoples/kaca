@@ -1,9 +1,9 @@
 /* ==========================================================
-   KACA — script halaman Worklist
+   MEDIVOX — script halaman Worklist
    ========================================================== */
 (function () {
   'use strict';
-  var K = window.KACA;
+  var K = window.MEDIVOX;
 
   /* ---------- ikon sidebar ---------- */
   [['i-inbox','inbox'],['i-clock','clock'],['i-user','user'],['i-check','check'],

@@ -1,11 +1,11 @@
 /* ==========================================================
-   KACA — sesi & penjaga halaman
+   MEDIVOX — sesi & penjaga halaman
    Dipakai oleh worklist.html dan viewer.html. Bergantung pada
-   window.KFB (assets/js/firebase-init.js) dan window.KACA.
+   window.KFB (assets/js/firebase-init.js) dan window.MEDIVOX.
    ========================================================== */
 (function (global) {
   'use strict';
-  var K = global.KACA;
+  var K = global.MEDIVOX;
 
   var TAMU = 'sesi.tamu';
 
@@ -123,7 +123,7 @@
       if (b.dataset.act === 'keluar') keluar();
       if (b.dataset.act === 'masuk') { setTamu(false); location.href = 'masuk.html'; }
       if (b.dataset.act === 'bantuan') {
-        if (global.KACA_BANTUAN) global.KACA_BANTUAN();
+        if (global.MEDIVOX_BANTUAN) global.MEDIVOX_BANTUAN();
         else K.toast('Pintasan lengkap ada di README.');
       }
     });

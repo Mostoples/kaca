@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /* ==========================================================
-   KACA — unduh seri DICOM volumetrik dari TCIA
+   MEDIVOX — unduh seri DICOM volumetrik dari TCIA
    ----------------------------------------------------------
    Jalankan:
      node tools/unduh-volume.js              # hanya seri phantom (~40 MB)
@@ -304,7 +304,7 @@ const pilihan = SERI.filter((s) => semua || s.jenis === 'phantom');
   const baris = [
     '# Sumber berkas DICOM di folder ini',
     '',
-    'Berkas `.dcm` di folder ini **bukan** buatan proyek Kaca. Semuanya diunduh oleh',
+    'Berkas `.dcm` di folder ini **bukan** buatan proyek Medivox. Semuanya diunduh oleh',
     '`tools/unduh-volume.js` dari **The Cancer Imaging Archive (TCIA)**,',
     '<https://www.cancerimagingarchive.net>, lewat REST API publik NBIA.',
     '',

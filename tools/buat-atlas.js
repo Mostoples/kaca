@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /* ==========================================================
-   KACA — pembangkit atlas anatomi contoh
+   MEDIVOX — pembangkit atlas anatomi contoh
    ----------------------------------------------------------
    Jalankan: node tools/buat-atlas.js
 
@@ -108,7 +108,7 @@ function organ(opsi) {
 }
 
 /* ----------------------------------------------------------
-   Susunan organ. Sumbu mengikuti kesepakatan DICOM di Kaca:
+   Susunan organ. Sumbu mengikuti kesepakatan DICOM di Medivox:
    +x kiri pasien, +y posterior, +z superior. Satuan milimeter.
    ---------------------------------------------------------- */
 const ORGAN = [
@@ -136,7 +136,7 @@ function main() {
 
   const bagian = ORGAN.map(organ);
   const baris = [
-    '# Kaca — atlas anatomi CONTOH, dibangkitkan oleh tools/buat-atlas.js',
+    '# Medivox — atlas anatomi CONTOH, dibangkitkan oleh tools/buat-atlas.js',
     '# BUKAN anatomi sungguhan: bentuk elipsoid berlekuk, letak kasar.',
     '# Hanya untuk memeriksa jalannya perangkat lunak. Bukan untuk klinis,',
     '# bukan untuk pendidikan. Satuan: milimeter.',
@@ -165,7 +165,7 @@ function main() {
   /* tiap organ juga ditulis sendiri-sendiri, untuk menguji pemuatan
      banyak berkas sekaligus di panel atlas */
   for (const b of bagian) {
-    const l = ['# Kaca — organ contoh (bukan anatomi sungguhan)', 'o ' + b.nama];
+    const l = ['# Medivox — organ contoh (bukan anatomi sungguhan)', 'o ' + b.nama];
     for (const v of b.vert) l.push('v ' + v[0].toFixed(3) + ' ' + v[1].toFixed(3) + ' ' + v[2].toFixed(3));
     for (const t of b.tri) l.push('f ' + (t[0] + 1) + ' ' + (t[1] + 1) + ' ' + (t[2] + 1));
     fs.writeFileSync(path.join(KELUARAN, b.nama.replace(/\s+/g, '-') + '.obj'), l.join('\n') + '\n');

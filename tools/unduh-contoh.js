@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /* ==========================================================
-   KACA — unduh berkas DICOM contoh dari internet
+   MEDIVOX — unduh berkas DICOM contoh dari internet
    ----------------------------------------------------------
    Jalankan:
      node tools/unduh-contoh.js             # set inti (~1,8 MB)
@@ -206,7 +206,7 @@ if (hanyaDaftar) {
   /* pemberitahuan hak cipta wajib disertakan untuk lisensi MIT */
   fs.writeFileSync(path.join(TUJUAN, 'SUMBER.md'),
     `# Sumber berkas DICOM di folder ini\n\n` +
-    `Berkas \`.dcm\` di folder ini **bukan** buatan proyek Kaca. Semuanya diunduh\n` +
+    `Berkas \`.dcm\` di folder ini **bukan** buatan proyek Medivox. Semuanya diunduh\n` +
     `oleh \`tools/unduh-contoh.js\` dari:\n\n` +
     `- **${SUMBER.nama}** — <${SUMBER.url}>\n` +
     `- Lisensi: **${SUMBER.lisensi}**\n` +

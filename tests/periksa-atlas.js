@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /* ==========================================================
-   KACA — pemeriksa atlas contoh
+   MEDIVOX — pemeriksa atlas contoh
    ----------------------------------------------------------
    Jalankan: node tools/buat-atlas.js  lalu
              node tests/periksa-atlas.js

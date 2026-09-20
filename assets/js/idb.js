@@ -1,5 +1,5 @@
 /* ==========================================================
-   KACA — penyimpanan berkas lokal (IndexedDB)
+   MEDIVOX — penyimpanan berkas lokal (IndexedDB)
    Dipakai agar berkas DICOM yang dibuka di Worklist tetap
    tersedia saat berpindah ke halaman Viewer, tanpa pernah
    dikirim ke server mana pun.

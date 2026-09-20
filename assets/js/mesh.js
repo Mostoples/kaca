@@ -1,5 +1,5 @@
 /* ==========================================================
-   KACA — rekonstruksi permukaan 3D dari volume
+   MEDIVOX — rekonstruksi permukaan 3D dari volume
    ----------------------------------------------------------
    Dua bagian:
 
@@ -455,7 +455,7 @@
     var dv = new DataView(buf);
     var u8 = new Uint8Array(buf);
 
-    var kepala = 'Kaca — rekonstruksi permukaan DICOM (phantom/prototipe). ' + (judul || '');
+    var kepala = 'Medivox — rekonstruksi permukaan DICOM (phantom/prototipe). ' + (judul || '');
     for (var i = 0; i < 80; i++) u8[i] = i < kepala.length ? kepala.charCodeAt(i) & 0x7F : 0x20;
     dv.setUint32(80, jml, true);
 
@@ -488,7 +488,7 @@
   /* OBJ teks, lengkap dengan normal per titik */
   Mesh.prototype.obj = function (judul) {
     var baris = [
-      '# Kaca — rekonstruksi permukaan dari volume DICOM',
+      '# Medivox — rekonstruksi permukaan dari volume DICOM',
       '# ' + (judul || this.desc),
       '# ambang ' + Math.round(this.ambang) + ', ' + this.jumlahSegitiga() + ' segitiga',
       '# satuan: milimeter',

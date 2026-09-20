@@ -1,5 +1,5 @@
 /* ==========================================================
-   KACA — uji volume 3D (MPR, MIP, proyeksi ray-cast)
+   MEDIVOX — uji volume 3D (MPR, MIP, proyeksi ray-cast)
    ----------------------------------------------------------
    Volume uji dibuat dari seri sintetis yang nilai voxel-nya
    diketahui persis, sehingga setiap potongan, slab, dan sinar

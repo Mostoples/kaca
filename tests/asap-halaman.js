@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /* ==========================================================
-   KACA — uji asap skrip halaman, tanpa peramban
+   MEDIVOX — uji asap skrip halaman, tanpa peramban
    ----------------------------------------------------------
    Jalankan: node tests/asap-halaman.js
 
@@ -103,6 +103,7 @@ function tekanKunci(dok, key) {
 async function ujiWorklist() {
   console.log('\nworklist.html');
   const { win, dok, skrip, galat } = muatHalaman('worklist.html', {
+    /* sengaja memakai awalan lama: sekalian menguji migrasi kunci */
     localStorage: { 'kaca.sesi.tamu': 'true' }
   });
 
@@ -110,12 +111,12 @@ async function ujiWorklist() {
   periksa('skrip halaman terdaftar di markup', skrip.length >= 6, `${skrip.length} <script>`);
   /* worklist sengaja TIDAK memuat volume.js & mesh.js — tidak dipakai di sini */
   periksa('global yang dibutuhkan worklist tersedia',
-    !!(win.KACA && win.DICOM && win.DEMO && win.KDB && win.KAUTH),
-    Object.keys({ KACA: 1, DICOM: 1, DEMO: 1, KDB: 1, KAUTH: 1 })
+    !!(win.MEDIVOX && win.DICOM && win.DEMO && win.KDB && win.KAUTH),
+    Object.keys({ MEDIVOX: 1, DICOM: 1, DEMO: 1, KDB: 1, KAUTH: 1 })
       .filter((k) => !win[k]).join(', ') || 'semua ada');
   periksa('worklist tidak memuat modul 3D yang tak dipakainya',
     !win.VOLUME && !win.MESH);
-  periksa('KACA_BANTUAN terdefinisi', typeof win.KACA_BANTUAN === 'function');
+  periksa('MEDIVOX_BANTUAN terdefinisi', typeof win.MEDIVOX_BANTUAN === 'function');
 
   await tunggu(win);
 
@@ -152,7 +153,7 @@ async function ujiWorklist() {
   periksa('penanda arah urut hanya satu', panah.length === 1, `${panah.length} penanda`);
 
   /* dialog pintasan */
-  win.KACA_BANTUAN();
+  win.MEDIVOX_BANTUAN();
   const dialog = dok.querySelector('.modal-back');
   periksa('dialog pintasan terbuka', !!dialog);
   if (dialog) {
@@ -174,6 +175,7 @@ async function ujiWorklist() {
 async function ujiViewer() {
   console.log('\nviewer.html');
   const { win, dok, galat } = muatHalaman('viewer.html', {
+    /* sengaja memakai awalan lama: sekalian menguji migrasi kunci */
     localStorage: { 'kaca.sesi.tamu': 'true' },
     search: '?demo=ST-2409-0146'
   });
@@ -290,7 +292,7 @@ async function ujiViewer() {
   try { tekanTombol(dok, 'btnSaveRep'); } catch (e) { repGalat = e.message; }
   periksa('menyimpan laporan tidak melempar', !repGalat, repGalat);
 
-  const status = JSON.parse(win.localStorage.getItem('kaca.wl.status') || '{}');
+  const status = JSON.parse(win.localStorage.getItem('medivox.wl.status') || '{}');
   periksa('status "Final" menandai studi Selesai di antrian',
     Object.values(status).includes('Selesai'), JSON.stringify(status));
 
@@ -391,6 +393,7 @@ async function ujiAtlas(win, dok) {
 async function ujiPrisma() {
   console.log('\nprisma.html');
   const { win, dok, galat } = muatHalaman('prisma.html', {
+    /* sengaja memakai awalan lama: sekalian menguji migrasi kunci */
     localStorage: { 'kaca.sesi.tamu': 'true' },
     search: '?demo=ST-2409-0146'
   });

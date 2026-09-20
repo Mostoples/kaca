@@ -1,5 +1,5 @@
 /* ==========================================================
-   KACA — halaman proyeksi prisma hologram
+   MEDIVOX — halaman proyeksi prisma hologram
    ========================================================== */
 .prisma-shell{
   height:100vh;height:100dvh;display:flex;flex-direction:column;overflow:hidden;background:#000;
@@ -7,8 +7,11 @@
 
 /* ---------- bilah atas ---------- */
 .prisma-bar{
-  flex:none;display:flex;align-items:center;gap:12px;padding:0 14px;height:52px;
-  background:var(--bg-1);border-bottom:1px solid var(--line);
+  flex:none;display:flex;align-items:center;gap:12px;padding:0 16px;height:58px;
+  background:linear-gradient(180deg,rgba(18,44,80,.96),rgba(12,34,64,.92));
+  border-bottom:var(--hairline);
+  box-shadow:0 10px 30px -18px rgba(1,6,14,.9);
+  backdrop-filter:blur(12px);
 }
 .prisma-bar .tit{min-width:0}
 .prisma-bar .tit b{display:block;font-size:13.5px;font-weight:650;line-height:1.2;
@@ -31,15 +34,15 @@
 .panggung:fullscreen canvas{border-radius:0}
 
 .panggung-info{
-  position:absolute;left:12px;bottom:10px;font-family:var(--mono);font-size:11px;
-  color:#4d5f73;pointer-events:none;
+  position:absolute;left:14px;bottom:12px;font-family:var(--mono);font-size:11px;
+  color:var(--muted-2);pointer-events:none;
 }
 .panggung:fullscreen .panggung-info{display:none}
 
 /* ---------- panel kontrol ---------- */
 .prisma-panel{
-  flex:none;width:308px;background:var(--bg-1);border-left:1px solid var(--line);
-  overflow:auto;padding:14px;
+  flex:none;width:326px;background:rgba(7,21,39,.62);border-left:var(--hairline);
+  overflow:auto;padding:16px;
 }
 body.tanpa-panel .prisma-panel{display:none}
 
@@ -140,9 +143,20 @@ body.tanpa-panel .prisma-panel{display:none}
 @media (max-width:1000px){
   .prisma-body{flex-direction:column}
   .prisma-panel{
-    width:auto;border-left:none;border-top:1px solid var(--line);
-    max-height:48vh;flex:none;
+    width:auto;border-left:none;border-top:var(--hairline);
+    max-height:44vh;flex:none;
   }
-  .panggung{flex:1;min-height:44vh}
+  /* panggung tetap bagian terbesar: di ponsel layarnya yang
+     diletakkan di bawah prisma, jadi luasnya menentukan ukuran
+     hologram yang terlihat */
+  .panggung{flex:1;min-height:52vh}
   .prow label{width:88px}
+}
+@media (max-width:620px){
+  .prisma-bar{height:56px;padding:0 10px;gap:8px}
+  .prisma-bar .tit{display:none}
+  .prisma-panel{padding:14px 12px;max-height:42vh}
+  .panggung{min-height:54vh;padding:6px}
+  .panggung-info{font-size:10px;left:10px;bottom:8px}
+  .prow label{width:76px;font-size:12.5px}
 }

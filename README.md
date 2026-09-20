@@ -1,6 +1,15 @@
-# Kaca — Viewer Hologram Prisma untuk Citra DICOM
+# Medivox — Viewer Hologram Prisma untuk Citra DICOM
+
+**See. Speak. Understand.**
 
 **Live: <https://kaca-id.web.app>**
+
+> Produk ini sebelumnya bernama *Kaca*. Nama, lambang, dan paletnya kini mengikuti
+> identitas Medivox. Identitas teknis yang tidak terlihat pengguna sengaja dibiarkan:
+> ID project Firebase tetap `kaca-id`, begitu pula nama basis data IndexedDB. Mengubahnya
+> berarti memindahkan project dan membuang data yang sudah tersimpan, tanpa manfaat yang
+> terlihat. Kunci `localStorage` memang berpindah ke awalan `medivox.`, tetapi kunci lama
+> ikut dipindahkan otomatis saat pertama dibaca sehingga laporan tersimpan tidak hilang.
 
 Inti sistem ini adalah **panggung hologram prisma**: tumpukan irisan CT atau MRI disusun jadi
 volume tiga dimensi, lalu dipancarkan sebagai empat pandangan yang saling berhadapan. Prisma
@@ -27,6 +36,38 @@ Firebase dari CDN untuk autentikasi dan penyimpanan laporan.
 
 Jalur pendek: `/app` dan `/hologram` → panggung hologram, `/viewer`, `/studi`, `/login`.
 Setelah masuk, tujuan bawaannya panggung hologram.
+
+## Bahasa visual
+
+Antarmuka memakai permukaan *neumorphic* di atas latar navy bergradien, dengan aksen gradien
+biru royal → cyan yang diambil dari huruf M pada logo:
+
+| Peran | Nilai |
+|---|---|
+| Biru merek | `#2f6fd0` |
+| Cyan aksen | `#5ec9f2` |
+| Navy wordmark | `#1b3a63` |
+| Permukaan | `#122c50` |
+| Gradien merek | `linear-gradient(120deg,#2f6fd0,#5ec9f2)` |
+
+Tipografi **Manrope** untuk antarmuka dan **JetBrains Mono** untuk angka, tag DICOM, serta
+overlay citra. Seluruh token ada di `assets/css/base.css`; mengubah paletnya cukup di sana.
+
+**Area citra medis dikecualikan dari gaya ini.** Viewport 2D, panel seri, dan panggung
+hologram tetap hitam murni tanpa gradien, karena latar berwarna menggeser persepsi kontras
+jaringan dan membuat penilaian window/level tidak dapat diandalkan.
+
+### Ponsel dan desktop
+
+Satu tata letak menyesuaikan diri, bukan dua halaman terpisah:
+
+- Di bawah 900 px sidebar worklist, panel seri, dan panel kanan menjadi laci geser; rel alat
+  viewer berpindah ke bawah sebagai baris yang dapat digulir; label tab diringkas.
+- Di bawah 720 px tabel worklist menjadi kartu — hanya kolom yang dipakai untuk memilih studi
+  yang ditampilkan; regio, jumlah citra, dan accession disembunyikan agar kartu tetap pendek.
+- Di atas 1700 px panel diberi ruang lebih lebar.
+- Seluruh interaksi viewer memakai Pointer Events, sehingga tetikus, pena, dan sentuh berjalan
+  lewat jalur yang sama, lengkap dengan cubit dua jari.
 
 ## Menjalankan secara lokal
 
@@ -60,7 +101,7 @@ merekonstruksi permukaan, mengekspor STL/OBJ, menyimpan laporan, dan menjalankan
 prisma sampai keempat sisinya benar-benar tergambar. Yang tertangkap: galat inisialisasi,
 `getElementById` yang mengembalikan `null`, dan pengendali yang melempar.
 
-Tiruan DOM-nya sengaja tidak lengkap — cakupannya persis sebatas yang dipakai kode Kaca:
+Tiruan DOM-nya sengaja tidak lengkap — cakupannya persis sebatas yang dipakai kode Medivox:
 pohon elemen dari HTML asli, subset selector CSS yang benar-benar muncul, dan konteks canvas
 2D yang **mencatat panggilan alih-alih menggambar**. Jadi yang **tidak** teruji tetap sama:
 hasil gambar, tata letak, dan gaya CSS. Untuk itu perlu dilihat mata di peramban.
@@ -435,7 +476,7 @@ pendidikan. Keluarannya dikecualikan git karena deterministik.
 
 ### Model anatomi sungguhan
 
-Kaca memuat OBJ/STL apa pun, jadi model sungguhan tinggal dimuat. Dua sumber berlisensi
+Medivox memuat OBJ/STL apa pun, jadi model sungguhan tinggal dimuat. Dua sumber berlisensi
 terbuka:
 
 | Sumber | Lisensi | Catatan |
@@ -448,7 +489,7 @@ Keduanya menuntut **atribusi** dan bersifat *share-alike*. Kredit yang diminta B
 > BodyParts3D, © The Database Center for Life Science licensed under
 > CC Attribution-Share Alike 2.1 Japan
 
-Share-alike itu mengikat modelnya, bukan kode Kaca yang berlisensi MIT. Model tidak
+Share-alike itu mengikat modelnya, bukan kode Medivox yang berlisensi MIT. Model tidak
 disertakan di repo ini — muat sendiri, dan sertakan atribusinya bila Anda
 mendistribusikannya kembali.
 

@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /* ==========================================================
-   KACA — pembuat berkas DICOM contoh yang volumetrik
+   MEDIVOX — pembuat berkas DICOM contoh yang volumetrik
    ----------------------------------------------------------
    Jalankan:
      node tools/buat-contoh.js            # resolusi sedang, ditulis ke contoh-dicom/
@@ -389,7 +389,7 @@ function buatSeri(st, ukuran, tujuan) {
       patient: st.patient, patientId: st.patientId, sex: st.sex, age: st.age,
       birth: '19700101', date: '20260901', time: '101500',
       accession: 'ACC91' + String(idx).padStart(2, '0'),
-      institution: 'RS Contoh Kaca', manufacturer: 'Kaca Prototype',
+      institution: 'RS Contoh Medivox', manufacturer: 'Medivox Prototype',
       model: 'Phantom Generator 2.0',
       imageType: 'DERIVED\\SECONDARY\\PHANTOM\\VOLUMETRIC',
       studyUID, seriesUID, seriesNumber: 1,

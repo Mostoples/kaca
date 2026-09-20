@@ -1,5 +1,5 @@
 /* ==========================================================
-   KACA — proyeksi prisma hologram
+   MEDIVOX — proyeksi prisma hologram
    ----------------------------------------------------------
    Menyiapkan tampilan untuk piramida/prisma akrilik yang
    diletakkan di atas layar (efek Pepper's ghost): empat
@@ -18,7 +18,7 @@
    ========================================================== */
 (function () {
   'use strict';
-  var K = window.KACA;
+  var K = window.MEDIVOX;
 
   var App = {
     vol: null,
@@ -228,7 +228,7 @@
     el('studiInfo').textContent = st.sumber === 'demo'
       ? 'Phantom sintetis — bukan data pasien.'
       : 'Berkas lokal Anda sendiri, diurai di peramban ini.';
-    document.title = st.label + ' — Prisma Kaca';
+    document.title = st.label + ' — Prisma Medivox';
 
     pesan('Menyusun volume…', 'membaca irisan');
     el('bar').style.width = '0%';
@@ -1045,10 +1045,10 @@
     else { c.fillStyle = '#000'; c.fillRect(0, 0, cv.width, cv.height); }
     if (!jejak) return;
     var k = jejak.kotak;
-    c.strokeStyle = '#2fd4bd';
+    c.strokeStyle = '#5ec9f2';
     c.lineWidth = 2;
     c.strokeRect(k.x0, k.y0, k.x1 - k.x0, k.y1 - k.y0);
-    c.fillStyle = '#2fd4bd';
+    c.fillStyle = '#5ec9f2';
     c.beginPath();
     c.arc(jejak.x * cv.width, jejak.y * cv.height, 3, 0, Math.PI * 2);
     c.fill();

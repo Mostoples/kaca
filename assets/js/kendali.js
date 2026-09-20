@@ -1,5 +1,5 @@
 /* ==========================================================
-   KACA — kendali gestur tangan & suara untuk panggung hologram
+   MEDIVOX — kendali gestur tangan & suara untuk panggung hologram
    ----------------------------------------------------------
    Dua sumber kendali yang berdiri sendiri:
 

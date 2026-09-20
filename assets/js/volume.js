@@ -1,5 +1,5 @@
 /* ==========================================================
-   KACA — volume 3D: MPR, MIP, dan proyeksi ray-cast
+   MEDIVOX — volume 3D: MPR, MIP, dan proyeksi ray-cast
    ----------------------------------------------------------
    Menyusun tumpukan irisan 2D menjadi satu volume, lalu
    menyediakan tiga hal:

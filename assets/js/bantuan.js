@@ -1,7 +1,7 @@
 /* ==========================================================
-   KACA — dialog bantuan pintasan papan ketik
+   MEDIVOX — dialog bantuan pintasan papan ketik
    ----------------------------------------------------------
-   Menyediakan window.KACA_BANTUAN() yang dipanggil dari menu
+   Menyediakan window.MEDIVOX_BANTUAN() yang dipanggil dari menu
    pengguna (assets/js/auth.js) dan dari tombol "?" / "Shift+/".
    Isi dialog menyesuaikan halaman yang sedang dibuka: worklist
    hanya menampilkan pintasan antrian, viewer menampilkan alat,
@@ -9,7 +9,7 @@
    ========================================================== */
 (function (global) {
   'use strict';
-  var K = global.KACA;
+  var K = global.MEDIVOX;
 
   /* ---------- isi ---------- */
   var UMUM = {
@@ -229,6 +229,6 @@
     buka();
   });
 
-  global.KACA_BANTUAN = buka;
-  global.KACA_BANTUAN_TUTUP = tutup;
+  global.MEDIVOX_BANTUAN = buka;
+  global.MEDIVOX_BANTUAN_TUTUP = tutup;
 })(window);

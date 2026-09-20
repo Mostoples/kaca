@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /* ==========================================================
-   KACA — periksa berkas contoh di contoh-dicom/
+   MEDIVOX — periksa berkas contoh di contoh-dicom/
    ----------------------------------------------------------
    Jalankan: node tests/periksa-contoh.js
 

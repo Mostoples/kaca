@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /* ==========================================================
-   KACA — server statis untuk pengembangan lokal
+   MEDIVOX — server statis untuk pengembangan lokal
    ----------------------------------------------------------
    Jalankan: node serve.js [port]
 
@@ -60,6 +60,6 @@ http.createServer((req, res) => {
     res.end(data);
   });
 }).listen(PORT, () => {
-  console.log('Kaca berjalan di http://localhost:' + PORT + '/');
+  console.log('Medivox berjalan di http://localhost:' + PORT + '/');
   console.log('Tekan Ctrl+C untuk berhenti.');
 });

@@ -1,5 +1,5 @@
 /* ==========================================================
-   KACA — Parser DICOM Part-10 (vanilla JS, tanpa dependensi)
+   MEDIVOX — Parser DICOM Part-10 (vanilla JS, tanpa dependensi)
    ----------------------------------------------------------
    Mendukung:
      - Preamble 128 byte + magic "DICM" (dan file tanpa preamble)

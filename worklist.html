@@ -3,8 +3,11 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Worklist — Kaca</title>
-<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='8' fill='%232fd4bd'/><text x='16' y='22' font-size='17' font-family='sans-serif' font-weight='bold' text-anchor='middle' fill='%2304211d'>K</text></svg>">
+<title>Worklist — Medivox</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><defs><linearGradient id='g' x1='0' y1='0' x2='1' y2='1'><stop offset='0' stop-color='%232f6fd0'/><stop offset='1' stop-color='%235ec9f2'/></linearGradient></defs><rect width='32' height='32' rx='9' fill='url(%23g)'/><path d='M8 23V9l8 8 8-8v14' fill='none' stroke='%23ffffff' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'/></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap">
 <link rel="stylesheet" href="assets/css/base.css">
 <link rel="stylesheet" href="assets/css/app.css">
 </head>
@@ -15,11 +18,11 @@
 
   <!-- ====== TOP BAR ====== -->
   <header class="app-bar">
-    <a class="brand" href="index.html"><span class="mark">K</span><span>Kaca</span></a>
+    <a class="brand" href="index.html"><span class="mark">M</span><span class="wordmark">Medivox</span></a>
     <div class="app-tabs">
-      <a href="prisma.html">Hologram</a>
-      <a href="viewer.html">Viewer 2D</a>
-      <a href="worklist.html" class="active">Studi</a>
+      <a href="prisma.html" data-short="3D">Hologram</a>
+      <a href="viewer.html" data-short="2D">Viewer 2D</a>
+      <a href="worklist.html" class="active" data-short="Studi">Studi</a>
     </div>
     <span class="spacer"></span>
     <button class="btn btn-sm only-mobile" id="btnFilter" aria-expanded="false" aria-controls="wlSide">
@@ -27,7 +30,7 @@
            stroke-linecap="round" aria-hidden="true"><path d="M3 6h18M6 12h12M10 18h4"/></svg>
       Filter
     </button>
-    <button class="btn btn-sm" id="btnOpenFiles">Buka File DICOM</button>
+    <button class="btn btn-sm" id="btnOpenFiles" title="Buka berkas DICOM"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 2H7a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7z"/><path d="M14 2v5h5"/></svg><span class="btn-teks">Buka File DICOM</span></button>
     <button class="btn btn-sm hide-narrow" id="btnOpenFolder">Buka Folder</button>
     <input type="file" id="fileInput" multiple accept=".dcm,.dicom,application/dicom,*/*" hidden>
     <input type="file" id="dirInput" webkitdirectory directory multiple hidden>

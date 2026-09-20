@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /* ==========================================================
-   KACA — penjalan uji parser DICOM tanpa peramban
+   MEDIVOX — penjalan uji parser DICOM tanpa peramban
    ----------------------------------------------------------
    Jalankan: node tests/node-runner.js
 

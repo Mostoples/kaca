@@ -1,5 +1,5 @@
 /* ==========================================================
-   KACA — utilitas bersama (toast, storage, helper DOM)
+   MEDIVOX — utilitas bersama (toast, storage, helper DOM)
    ========================================================== */
 (function (global) {
   'use strict';
@@ -33,17 +33,57 @@
     }, ms || 2800);
   }
 
-  /* ---------- localStorage aman ---------- */
+  /* ---------- localStorage aman ----------
+     Awalan kunci ikut berganti saat produk ini berganti nama menjadi
+     Medivox. Kunci lama berawalan "kaca." dipindahkan sekali saat
+     pertama kali dibaca, supaya laporan dan preferensi yang sudah
+     tersimpan di peramban pengguna tidak hilang. */
+  var AWALAN = 'medivox.';
+  var AWALAN_LAMA = 'kaca.';
+
+  function pindahkanKunciLama() {
+    try {
+      if (localStorage.getItem(AWALAN + '__migrasi') === '1') return;
+      for (var i = localStorage.length - 1; i >= 0; i--) {
+        var k = localStorage.key(i);
+        if (!k || k.indexOf(AWALAN_LAMA) !== 0) continue;
+        var baruK = AWALAN + k.slice(AWALAN_LAMA.length);
+        if (localStorage.getItem(baruK) === null) {
+          localStorage.setItem(baruK, localStorage.getItem(k));
+        }
+        localStorage.removeItem(k);
+      }
+      localStorage.setItem(AWALAN + '__migrasi', '1');
+    } catch (e) { /* mode privat atau kuota penuh — abaikan */ }
+  }
+  pindahkanKunciLama();
+
+  /* Jaring pengaman per-kunci. Migrasi massal di atas perlu
+     localStorage.length dan .key(); tidak semua lingkungan
+     menyediakannya. Kalau kunci baru belum ada, kunci lama tetap
+     dibaca lalu dipindahkan saat itu juga. */
+  function ambilDenganCadangan(k) {
+    var v = localStorage.getItem(AWALAN + k);
+    if (v !== null) return v;
+    var lama = localStorage.getItem(AWALAN_LAMA + k);
+    if (lama === null) return null;
+    try {
+      localStorage.setItem(AWALAN + k, lama);
+      localStorage.removeItem(AWALAN_LAMA + k);
+    } catch (e) { /* hanya pemindahan; nilainya tetap dikembalikan */ }
+    return lama;
+  }
+
   var store = {
     get: function (k, d) {
-      try { var v = localStorage.getItem('kaca.' + k); return v === null ? d : JSON.parse(v); }
+      try { var v = ambilDenganCadangan(k); return v === null ? d : JSON.parse(v); }
       catch (e) { return d; }
     },
     set: function (k, v) {
-      try { localStorage.setItem('kaca.' + k, JSON.stringify(v)); return true; }
+      try { localStorage.setItem(AWALAN + k, JSON.stringify(v)); return true; }
       catch (e) { return false; }
     },
-    del: function (k) { try { localStorage.removeItem('kaca.' + k); } catch (e) {} }
+    del: function (k) { try { localStorage.removeItem(AWALAN + k); } catch (e) {} }
   };
 
   /* ---------- format ---------- */
@@ -90,7 +130,7 @@
       '>' + (ICONS[name] || '') + '</svg>';
   }
 
-  global.KACA = {
+  global.MEDIVOX = {
     qs: qs, qsa: qsa, el: el, toast: toast, store: store, icon: icon, ICONS: ICONS,
     fmtDate: fmtDate, fmtTime: fmtTime, fmtName: fmtName, fmtBytes: fmtBytes
   };

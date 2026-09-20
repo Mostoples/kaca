@@ -1,5 +1,5 @@
 /* ==========================================================
-   KACA — pemuat model permukaan (OBJ / STL) + adegan atlas
+   MEDIVOX — pemuat model permukaan (OBJ / STL) + adegan atlas
    ----------------------------------------------------------
    Dua hal yang dikerjakan berkas ini:
 

@@ -1,9 +1,9 @@
 /* ==========================================================
-   KACA — mesin Viewer DICOM
+   MEDIVOX — mesin Viewer DICOM
    ========================================================== */
 (function () {
   'use strict';
-  var K = window.KACA;
+  var K = window.MEDIVOX;
 
   /* ==========================================================
      State global
@@ -49,7 +49,7 @@
     { n: 'Abu-abu', v: null }, { n: 'Hot', v: 'hot' },
     { n: 'Bone', v: 'bone' }, { n: 'Jet', v: 'jet' }, { n: 'PET', v: 'pet' }
   ];
-  var MEAS_COLORS = ['#2fd4bd', '#f5b942', '#8ab8ff', '#ff8b90', '#c79bff', '#5ce7a8'];
+  var MEAS_COLORS = ['#5ec9f2', '#ffc56a', '#8cc6f5', '#ff8aa1', '#b9adf5', '#5fe0a8'];
 
   /* ==========================================================
      Penyimpanan pengukuran
@@ -1200,7 +1200,7 @@
     document.getElementById('hPatient').textContent = study.patient.name || '—';
     document.getElementById('hStudy').textContent =
       study.modality + ' · ' + study.desc + ' · ' + K.fmtDate(study.date) + ' · ' + study.series.length + ' seri';
-    document.title = (study.patient.name || 'Studi') + ' — Kaca Viewer';
+    document.title = (study.patient.name || 'Studi') + ' — Medivox Viewer';
     renderSeries();
     loadReport();
 

@@ -1,5 +1,5 @@
 /* ==========================================================
-   KACA — jembatan Firebase
+   MEDIVOX — jembatan Firebase
    ----------------------------------------------------------
    Berkas ini satu-satunya modul ES di proyek. Ia memuat SDK
    modular Firebase dari CDN lalu menyediakan API kecil di

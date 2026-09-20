@@ -1,9 +1,9 @@
 /* ==========================================================
-   KACA — script halaman masuk / daftar
+   MEDIVOX — script halaman masuk / daftar
    ========================================================== */
 (function () {
   'use strict';
-  var K = window.KACA;
+  var K = window.MEDIVOX;
   var mode = 'masuk';           /* 'masuk' | 'daftar' */
   var params = new URLSearchParams(location.search);
   /* Tujuan bawaan setelah masuk adalah panggung hologram — itulah inti

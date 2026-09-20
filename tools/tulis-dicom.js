@@ -1,5 +1,5 @@
 /* ==========================================================
-   KACA — penulis DICOM minimal
+   MEDIVOX — penulis DICOM minimal
    ----------------------------------------------------------
    Bukan bagian dari aplikasi. Dipakai dua hal:
      - tests/uji-dicom.js — uji round-trip parser
@@ -226,8 +226,8 @@
       ['00080030', 'TM', teks(o.time || '090000', 'TM')],
       ['00080050', 'SH', teks(o.accession || 'ACC0000001', 'SH')],
       ['00080060', 'CS', teks(o.modality || 'CT', 'CS')],
-      ['00080070', 'LO', teks(o.manufacturer || 'Kaca Prototype', 'LO')],
-      ['00080080', 'LO', teks(o.institution || 'RS Contoh Kaca', 'LO')],
+      ['00080070', 'LO', teks(o.manufacturer || 'Medivox Prototype', 'LO')],
+      ['00080080', 'LO', teks(o.institution || 'RS Contoh Medivox', 'LO')],
       ['00081030', 'LO', teks(o.studyDesc || 'Studi phantom', 'LO')],
       ['0008103E', 'LO', teks(o.seriesDesc || 'Seri phantom', 'LO')],
       ['00081090', 'LO', teks(o.model || 'Phantom Generator 2.0', 'LO')],

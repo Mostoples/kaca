@@ -1,5 +1,5 @@
 /* ==========================================================
-   KACA — Data demo (phantom sintetis)
+   MEDIVOX — Data demo (phantom sintetis)
    Menghasilkan objek image yang bentuknya sama persis dengan
    hasil DICOM.readPixels(), sehingga viewer tidak perlu tahu
    apakah sumbernya file DICOM asli atau phantom demo.

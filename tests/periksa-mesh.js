@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /* ==========================================================
-   KACA — periksa rekonstruksi 3D pada seri volumetrik nyata
+   MEDIVOX — periksa rekonstruksi 3D pada seri volumetrik nyata
    ----------------------------------------------------------
    Jalankan: node tests/periksa-mesh.js
    Perlu:    node tools/buat-contoh.js  (untuk mengisi contoh-dicom/volume/)

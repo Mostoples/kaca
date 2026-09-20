@@ -1,5 +1,5 @@
 /* ==========================================================
-   KACA — uji pemuat model & adegan atlas
+   MEDIVOX — uji pemuat model & adegan atlas
    ----------------------------------------------------------
    Acuannya kubus: jumlah titik, jumlah segitiga, arah normal,
    dan letak di layar semuanya bisa dihitung dengan tangan.
