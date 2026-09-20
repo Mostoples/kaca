@@ -2,16 +2,17 @@
    MEDIVOX — halaman proyeksi prisma hologram
    ========================================================== */
 .prisma-shell{
-  height:100vh;height:100dvh;display:flex;flex-direction:column;overflow:hidden;background:#000;
+  height:100vh;height:100dvh;display:flex;flex-direction:column;overflow:hidden;
+  background:var(--bg);
 }
 
 /* ---------- bilah atas ---------- */
 .prisma-bar{
   flex:none;display:flex;align-items:center;gap:12px;padding:0 16px;height:58px;
-  background:linear-gradient(180deg,rgba(18,44,80,.96),rgba(12,34,64,.92));
-  border-bottom:var(--hairline);
-  box-shadow:0 10px 30px -18px rgba(1,6,14,.9);
-  backdrop-filter:blur(12px);
+  background:rgba(255,255,255,.88);
+  border-bottom:1px solid var(--line-soft);
+  box-shadow:0 1px 2px rgba(19,45,80,.04);
+  backdrop-filter:blur(14px);
 }
 .prisma-bar .tit{min-width:0}
 .prisma-bar .tit b{display:block;font-size:13.5px;font-weight:650;line-height:1.2;
@@ -35,14 +36,14 @@
 
 .panggung-info{
   position:absolute;left:14px;bottom:12px;font-family:var(--mono);font-size:11px;
-  color:var(--muted-2);pointer-events:none;
+  color:#5b6b80;pointer-events:none;
 }
 .panggung:fullscreen .panggung-info{display:none}
 
 /* ---------- panel kontrol ---------- */
 .prisma-panel{
-  flex:none;width:326px;background:rgba(7,21,39,.62);border-left:var(--hairline);
-  overflow:auto;padding:16px;
+  flex:none;width:326px;background:var(--panel);border-left:1px solid var(--line-soft);
+  overflow:auto;padding:18px;
 }
 body.tanpa-panel .prisma-panel{display:none}
 
@@ -61,8 +62,9 @@ body.tanpa-panel .prisma-panel{display:none}
 }
 .pgrid button b{font-size:12px;color:var(--text);font-weight:600}
 .pgrid button span{font-size:10px;color:var(--muted)}
-.pgrid button:hover{border-color:#2c3d52}
-.pgrid button.on{border-color:var(--accent);background:rgba(47,212,189,.08)}
+.pgrid button{box-shadow:var(--shadow-out-sm);transition:border-color .15s,box-shadow .15s}
+.pgrid button:hover{border-color:rgba(47,111,208,.35);box-shadow:var(--shadow-out)}
+.pgrid button.on{border-color:var(--accent);background:rgba(47,111,208,.08)}
 .pgrid button.on b{color:var(--accent)}
 .pgrid button:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
 
@@ -77,7 +79,7 @@ body.tanpa-panel .prisma-panel{display:none}
   border-color:var(--warn);color:var(--warn);
   animation:denyut 1.6s ease-in-out infinite;
 }
-@keyframes denyut{50%{background:rgba(245,185,66,.1)}}
+@keyframes denyut{50%{background:rgba(199,122,6,.1)}}
 
 .vinfo{
   margin:9px 0 0;font-family:var(--mono);font-size:10.5px;line-height:1.6;
@@ -96,13 +98,13 @@ body.tanpa-panel .prisma-panel{display:none}
   padding:5px 6px;cursor:pointer;color:var(--text-2);
   font-size:11.5px;text-align:left;font-family:inherit;
 }
-.organ-list button:hover{background:rgba(255,255,255,.04);border-color:#2c3d52}
+.organ-list button:hover{background:var(--bg-1);border-color:var(--line)}
 .organ-list button:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
-.organ-list button[aria-pressed=true]{border-color:var(--accent);background:rgba(47,212,189,.09)}
+.organ-list button[aria-pressed=true]{border-color:var(--accent);background:rgba(47,111,208,.08)}
 .organ-list button[aria-pressed=true] .onama{color:var(--text)}
 .organ-list .oswatch{
   flex:none;width:11px;height:11px;border-radius:3px;
-  border:1px solid rgba(255,255,255,.22);
+  border:1px solid rgba(18,44,80,.2);
 }
 .organ-list .onama{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .organ-list .otri{flex:none;font-family:var(--mono);font-size:10px;color:var(--muted)}
@@ -131,19 +133,20 @@ body.tanpa-panel .prisma-panel{display:none}
 .pstatus{
   position:absolute;inset:0;display:grid;place-items:center;
   background:rgba(0,0,0,.82);backdrop-filter:blur(3px);z-index:20;
+  color:#e8f1fb;               /* berada di atas panggung gelap */
 }
 .pstatus .kotak{text-align:center;width:min(340px,80vw)}
 .pstatus p{margin:0 0 6px;font-size:14px}
-.pstatus small{display:block;font-family:var(--mono);font-size:11.5px;color:var(--muted);min-height:1.4em}
+.pstatus small{display:block;font-family:var(--mono);font-size:11.5px;color:#9fb3cc;min-height:1.4em}
 .pbar{
-  height:4px;border-radius:20px;background:var(--line);overflow:hidden;margin-top:14px;
+  height:4px;border-radius:20px;background:rgba(255,255,255,.16);overflow:hidden;margin-top:14px;
 }
 .pbar i{display:block;height:100%;width:0;background:var(--accent);transition:width .18s linear}
 
 @media (max-width:1000px){
   .prisma-body{flex-direction:column}
   .prisma-panel{
-    width:auto;border-left:none;border-top:var(--hairline);
+    width:auto;border-left:none;border-top:1px solid var(--line-soft);
     max-height:44vh;flex:none;
   }
   /* panggung tetap bagian terbesar: di ponsel layarnya yang

@@ -39,23 +39,43 @@ Setelah masuk, tujuan bawaannya panggung hologram.
 
 ## Bahasa visual
 
-Antarmuka memakai permukaan *neumorphic* di atas latar navy bergradien, dengan aksen gradien
-biru royal → cyan yang diambil dari huruf M pada logo:
+Tema terang: putih lapang, garis tipis, bayangan lembut. Aksen memakai gradien biru royal →
+cyan yang diambil dari huruf M pada logo, dan navy wordmark sebagai warna judul.
 
-| Peran | Nilai |
-|---|---|
-| Biru merek | `#2f6fd0` |
-| Cyan aksen | `#5ec9f2` |
-| Navy wordmark | `#1b3a63` |
-| Permukaan | `#122c50` |
-| Gradien merek | `linear-gradient(120deg,#2f6fd0,#5ec9f2)` |
+| Peran | Nilai | Asal |
+|---|---|---|
+| Biru merek / aksen | `#2f6fd0` | sisi kiri huruf M |
+| Cyan | `#5ec9f2` | sisi kanan huruf M |
+| Navy judul | `#1b3a63` | wordmark MEDI |
+| Permukaan | `#ffffff` | — |
+| Latar halaman | `#f6f9fd` | — |
+| Gradien merek | `linear-gradient(120deg,#2f6fd0,#5ec9f2)` | — |
 
 Tipografi **Manrope** untuk antarmuka dan **JetBrains Mono** untuk angka, tag DICOM, serta
 overlay citra. Seluruh token ada di `assets/css/base.css`; mengubah paletnya cukup di sana.
 
-**Area citra medis dikecualikan dari gaya ini.** Viewport 2D, panel seri, dan panggung
-hologram tetap hitam murni tanpa gradien, karena latar berwarna menggeser persepsi kontras
-jaringan dan membuat penilaian window/level tidak dapat diandalkan.
+**Area citra dikecualikan dari tema terang.** Viewport 2D, thumbnail seri, dan panggung
+hologram tetap hitam. Jaringan dinilai di atas hitam — latar terang di belakang gambar
+menggeser persepsi kontras dan membuat penilaian window/level tidak dapat diandalkan. Jadi
+polanya: kerangka terang, gambar gelap, sama seperti stasiun kerja PACS.
+
+### Kontras teks
+
+Warna teks dipilih dengan mengukur, bukan menebak. Setiap warna yang dipakai untuk teks kecil
+mencapai minimal 4,5:1 di atas putih maupun `--bg`:
+
+| Token | Nilai | Rasio di atas `--bg` |
+|---|---|---|
+| `--text` | `#12233c` | 14,9:1 |
+| `--text-2` | `#41608a` | 6,1:1 |
+| `--muted` | `#5a7290` | 4,7:1 |
+| `--accent` | `#2f6fd0` | 4,6:1 |
+| `--ok` | `#0f7d57` | 4,9:1 |
+| `--warn` | `#9a5d04` | 5,1:1 |
+| `--danger` | `#c13333` | 5,3:1 |
+
+`--muted-2` sengaja lebih pucat dan dipakai hanya untuk garis serta ikon dekoratif, tidak
+pernah untuk teks.
 
 ### Ponsel dan desktop
 

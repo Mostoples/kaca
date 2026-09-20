@@ -2,74 +2,82 @@
    MEDIVOX — Design tokens & primitif
    "See. Speak. Understand."
    ----------------------------------------------------------
-   Palet diambil dari logo: biru royal pada sisi kiri huruf M,
-   cyan terang pada sisi kanan, navy pekat dari wordmark MEDI.
-   Permukaan neumorphic bertepi rambut, aksen gradien biru → cyan.
+   Tema terang: putih lapang, bayangan lembut, garis tipis.
+   Warna diambil dari logo — biru royal pada sisi kiri huruf M,
+   cyan pada sisi kanan, navy pekat dari wordmark MEDI.
 
    Satu pengecualian yang disengaja: area citra medis tetap
-   hitam murni. Itu syarat diagnostik, bukan pilihan gaya —
-   latar bergradien akan mengubah persepsi kontras jaringan.
+   gelap. Itu syarat diagnostik, bukan pilihan gaya — jaringan
+   dinilai di atas hitam, dan latar terang di belakang gambar
+   membuat penilaian window/level tidak dapat diandalkan.
+   Jadi: kerangka terang, gambar gelap.
    ========================================================== */
 :root{
-  /* ---- permukaan (navy dari wordmark) ---- */
-  --bg:#071527;
-  --bg-deep:#04101f;
-  --bg-1:#0c2240;
-  --panel:#122c50;
-  --panel-2:#16355d;
+  /* ---- permukaan ---- */
+  --bg:#f6f9fd;
+  --bg-deep:#eef3fa;
+  --bg-1:#eff4fa;          /* alur tenggelam / isian */
+  --panel:#ffffff;
+  --panel-2:#f7fafd;
+
+  /* ---- area citra (selalu gelap) ---- */
+  --film:#0a0f16;
+  --film-deep:#000000;
 
   /* ---- merek (dari gradien huruf M) ---- */
   --brand-deep:#1b3a63;
   --brand:#2f6fd0;
   --brand-mid:#4a9fe8;
-  --accent:#5ec9f2;
-  --accent-soft:#a5e2fb;
-  --accent-2:#2f6fd0;
-  --accent-ink:#04202e;
+  --accent:#2f6fd0;        /* aksen di atas putih memakai biru */
+  --accent-bright:#5ec9f2; /* cyan untuk gradien & sorotan */
+  --accent-soft:#a5e2fb;   /* dipakai di atas citra gelap */
+  --accent-2:#5ec9f2;
+  --accent-ink:#ffffff;
   --grad:linear-gradient(120deg,#2f6fd0 0%,#5ec9f2 100%);
-  --grad-soft:linear-gradient(120deg,rgba(47,111,208,.18),rgba(94,201,242,.18));
+  --grad-soft:linear-gradient(120deg,rgba(47,111,208,.10),rgba(94,201,242,.12));
 
   /* ---- teks ---- */
-  --text:#e8f1fb;
-  --text-2:#a8c0db;
-  --muted:#6e89ab;
-  --muted-2:#43597a;
+  --text:#12233c;
+  --text-2:#41608a;
+  --muted:#5a7290;        /* 4.7:1 di atas --bg */
+  --muted-2:#8ea2ba;      /* hanya untuk garis & ikon, bukan teks */
 
   /* ---- status ---- */
-  --ok:#5fe0a8;
-  --warn:#ffc56a;
-  --danger:#ff7a7a;
-  --info:#5fb0ff;
+  /* Nilai status dipilih agar lulus kontras 4.5:1 untuk teks kecil
+     di atas putih maupun --bg; versi terang dipakai hanya sebagai
+     latar pil, bukan sebagai warna teks. */
+  --ok:#0f7d57;
+  --warn:#9a5d04;
+  --danger:#c13333;
+  --info:#2f6fd0;
 
   /* ---- garis ---- */
-  --line:rgba(94,160,232,.24);
-  --line-soft:rgba(94,160,232,.14);
-  --hairline:1px solid rgba(94,160,232,.18);
+  --line:rgba(18,44,80,.12);
+  --line-soft:rgba(18,44,80,.07);
+  --hairline:1px solid rgba(18,44,80,.10);
 
-  /* ---- bayangan neumorphic ---- */
-  --sh-light:rgba(74,140,226,.20);
-  --sh-dark:rgba(1,6,14,.80);
-  --sh-dark-2:rgba(1,6,14,.55);
-  --shadow-out:-6px -6px 14px var(--sh-light), 7px 7px 16px var(--sh-dark);
-  --shadow-out-sm:-3px -3px 8px var(--sh-light), 4px 4px 9px var(--sh-dark-2);
-  --shadow-out-lg:-10px -10px 26px var(--sh-light), 14px 14px 32px var(--sh-dark);
-  --shadow-in:inset 3px 3px 7px var(--sh-dark), inset -3px -3px 7px var(--sh-light);
-  --shadow-in-lg:inset 5px 5px 12px var(--sh-dark), inset -5px -5px 12px var(--sh-light);
+  /* ---- bayangan lembut ---- */
+  --sh:rgba(19,45,80,.10);
+  --sh-2:rgba(19,45,80,.06);
+  --shadow-out-sm:0 1px 2px var(--sh-2), 0 2px 8px -4px var(--sh);
+  --shadow-out:0 1px 2px var(--sh-2), 0 8px 24px -14px var(--sh);
+  --shadow-out-lg:0 2px 4px var(--sh-2), 0 24px 56px -28px rgba(19,45,80,.22);
+  --shadow-in:inset 0 1px 3px rgba(19,45,80,.10);
+  --shadow-in-lg:inset 0 2px 6px rgba(19,45,80,.12);
   --shadow:var(--shadow-out-lg);
-  --glow:0 0 26px rgba(94,201,242,.24);
-  --glow-soft:0 0 16px rgba(94,201,242,.15);
+  --glow:0 8px 28px -12px rgba(47,111,208,.45);
+  --glow-soft:0 4px 16px -8px rgba(47,111,208,.35);
 
   /* ---- bentuk ---- */
-  --radius:20px;
-  --radius-lg:26px;
-  --radius-sm:14px;
-  --radius-xs:10px;
+  --radius:18px;
+  --radius-lg:24px;
+  --radius-sm:12px;
+  --radius-xs:9px;
 
   /* ---- tipografi ---- */
   --font:"Manrope","SF Pro Display",-apple-system,BlinkMacSystemFont,"Segoe UI",system-ui,sans-serif;
   --mono:"JetBrains Mono",ui-monospace,"SFMono-Regular",Consolas,monospace;
 
-  /* ---- ukuran kendali ---- */
   --tap:44px;
 }
 
@@ -78,29 +86,31 @@ html{-webkit-text-size-adjust:100%}
 
 body{
   margin:0;color:var(--text);
-  font-family:var(--font);font-size:15px;line-height:1.55;
+  font-family:var(--font);font-size:15px;line-height:1.6;
   -webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;
   background:
-    radial-gradient(60% 45% at 12% -5%,rgba(47,111,208,.32),transparent 70%),
-    radial-gradient(55% 45% at 90% 108%,rgba(94,201,242,.18),transparent 70%),
-    linear-gradient(165deg,#04101f 0%,#0a1c33 38%,#10315a 74%,#164280 100%);
+    radial-gradient(62% 46% at 14% -6%,rgba(47,111,208,.07),transparent 68%),
+    radial-gradient(54% 44% at 92% 104%,rgba(94,201,242,.09),transparent 66%),
+    linear-gradient(180deg,#ffffff 0%,#f6f9fd 42%,#eef4fb 100%);
   background-attachment:fixed;
   min-height:100vh;
 }
 
-h1,h2,h3,h4{margin:0 0 .5em;line-height:1.2;font-weight:800;letter-spacing:-.025em}
+h1,h2,h3,h4{margin:0 0 .5em;line-height:1.18;font-weight:800;
+  letter-spacing:-.025em;color:var(--brand-deep)}
 p{margin:0 0 1em}
 a{color:inherit;text-decoration:none}
 img{max-width:100%;display:block}
 button,input,select,textarea{font:inherit;color:inherit}
-::selection{background:rgba(94,201,242,.32)}
+::selection{background:rgba(47,111,208,.16)}
 
 /* ---------- scrollbar ---------- */
-*{scrollbar-width:thin;scrollbar-color:rgba(74,158,232,.45) transparent}
-*::-webkit-scrollbar{width:9px;height:9px}
+*{scrollbar-width:thin;scrollbar-color:rgba(47,111,208,.28) transparent}
+*::-webkit-scrollbar{width:10px;height:10px}
 *::-webkit-scrollbar-track{background:transparent}
-*::-webkit-scrollbar-thumb{background:rgba(74,158,232,.42);border-radius:999px}
-*::-webkit-scrollbar-thumb:hover{background:rgba(94,201,242,.58)}
+*::-webkit-scrollbar-thumb{background:rgba(47,111,208,.24);border-radius:999px;
+  border:3px solid transparent;background-clip:content-box}
+*::-webkit-scrollbar-thumb:hover{background:rgba(47,111,208,.42);background-clip:content-box}
 
 /* ---------- pembantu tata letak ---------- */
 .wrap{width:min(1180px,92vw);margin-inline:auto}
@@ -109,37 +119,36 @@ button,input,select,textarea{font:inherit;color:inherit}
 .hide{display:none !important}
 
 /* ==========================================================
-   Primitif neumorphic
+   Primitif
    ========================================================== */
 .neu{background:var(--panel);box-shadow:var(--shadow-out);border:var(--hairline);border-radius:var(--radius)}
 .neu-sm{background:var(--panel);box-shadow:var(--shadow-out-sm);border:var(--hairline);border-radius:var(--radius-sm)}
 .neu-in{background:var(--bg-1);box-shadow:var(--shadow-in);border-radius:var(--radius-sm)}
 .neu-pill{background:var(--panel);box-shadow:var(--shadow-out-sm);border:var(--hairline);border-radius:999px}
 
-/* label kecil beraksen — dipakai di atas judul bagian */
 .eyebrow{
-  font-size:11px;letter-spacing:.32em;text-transform:uppercase;
-  color:var(--accent);font-weight:700;display:block;
+  font-size:11px;letter-spacing:.3em;text-transform:uppercase;
+  color:var(--accent);font-weight:800;display:block;
 }
-/* teks bergradien untuk angka & wordmark */
 .grad-text{
   background:var(--grad);-webkit-background-clip:text;background-clip:text;
   -webkit-text-fill-color:transparent;color:transparent;
 }
 
 /* ---------- merek ---------- */
-.brand{display:flex;align-items:center;gap:11px;font-weight:800;letter-spacing:-.03em;font-size:18px}
+.brand{display:flex;align-items:center;gap:11px;font-weight:800;
+  letter-spacing:-.03em;font-size:18px;color:var(--brand-deep)}
 .brand .mark{
   width:34px;height:34px;border-radius:11px;flex:none;
   background:var(--grad);display:grid;place-items:center;
-  color:#04202e;font-weight:900;font-size:16px;
-  box-shadow:0 8px 20px -6px rgba(94,201,242,.55),var(--shadow-out-sm);
+  color:#fff;font-weight:900;font-size:16px;
+  box-shadow:0 6px 16px -6px rgba(47,111,208,.55);
 }
 .brand .wordmark{background:var(--grad);-webkit-background-clip:text;background-clip:text;
   -webkit-text-fill-color:transparent;color:transparent}
 .brand small{
-  display:block;font-size:9.5px;font-weight:700;color:var(--muted);
-  letter-spacing:.26em;text-transform:uppercase;line-height:1.4;
+  display:block;font-size:9px;font-weight:700;
+  letter-spacing:.24em;text-transform:uppercase;line-height:1.5;
   -webkit-text-fill-color:initial;color:var(--muted);
 }
 
@@ -149,62 +158,62 @@ button,input,select,textarea{font:inherit;color:inherit}
 .btn{
   display:inline-flex;align-items:center;justify-content:center;gap:9px;
   padding:11px 20px;border-radius:999px;cursor:pointer;
-  background:var(--panel);border:var(--hairline);color:var(--text);
+  background:var(--panel);border:1px solid var(--line);color:var(--text);
   box-shadow:var(--shadow-out-sm);
   font-size:14px;font-weight:700;white-space:nowrap;letter-spacing:-.01em;
-  transition:transform .14s,box-shadow .16s,color .16s,background .16s;
+  transition:transform .14s,box-shadow .16s,color .16s,border-color .16s,background .16s;
 }
-.btn:hover{color:#fff;box-shadow:var(--shadow-out),var(--glow-soft);transform:translateY(-1px)}
-.btn:active{box-shadow:var(--shadow-in);transform:translateY(0)}
+.btn:hover{color:var(--accent);border-color:rgba(47,111,208,.35);
+  box-shadow:var(--shadow-out);transform:translateY(-1px)}
+.btn:active{transform:translateY(0);box-shadow:var(--shadow-in)}
 .btn-primary{
-  background:var(--grad);border-color:transparent;color:#04202e;
-  box-shadow:0 10px 26px -10px rgba(94,201,242,.65),var(--shadow-out-sm);
+  background:var(--grad);border-color:transparent;color:#fff;
+  box-shadow:0 8px 22px -10px rgba(47,111,208,.65);
 }
-.btn-primary:hover{color:#031a26;box-shadow:0 14px 34px -10px rgba(94,201,242,.8),var(--shadow-out)}
-.btn-ghost{background:transparent;box-shadow:none}
-.btn-ghost:hover{background:rgba(94,160,232,.10);box-shadow:var(--shadow-out-sm)}
+.btn-primary:hover{color:#fff;box-shadow:0 12px 30px -10px rgba(47,111,208,.8)}
+.btn-ghost{background:transparent;border-color:transparent;box-shadow:none}
+.btn-ghost:hover{background:rgba(47,111,208,.07);box-shadow:none}
 .btn-sm{padding:8px 15px;font-size:13px}
-.btn-danger{color:#ffb1b4;border-color:rgba(255,122,122,.35)}
-.btn-danger:hover{background:rgba(255,122,122,.12);color:#fff}
-.btn[disabled]{opacity:.42;pointer-events:none}
+.btn-danger{color:var(--danger);border-color:rgba(193,51,51,.28)}
+.btn-danger:hover{background:rgba(193,51,51,.07);color:var(--danger);border-color:rgba(193,51,51,.45)}
+.btn[disabled]{opacity:.45;pointer-events:none}
 
 /* ==========================================================
    Pil / lencana
    ========================================================== */
 .pill{
   display:inline-flex;align-items:center;gap:7px;padding:5px 13px;border-radius:999px;
-  font-size:11.5px;font-weight:700;letter-spacing:.02em;
-  background:var(--panel);border:var(--hairline);color:var(--text-2);
+  font-size:11.5px;font-weight:700;letter-spacing:.01em;
+  background:var(--panel);border:1px solid var(--line);color:var(--text-2);
   box-shadow:var(--shadow-out-sm);
 }
 .pill .dot{width:6px;height:6px;border-radius:50%;background:currentColor;flex:none}
-.pill-ok{color:var(--ok);border-color:rgba(95,224,168,.32)}
-.pill-warn{color:var(--warn);border-color:rgba(255,197,106,.32)}
-.pill-info{color:var(--info);border-color:rgba(95,176,255,.32)}
-.pill-urgent{color:var(--danger);border-color:rgba(255,122,122,.36)}
-.pill-accent{color:var(--accent);border-color:rgba(47,212,238,.36)}
+.pill-ok{color:var(--ok);background:rgba(15,125,87,.08);border-color:rgba(15,125,87,.26)}
+.pill-warn{color:var(--warn);background:rgba(154,93,4,.08);border-color:rgba(154,93,4,.26)}
+.pill-info{color:var(--info);background:rgba(47,111,208,.08);border-color:rgba(47,111,208,.26)}
+.pill-urgent{color:var(--danger);background:rgba(193,51,51,.08);border-color:rgba(193,51,51,.28)}
+.pill-accent{color:var(--accent);background:rgba(47,111,208,.08);border-color:rgba(47,111,208,.28)}
 
 /* ==========================================================
    Isian formulir
    ========================================================== */
 .field{
   width:100%;padding:12px 15px;border-radius:var(--radius-sm);
-  background:var(--bg-1);border:var(--hairline);outline:none;font-size:14px;
+  background:var(--panel);border:1px solid var(--line);outline:none;font-size:14px;
   box-shadow:var(--shadow-in);
   transition:border-color .16s,box-shadow .16s;
 }
-.field:focus{border-color:rgba(94,201,242,.55);box-shadow:var(--shadow-in),0 0 0 3px rgba(94,201,242,.18)}
-.field::placeholder{color:var(--muted-2)}
-label.lbl{display:block;font-size:11.5px;font-weight:700;color:var(--muted);
-  margin-bottom:7px;letter-spacing:.1em;text-transform:uppercase}
+.field:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(47,111,208,.14)}
+.field::placeholder{color:var(--muted)}
+label.lbl{display:block;font-size:11px;font-weight:800;color:var(--muted);
+  margin-bottom:7px;letter-spacing:.14em;text-transform:uppercase}
 select.field{
   appearance:none;padding-right:34px;
-  background-image:linear-gradient(45deg,transparent 50%,#7184ad 50%),linear-gradient(135deg,#7184ad 50%,transparent 50%);
+  background-image:linear-gradient(45deg,transparent 50%,#7d93af 50%),linear-gradient(135deg,#7d93af 50%,transparent 50%);
   background-position:calc(100% - 17px) 53%,calc(100% - 12px) 53%;
   background-size:5px 5px,5px 5px;background-repeat:no-repeat;
 }
 
-/* ---------- kartu ---------- */
 .card{background:var(--panel);border:var(--hairline);border-radius:var(--radius);
   padding:24px;box-shadow:var(--shadow-out)}
 
@@ -214,9 +223,9 @@ select.field{
 #toasts{position:fixed;right:18px;bottom:18px;z-index:9999;display:flex;
   flex-direction:column;gap:9px;align-items:flex-end;pointer-events:none}
 .toast{
-  background:var(--panel);border:var(--hairline);border-left:3px solid var(--accent);
+  background:var(--panel);border:1px solid var(--line);border-left:3px solid var(--accent);
   padding:12px 17px;border-radius:var(--radius-sm);font-size:13.5px;font-weight:600;
-  box-shadow:var(--shadow-out),var(--glow-soft);
+  box-shadow:var(--shadow-out-lg);color:var(--text);
   animation:toastIn .22s ease-out;max-width:min(340px,86vw);
 }
 .toast.err{border-left-color:var(--danger)}
@@ -226,7 +235,7 @@ select.field{
 /* ==========================================================
    Modal
    ========================================================== */
-.modal-back{position:fixed;inset:0;background:rgba(3,7,16,.74);backdrop-filter:blur(5px);
+.modal-back{position:fixed;inset:0;background:rgba(18,35,60,.34);backdrop-filter:blur(5px);
   z-index:900;display:grid;place-items:center;padding:20px}
 .modal{background:var(--panel);border:var(--hairline);border-radius:var(--radius-lg);
   width:min(560px,94vw);max-height:88vh;overflow:auto;box-shadow:var(--shadow-out-lg)}
@@ -243,7 +252,7 @@ select.field{
 }
 .skip-link{
   position:absolute;left:-9999px;top:0;z-index:999;
-  background:var(--grad);color:#04202e;padding:12px 20px;
+  background:var(--grad);color:#fff;padding:12px 20px;
   border-radius:0 0 var(--radius-sm) 0;font-weight:800;font-size:13px;
 }
 .skip-link:focus{left:0}
