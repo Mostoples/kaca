@@ -36,8 +36,14 @@ def argumen():
     p.add_argument('--organ', default='otak', choices=['otak', 'toraks', 'tengkorak'])
     p.add_argument('--save-blend', action='store_true')
     p.add_argument('--opaque', action='store_true')
+    p.add_argument('--putih', action='store_true',
+                   help='varian keramik putih untuk tema terang')
     p.add_argument('--shot', default='masuk')
     p.add_argument('--layar', default='')
+    p.add_argument('--studio', action='store_true',
+                   help='panggung putih lapang (lantai & latar terang) untuk shot')
+    p.add_argument('--layar-laptop', default='')
+    p.add_argument('--layar-ponsel', default='')
     return p.parse_args(argv)
 
 ARG = argumen()
@@ -464,6 +470,282 @@ def panggung_gelap():
     return lantai
 
 
+def panggung_putih():
+    """Studio putih lapang berupa siklorama: lantai yang melengkung naik
+    menjadi dinding belakang, tanpa garis cakrawala. Bagian yang naik
+    memancarkan cahaya putih-biru es sendiri, sehingga latar tampak putih
+    bersih tanpa perlu menerangi lantai sampai terbakar."""
+    me = bpy.data.meshes.new('siklorama')
+    bm = bmesh.new()
+    profil = []
+    for i in range(24):                      # lantai datar
+        profil.append((-3.0 + i * (3.6 / 23), 0.0))
+    r = 0.7
+    for i in range(1, 25):                   # lengkung seperempat lingkaran
+        a = (math.pi / 2) * i / 24
+        profil.append((0.6 + math.sin(a) * r, r - math.cos(a) * r))
+    for i in range(1, 8):                    # dinding tegak
+        profil.append((0.6 + r, r + i * 0.4))
+    xs = [-9.0 + i * 0.5 for i in range(37)]
+    grid = [[bm.verts.new((x, y, z)) for (y, z) in profil] for x in xs]
+    for i in range(len(xs) - 1):
+        for j in range(len(profil) - 1):
+            bm.faces.new((grid[i][j], grid[i + 1][j], grid[i + 1][j + 1], grid[i][j + 1]))
+    bmesh.ops.recalc_face_normals(bm, faces=list(bm.faces))
+    bm.to_mesh(me)
+    bm.free()
+    lantai = bpy.data.objects.new('lantai', me)
+    bpy.context.collection.objects.link(lantai)
+    lantai.location = (0, 0, -0.0012)
+    halus(lantai)
+
+    m = bpy.data.materials.new('siklorama')
+    m.use_nodes = True
+    nt = m.node_tree
+    bsdf = nt.nodes['Principled BSDF']
+    bsdf.inputs['Base Color'].default_value = (0.36, 0.40, 0.46, 1)
+    bsdf.inputs['Roughness'].default_value = 0.32
+    if 'Specular IOR Level' in bsdf.inputs:
+        bsdf.inputs['Specular IOR Level'].default_value = 0.3
+    keluar = next(n for n in nt.nodes if n.type == 'OUTPUT_MATERIAL')
+    geo = nt.nodes.new('ShaderNodeNewGeometry')
+    pisah = nt.nodes.new('ShaderNodeSeparateXYZ')
+    petak = nt.nodes.new('ShaderNodeMapRange')
+    petak.inputs['From Min'].default_value = 0.0
+    petak.inputs['From Max'].default_value = 0.10
+    petak.interpolation_type = 'SMOOTHSTEP'
+    # lantai juga memudar ke putih menjauhi perangkat (radial)
+    pisah2 = nt.nodes.new('ShaderNodeVectorMath')
+    pisah2.operation = 'MULTIPLY'
+    pisah2.inputs[1].default_value = (1.0, 1.0, 0.0)
+    panjang = nt.nodes.new('ShaderNodeVectorMath')
+    panjang.operation = 'LENGTH'
+    petak2 = nt.nodes.new('ShaderNodeMapRange')
+    petak2.inputs['From Min'].default_value = 0.34
+    petak2.inputs['From Max'].default_value = 0.95
+    petak2.interpolation_type = 'SMOOTHSTEP'
+    maks = nt.nodes.new('ShaderNodeMath')
+    maks.operation = 'MAXIMUM'
+    pancar = nt.nodes.new('ShaderNodeEmission')
+    pancar.inputs['Color'].default_value = (0.90, 0.945, 1.0, 1)
+    pancar.inputs['Strength'].default_value = 1.75
+    campur = nt.nodes.new('ShaderNodeMixShader')
+    nt.links.new(geo.outputs['Position'], pisah.inputs[0])
+    nt.links.new(pisah.outputs['Z'], petak.inputs['Value'])
+    nt.links.new(geo.outputs['Position'], pisah2.inputs[0])
+    nt.links.new(pisah2.outputs['Vector'], panjang.inputs[0])
+    nt.links.new(panjang.outputs['Value'], petak2.inputs['Value'])
+    nt.links.new(petak.outputs['Result'], maks.inputs[0])
+    nt.links.new(petak2.outputs['Result'], maks.inputs[1])
+    nt.links.new(maks.outputs['Value'], campur.inputs['Fac'])
+    nt.links.new(bsdf.outputs['BSDF'], campur.inputs[1])
+    nt.links.new(pancar.outputs['Emission'], campur.inputs[2])
+    nt.links.new(campur.outputs['Shader'], keluar.inputs['Surface'])
+    pasang(lantai, m)
+
+    dunia = bpy.context.scene.world
+    dunia.node_tree.nodes['Background'].inputs[0].default_value = (0.86, 0.91, 0.98, 1)
+    dunia.node_tree.nodes['Background'].inputs[1].default_value = 0.45
+    # lampu studio dirancang untuk panggung gelap; di atas putih diredam
+    bpy.context.scene.view_settings.exposure = -0.9
+    return lantai
+
+
+def bahan_layar(nama, gambar, kuat=1.0):
+    """Layar menyala: emisi dari tangkapan layar ditambah kilap kaca tipis."""
+    m = bpy.data.materials.new(nama)
+    m.use_nodes = True
+    nt = m.node_tree
+    for n in list(nt.nodes):
+        if n.type != 'OUTPUT_MATERIAL':
+            nt.nodes.remove(n)
+    keluar = next(n for n in nt.nodes if n.type == 'OUTPUT_MATERIAL')
+    tex = nt.nodes.new('ShaderNodeTexImage')
+    tex.image = bpy.data.images.load(gambar)
+    tex.interpolation = 'Cubic'
+    emisi = nt.nodes.new('ShaderNodeEmission')
+    emisi.inputs['Strength'].default_value = kuat
+    kilap = nt.nodes.new('ShaderNodeBsdfGlossy')
+    kilap.inputs['Roughness'].default_value = 0.04
+    kilap.inputs['Color'].default_value = (1, 1, 1, 1)
+    fresnel = nt.nodes.new('ShaderNodeFresnel')
+    fresnel.inputs['IOR'].default_value = 1.5
+    kali = nt.nodes.new('ShaderNodeMath')
+    kali.operation = 'MULTIPLY'
+    kali.inputs[1].default_value = 0.14
+    campur = nt.nodes.new('ShaderNodeMixShader')
+    nt.links.new(tex.outputs['Color'], emisi.inputs['Color'])
+    nt.links.new(fresnel.outputs['Fac'], kali.inputs[0])
+    nt.links.new(kali.outputs['Value'], campur.inputs['Fac'])
+    nt.links.new(emisi.outputs['Emission'], campur.inputs[1])
+    nt.links.new(kilap.outputs['BSDF'], campur.inputs[2])
+    nt.links.new(campur.outputs['Shader'], keluar.inputs['Surface'])
+    return m
+
+
+def kotak_bulat(nama, lebar, tinggi, tebal, jari, segmen=10):
+    """Balok bersudut membulat (sudut denah), seperti badan ponsel/laptop."""
+    me = bpy.data.meshes.new(nama)
+    bm = bmesh.new()
+    x, y = lebar / 2, tinggi / 2
+    vs = [bm.verts.new(v) for v in ((-x, -y, 0), (x, -y, 0), (x, y, 0), (-x, y, 0))]
+    bm.faces.new(vs)
+    bmesh.ops.bevel(bm, geom=list(bm.verts), offset=jari, segments=segmen, affect='VERTICES')
+    hasil = bmesh.ops.extrude_face_region(bm, geom=list(bm.faces))
+    naik = [e for e in hasil['geom'] if isinstance(e, bmesh.types.BMVert)]
+    bmesh.ops.translate(bm, verts=naik, vec=(0, 0, tebal))
+    bmesh.ops.recalc_face_normals(bm, faces=list(bm.faces))
+    bm.to_mesh(me)
+    bm.free()
+    o = bpy.data.objects.new(nama, me)
+    bpy.context.collection.objects.link(o)
+    bpy.context.view_layer.objects.active = o
+    bevel(o, 0.9 * MM, 3)
+    halus(o)
+    return o
+
+
+def bidang(nama, lebar, tinggi, mat):
+    bpy.ops.mesh.primitive_plane_add(size=1, location=(0, 0, 0))
+    o = bpy.context.object
+    o.name = nama
+    o.scale = (lebar, tinggi, 1)
+    bpy.ops.object.transform_apply(scale=True)
+    pasang(o, mat)
+    return o
+
+
+# posisi mockup dicatat supaya lintasan kamera bisa menujunya
+MOCKUP = {}
+
+
+def laptop(gambar):
+    """Laptop putih-perak ramping dengan aplikasi Medivox di layarnya.
+    Bagian dibangun di titik nol, dipasangkan ke induk, lalu induk
+    dipindah (lihat catatan di tablet())."""
+    perak = bahan('laptop_perak', (0.74, 0.77, 0.81, 1), logam=0.7, kasar=0.26)
+    dek = bahan('laptop_dek', (0.62, 0.66, 0.72, 1), logam=0.5, kasar=0.4)
+    kaca_hitam = bahan('laptop_bezel', (0.012, 0.015, 0.02, 1), kasar=0.08)
+    L, D = 0.304, 0.212
+
+    alas = kotak_bulat('laptop_alas', L, D, 0.0072, 0.010)
+    pasang(alas, perak)
+    kb = bidang('laptop_keyboard', L * 0.86, D * 0.40, dek)
+    kb.location = (0, 0.036, 0.0074)
+    kb.parent = alas
+    tp = bidang('laptop_trackpad', 0.112, 0.068, dek)
+    tp.location = (0, -0.062, 0.0074)
+    tp.parent = alas
+
+    # tutup: berdiri pada engsel (tepi belakang alas), menghadap -Y
+    engsel = bpy.data.objects.new('laptop_engsel', None)
+    bpy.context.collection.objects.link(engsel)
+    tutup = kotak_bulat('laptop_tutup', L, 0.206, 0.0048, 0.010)
+    pasang(tutup, perak)
+    tutup.rotation_euler = (math.radians(90), 0, 0)
+    tutup.location = (0, 0.0048, 0.104)   # tebal ke +Y, muka depan di y=0
+    tutup.parent = engsel
+    bezel = bidang('laptop_bezel', L - 0.006, 0.200, kaca_hitam)
+    bezel.rotation_euler = (math.radians(90), 0, 0)
+    bezel.location = (0, -0.0003, 0.104)
+    bezel.parent = engsel
+    # layar 16:10
+    lw, lh = 0.286, 0.1788
+    layar = bidang('laptop_layar', lw, lh, bahan_layar('layar_laptop', gambar, 1.9))
+    layar.rotation_euler = (math.radians(90), 0, 0)
+    layar.location = (0, -0.0006, 0.106)
+    layar.parent = engsel
+    engsel.location = (0, D / 2 - 0.004, 0.0072)
+    engsel.rotation_euler = (math.radians(-14), 0, 0)
+    engsel.parent = alas
+
+    alas.location = (-0.32, 0.17, 0.0)
+    alas.rotation_euler = (0, 0, math.radians(20))
+    bpy.context.view_layer.update()
+    MOCKUP['laptop'] = (layar.matrix_world.translation.copy(),
+                        (layar.matrix_world.to_3x3() @ Vector((0, 0, 1))).normalized())
+
+
+def ponsel(gambar):
+    """Ponsel pada penyangga kecil, menampilkan Medivox versi seluler."""
+    badan_m = bahan('ponsel_badan', (0.90, 0.92, 0.95, 1), logam=0.5, kasar=0.22)
+    bingkai = bahan('ponsel_bingkai', (0.012, 0.015, 0.02, 1), kasar=0.08)
+    W, H = 0.0716, 0.1512
+    induk = bpy.data.objects.new('ponsel', None)
+    bpy.context.collection.objects.link(induk)
+    badan = kotak_bulat('ponsel_badan', W, H, 0.0078, 0.0105, 12)
+    pasang(badan, badan_m)
+    badan.parent = induk
+    kaca = kotak_bulat('ponsel_kaca', W - 0.0016, H - 0.0016, 0.0003, 0.0098, 12)
+    kaca.location = (0, 0, 0.0078)
+    pasang(kaca, bingkai)
+    kaca.parent = induk
+    layar = bidang('ponsel_layar', W - 0.0052, H - 0.0052, bahan_layar('layar_ponsel', gambar, 1.9))
+    layar.location = (0, 0, 0.00815)
+    layar.parent = induk
+
+    # penyangga: balok putih membulat
+    peny = kotak_bulat('ponsel_penyangga', 0.058, 0.040, 0.014, 0.008)
+    pasang(peny, bahan('penyangga', (0.92, 0.935, 0.955, 1), kasar=0.3))
+    peny.location = (0.206, 0.012, 0)
+    peny.rotation_euler = (0, 0, math.radians(8))
+
+    induk.location = (0.200, -0.030, 0.070)
+    induk.rotation_euler = (math.radians(72), 0, math.radians(8))
+    bpy.context.view_layer.update()
+    MOCKUP['ponsel'] = (layar.matrix_world.translation.copy(),
+                        (layar.matrix_world.to_3x3() @ Vector((0, 0, 1))).normalized())
+
+
+def jadikan_putih():
+    """Varian putih untuk antarmuka terang.
+
+    Tepi prisma yang bercahaya cyan akan lenyap di atas latar putih, jadi
+    tepi dan pita aksen memakai biru merek yang tidak memancar; hologram
+    diberi biru jenuh supaya tetap terbaca tanpa latar gelap.
+    """
+    def kilap(nama, warna, kasar=0.18, logam=0.0, coat=1.0):
+        m = bahan(nama, warna, logam=logam, kasar=kasar)
+        b = m.node_tree.nodes['Principled BSDF']
+        if 'Coat Weight' in b.inputs:
+            b.inputs['Coat Weight'].default_value = coat
+            b.inputs['Coat Roughness'].default_value = 0.05
+        return m
+
+    keramik = kilap('keramik_putih', (0.90, 0.925, 0.955, 1))
+    aksen = kilap('aksen_biru', (0.10, 0.34, 0.82, 1), kasar=0.2, logam=0.2)
+    krom = bahan('krom', (0.86, 0.90, 0.95, 1), logam=1.0, kasar=0.12)
+    teks_sub = bahan('teks_sub_putih', (0.42, 0.50, 0.62, 1), kasar=0.5)
+    holo = bahan('holo_putih', (0.06, 0.30, 0.86, 1), emisi=(0.14, 0.52, 1.0, 1),
+                 kuat=1.05, alpha=0.86)
+    irisan = bahan('irisan_putih', (0.2, 0.5, 0.95, 1), emisi=CYAN, kuat=0.6, alpha=0.18)
+    # BLENDED tidak menulis kedalaman, sehingga DOF mengaburkan hologram
+    # seolah-olah ia sejauh dinding latar. DITHERED menulis kedalaman.
+    if hasattr(holo, 'surface_render_method'):
+        holo.surface_render_method = 'DITHERED'
+
+    def ganti(o, m):
+        if o.data and hasattr(o.data, 'materials'):
+            o.data.materials.clear()
+            o.data.materials.append(m)
+
+    for o in bpy.context.scene.objects:
+        n = o.name
+        if n.startswith(('basis_bawah', 'basis_atas', 'kaki')):
+            ganti(o, keramik)
+        elif n.startswith(('celah', 'tepi', 'bingkai', 'nama_produk', 'panel_garis')):
+            ganti(o, aksen)
+        elif n.startswith('sekrup'):
+            ganti(o, krom)
+        elif n.startswith('sub_produk'):
+            ganti(o, teks_sub)
+        elif n.startswith('holo_'):
+            ganti(o, holo)
+        elif n.startswith('irisan'):
+            ganti(o, irisan)
+    bpy.context.scene.view_settings.view_transform = 'Standard'
+
+
 def pencahayaan():
     dunia = bpy.data.worlds.new('dunia')
     bpy.context.scene.world = dunia
@@ -559,12 +841,20 @@ def bangun():
     hologram(ARG.organ)
     bidang_irisan()
     pencahayaan()
-    if ARG.opaque:
+    if ARG.studio:
+        panggung_putih()
+    elif ARG.opaque:
         panggung_gelap()
+    if ARG.putih:
+        jadikan_putih()
     if ARG.mode == 'shot':
         sorot_atas()
         if ARG.shot == 'app' and ARG.layar and os.path.exists(ARG.layar):
             tablet(os.path.abspath(ARG.layar))
+        if ARG.layar_laptop and os.path.exists(ARG.layar_laptop):
+            laptop(os.path.abspath(ARG.layar_laptop))
+        if ARG.layar_ponsel and os.path.exists(ARG.layar_ponsel):
+            ponsel(os.path.abspath(ARG.layar_ponsel))
 
 
 def render_ke(sc, kam, berkas):
@@ -589,13 +879,19 @@ SHOT = {
                   lihat_a=(0, 0, 0.05), lihat_b=(0, 0, 0.055), lensa=90, f=3.2),
     'app':   dict(awal=(0.70, -0.86, 0.30), akhir=(0.56, -0.74, 0.25),
                   lihat_a=(0.10, 0.02, 0.07), lihat_b=(0.10, 0.02, 0.07), lensa=58, f=4.0),
+    # perangkat keras + perangkat lunak dalam satu bingkai
+    'ekosistem': dict(awal=(0.34, -0.78, 0.36), akhir=(0.04, -0.72, 0.27),
+                      lihat_a=(-0.06, 0.06, 0.07), lihat_b=(-0.08, 0.06, 0.075), lensa=36, f=5.6),
+    # mendekat ke layar laptop / ponsel; titik dihitung dari MOCKUP
+    'laptop': dict(mockup='laptop', jarak=(0.62, 0.40), geser=(0.10, 0.02), lensa=50, f=3.2),
+    'ponsel': dict(mockup='ponsel', jarak=(0.62, 0.42), geser=(-0.10, -0.03), lensa=60, f=3.2),
 }
 
 
 def sorot_atas():
     """Genangan cahaya dari atas seperti meja pameran."""
     d = bpy.data.lights.new('sorot', 'SPOT')
-    d.energy = 8
+    d.energy = 2.2 if ARG.studio else 8
     d.spot_size = math.radians(52)
     d.spot_blend = 0.9
     d.color = (0.82, 0.90, 1.0)
@@ -663,6 +959,10 @@ def render_shot(nama, frames, out):
     sc.render.image_settings.file_format = 'JPEG'
     sc.render.image_settings.color_mode = 'RGB'
     sc.render.image_settings.quality = 94
+    if ARG.putih:
+        sc.view_settings.view_transform = 'Standard'
+    if ARG.frames == 1:
+        sc.render.image_settings.quality = 90
     kam = kamera('kam_' + nama, (1, -1, 0.3), (0, 0, 0.08), cfg['lensa'])
     kam.data.dof.use_dof = True
     kam.data.dof.aperture_fstop = cfg['f']
@@ -680,13 +980,21 @@ def render_shot(nama, frames, out):
 
     for i in range(frames):
         t = halus_t(i / max(1, frames - 1))
-        if 'orbit' in cfg:
+        if 'mockup' in cfg:
+            pusat, normal = MOCKUP[cfg['mockup']]
+            samping = normal.cross(Vector((0, 0, 1))).normalized()
+            jarak = cfg['jarak'][0] + (cfg['jarak'][1] - cfg['jarak'][0]) * t
+            geser = cfg['geser'][0] + (cfg['geser'][1] - cfg['geser'][0]) * t
+            lok = tuple(pusat + normal * jarak + samping * geser + Vector((0, 0, 0.03 * (1 - t))))
+            lihat = pusat
+        elif 'orbit' in cfg:
             a0, a1 = cfg['orbit']
             sudut = math.radians(a0 + (a1 - a0) * t) - math.pi / 2
             lok = (math.cos(sudut) * cfg['radius'], math.sin(sudut) * cfg['radius'], cfg['z'])
         else:
             lok = lerp(cfg['awal'], cfg['akhir'], t)
-        lihat = Vector(lerp(cfg['lihat_a'], cfg['lihat_b'], t))
+        if 'mockup' not in cfg:
+            lihat = Vector(lerp(cfg['lihat_a'], cfg['lihat_b'], t))
         kam.location = lok
         kam.rotation_euler = (lihat - Vector(lok)).to_track_quat('-Z', 'Y').to_euler()
         kam.data.dof.focus_distance = (lihat - Vector(lok)).length

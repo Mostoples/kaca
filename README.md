@@ -2,7 +2,8 @@
 
 **See. Speak. Understand.**
 
-**Live: <https://kaca-id.web.app>**
+**Live: <https://medivox-id.web.app>** — alamat lama `kaca-id.web.app` dialihkan (301) ke sini,
+lengkap dengan jalur dan parameter URL-nya.
 
 > Produk ini sebelumnya bernama *Kaca*. Nama, lambang, dan paletnya kini mengikuti
 > identitas Medivox. Identitas teknis yang tidak terlihat pengguna sengaja dibiarkan:
@@ -39,8 +40,29 @@ Setelah masuk, tujuan bawaannya panggung hologram.
 
 ## Bahasa visual
 
-Tema terang: putih lapang, garis tipis, bayangan lembut. Aksen memakai gradien biru royal →
-cyan yang diambil dari huruf M pada logo, dan navy wordmark sebagai warna judul.
+**Putih bersih futuristik.** Latar putih kebiruan dengan aura cahaya biru-cyan dan kisi titik
+halus; bilah dan panel berupa kaca beku (`backdrop-filter`) yang melayang; siku HUD cyan tipis
+di pojok kartu penting; eyebrow bermono dengan titik bercahaya. Aksen memakai gradien biru
+royal → cyan yang diambil dari huruf M pada logo, dan navy wordmark sebagai warna judul.
+
+**Seluruh ikon, ornamen, dan pola kartu dibuat dengan Blender CLI** (`tools/blender/bangun-kit-ui.py`),
+bukan pustaka ikon:
+
+| Kit | Isi | Dipakai di |
+|---|---|---|
+| `assets/ui/ikon/` | 48 ikon 3D keramik biru bergradien (hologram, viewer, studi, alat ukur, dll.) | tab aplikasi, rel alat viewer, tombol, kartu fitur, sidebar |
+| `assets/ui/ornamen/` | cincin, bola kaca, kapsul, palang medis, heliks DNA, latar hero | hero landing, halaman masuk, kartu ajakan, showreel, deck |
+| `assets/ui/pola/` | relief heksagon, titik, gelombang, lingkaran — sebagai lapisan alfa | latar kartu (`.pola`, kartu fitur/langkah/harga), sidebar & panel aplikasi |
+| `assets/3d/putih-*.webp` | render MEDIVOX-1 varian keramik putih | hero, galeri perangkat, halaman masuk |
+
+Pola dirender sebagai relief putih bercahaya samping, lalu `tools/optimasi-kit.py` mengubahnya
+menjadi lapisan transparan (bayangan navy + sorotan putih) supaya bisa ditaruh di atas warna
+kartu apa pun. `K.icon()` di `common.js` kini mengembalikan `<img>` ikon 3D ini.
+
+```bash
+"$BL" -b -P tools/blender/bangun-kit-ui.py -- --mode semua --out build/kit
+python tools/optimasi-kit.py        # build/kit -> assets/ui (WebP), build/putih* -> assets/3d
+```
 
 | Peran | Nilai | Asal |
 |---|---|---|
@@ -327,8 +349,19 @@ dan membatasi panjang teks laporan. Tidak ada koleksi yang bisa dibaca lintas pe
 
 ### Deploy
 
+Hosting memakai dua *site* di project yang sama (lihat `.firebaserc`):
+
+| Target | Site | Isi |
+|---|---|---|
+| `medivox` | `medivox-id` → <https://medivox-id.web.app> | aplikasi lengkap |
+| `lama` | `kaca-id` → <https://kaca-id.web.app> | hanya pengalihan 301 ke domain baru (`alih/`) |
+
+`medivox.web.app` sudah dipakai project lain, jadi `medivox-id` yang dipakai.
+`medivox-id.web.app` sudah ditambahkan ke *Authorized domains* Firebase Auth.
+
 ```bash
-firebase deploy --only hosting --project kaca-id
+firebase deploy --only hosting:medivox --project kaca-id
+firebase deploy --only hosting:lama --project kaca-id      # jarang: hanya bila pengalihan berubah
 firebase deploy --only firestore:rules --project kaca-id
 ```
 
@@ -627,12 +660,21 @@ BL="C:/Program Files/Blender Foundation/Blender 5.2/blender.exe"
 "$BL" -b -P tools/blender/bangun-produk.py -- --mode still --organ toraks    --opaque --out build/organ-toraks
 "$BL" -b -P tools/blender/bangun-produk.py -- --mode still --organ tengkorak --opaque --out build/organ-tengkorak
 
-# empat shot kamera bergerak untuk showreel (±20 menit, 690 frame JPEG, ±90 MB)
-bash tools/render-shot.sh        # atau: --mode shot --shot masuk|orbit|panel|app --frames N
+# enam shot studio putih untuk showreel (±20 menit, 900 frame JPEG)
+bash tools/render-reel.sh        # masuk, orbit, panel, ekosistem, laptop, ponsel
 
-python tools/bangun-showreel.py  # → build/MEDIVOX_Showreel.mp4
-python tools/bangun-deck.py      # → build/MEDIVOX_Deck.pptx
+# tangkapan UI asli (desktop & ponsel) untuk layar mockup
+node serve.js 8099 &
+node --experimental-websocket tools/foto-cdp.js tools/foto-tex.json
+
+python tools/bangun-showreel.py        # → build/MEDIVOX_Showreel.mp4   (perangkat keras + lunak)
+python tools/bangun-showreel.py --app  # → build/MEDIVOX_App_Mockup.mp4 (mockup aplikasi saja)
+python tools/bangun-deck.py            # → build/MEDIVOX_Deck.pptx
 ```
+
+Opsi shot di `bangun-produk.py`: `--putih` (keramik putih), `--studio` (siklorama putih),
+`--layar-laptop`/`--layar-ponsel` (tangkapan layar untuk laptop & ponsel mockup yang dibangun
+di adegan yang sama dengan MEDIVOX-1).
 
 Render PNG dari Blender dikonversi ke WebP sebelum masuk `assets/3d/` — tujuh gambar turun
 dari 10,6 MB menjadi ±200 KB tanpa perbedaan yang terlihat di layar.
@@ -656,24 +698,44 @@ opak tidak membutuhkan kanal alfa, jadi JPEG kualitas 94 tidak mengurangi apa pu
   lalu diberi *Displace* bertekstur awan, sehingga berlekuk seperti girus.
 - **Parenting sebelum transformasi.** Layar tablet dipasangkan ke badannya selagi keduanya
   masih di titik nol; memindah badan lebih dulu membuat layar tertinggal.
+- **Material BLENDED tidak menulis kedalaman**, sehingga *depth of field* mengaburkan hologram
+  seolah-olah ia sejauh dinding latar. Hologram varian putih memakai `DITHERED`.
+- **Latar putih tidak bisa diperoleh dari dunia saja.** *Is Camera Ray* di shader dunia
+  diabaikan EEVEE, dan menaikkan kekuatan dunia membakar lantai. Studio putih karena itu
+  berupa siklorama yang bagian jauhnya memancarkan cahaya sendiri, sementara lantai di sekitar
+  produk tetap diterangi lampu biasa (lengkap dengan bayangan).
 
 ### Showreel
 
-Strukturnya mengikuti showcase RePulse: pembuka lambang bercahaya, empat potongan kamera
-bergerak dengan *depth of field* dan sorot dari atas, keterangan kecil di kiri bawah,
-penutup nama produk di atas adegan yang diburamkan. 1920×1080, 30 fps, ±32 detik.
+Satu film putih-bersih yang menyatukan **perangkat keras dan perangkat lunak**:
 
-**Musiknya disintesis**, bukan diambil dari mana pun: akor A mayor-sembilan dari gelombang
-sinus yang bernapas pelan, disaring dan diberi gema oleh ffmpeg. Jadi tidak ada persoalan
-lisensi — alasan video promo lama sengaja tanpa musik.
+1. pembuka — lambang Medivox dan ornamen 3D Blender yang melayang di atas aura
+2. perangkat — MEDIVOX-1 keramik putih di studio siklorama (masuk, orbit, panel)
+3. ekosistem — MEDIVOX-1, laptop, dan ponsel dalam satu adegan Blender; layarnya berisi
+   tangkapan UI Medivox yang asli
+4. aplikasi desktop — kamera mendekat ke laptop, lalu jendela peramban melayang yang
+   menggulir situs, dan alur tiga layar studi → viewer 2D → hologram
+5. aplikasi seluler — kamera mendekat ke ponsel, lalu tiga ponsel naik bergantian
+6. penutup — produk putih, nama, tagline, dan `medivox-id.web.app`
+
+Keterangan tiap adegan berupa kartu kaca dengan siku HUD di kiri bawah. 1920×1080, 30 fps.
+`--app` merakit versi mockup aplikasi saja (adegan 4–6).
+
+**Musiknya disintesis**, bukan diambil dari mana pun: akor D mayor-sembilan dari gelombang
+sinus yang bernapas pelan plus denyut halus, disaring dan diberi gema oleh ffmpeg — tanpa
+persoalan lisensi.
 
 ### Deck
 
-20 slide 16:9 bergaya neumorphic terang, mengikuti susunan deck AQUENT: kop bab bernomor,
-judul besar, nomor halaman, dan kartu bayangan lembut. Kartu, angka, dan diagram digambar
-dengan Pillow lalu ditempel sebagai PNG **beralfa** — `convert('RGB')` akan mengubah bagian
-transparan menjadi blok hitam. Pratinjau tiap slide bisa diekspor lewat PowerPoint COM
-(`tools/pptx2png.ps1`).
+24 slide 16:9 bergaya **neumorfisme aura glass**: latar aura biru-cyan-lila dengan kisi titik,
+kartu kaca beku sungguhan (latar di bawahnya diburamkan), bayangan ganda terang/gelap, siku
+HUD, pola relief, ikon dan ornamen 3D Blender, render produk putih, serta tangkapan UI asli
+(desktop, alur kerja, ponsel). Setiap slide adalah satu kanvas JPEG 2560×1440, lalu judul dan
+paragraf ditaruh sebagai kotak teks PowerPoint supaya tetap bisa disunting. Pratinjau tiap
+slide bisa diekspor lewat PowerPoint COM (`tools/pptx2png.ps1`).
+
+Huruf Manrope/JetBrains Mono untuk teks yang digambar diunduh ke `build/font/` (diabaikan
+git); bila tidak ada, skrip jatuh ke Segoe UI/Consolas.
 
 Semua keluaran ada di `build/` dan dikecualikan dari git dan deploy — semuanya bisa dibangun
 ulang dari skrip di atas.

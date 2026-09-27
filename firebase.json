@@ -1,106 +1,124 @@
 {
-  "hosting": {
-    "public": ".",
-    "ignore": [
-      "firebase.json",
-      ".firebaserc",
-      "firestore.rules",
-      "firestore.indexes.json",
-      "**/.*",
-      "**/.*/**",
-      ".git/**",
-      ".github/**",
-      "**/node_modules/**",
-      "serve.js",
-      "README.md",
-      "LICENSE",
-      "tests/node-runner.js",
-      "tests/periksa-contoh.js",
-      "tests/periksa-volume.js",
-      "tests/periksa-mesh.js",
-      "tests/periksa-atlas.js",
-      "tests/asap-halaman.js",
-      "tests/dom-tiruan.js",
-      "contoh-dicom/volume/**",
-      "contoh-dicom/unduhan/**",
-      "contoh-dicom/tcia/**",
-      "contoh-dicom/atlas/**",
-      "tools/buat-contoh.js",
-      "tools/buat-atlas.js",
-      "tools/unduh-contoh.js",
-      "tools/unduh-volume.js",
-      "video/**",
-      "build/**",
-      "output/**",
-      "tools/**",
-      "*.pdf",
-      "*.pptx",
-      "*.mp4",
-      "assets/3d/*.blend",
-      "assets/3d/*.blend1"
-    ],
-    "cleanUrls": false,
-    "trailingSlash": false,
-    "rewrites": [
-      {
-        "source": "/app",
-        "destination": "/prisma.html"
-      },
-      {
-        "source": "/hologram",
-        "destination": "/prisma.html"
-      },
-      {
-        "source": "/viewer",
-        "destination": "/viewer.html"
-      },
-      {
-        "source": "/studi",
-        "destination": "/worklist.html"
-      },
-      {
-        "source": "/login",
-        "destination": "/masuk.html"
-      }
-    ],
-    "headers": [
-      {
-        "source": "**/*.@(js|css)",
-        "headers": [
-          {
-            "key": "Cache-Control",
-            "value": "public, max-age=3600"
-          }
-        ]
-      },
-      {
-        "source": "**/*.dcm",
-        "headers": [
-          {
-            "key": "Cache-Control",
-            "value": "public, max-age=86400"
-          },
-          {
-            "key": "Content-Type",
-            "value": "application/dicom"
-          }
-        ]
-      },
-      {
-        "source": "**",
-        "headers": [
-          {
-            "key": "X-Content-Type-Options",
-            "value": "nosniff"
-          },
-          {
-            "key": "Referrer-Policy",
-            "value": "strict-origin-when-cross-origin"
-          }
-        ]
-      }
-    ]
-  },
+  "hosting": [
+    {
+      "public": ".",
+      "ignore": [
+        "firebase.json",
+        ".firebaserc",
+        "firestore.rules",
+        "firestore.indexes.json",
+        "**/.*",
+        "**/.*/**",
+        ".git/**",
+        ".github/**",
+        "**/node_modules/**",
+        "serve.js",
+        "README.md",
+        "LICENSE",
+        "tests/node-runner.js",
+        "tests/periksa-contoh.js",
+        "tests/periksa-volume.js",
+        "tests/periksa-mesh.js",
+        "tests/periksa-atlas.js",
+        "tests/asap-halaman.js",
+        "tests/dom-tiruan.js",
+        "contoh-dicom/volume/**",
+        "contoh-dicom/unduhan/**",
+        "contoh-dicom/tcia/**",
+        "contoh-dicom/atlas/**",
+        "tools/buat-contoh.js",
+        "tools/buat-atlas.js",
+        "tools/unduh-contoh.js",
+        "tools/unduh-volume.js",
+        "video/**",
+        "build/**",
+        "output/**",
+        "tools/**",
+        "*.pdf",
+        "*.pptx",
+        "*.mp4",
+        "assets/3d/*.blend",
+        "assets/3d/*.blend1",
+        "alih/**"
+      ],
+      "cleanUrls": false,
+      "trailingSlash": false,
+      "rewrites": [
+        {
+          "source": "/app",
+          "destination": "/prisma.html"
+        },
+        {
+          "source": "/hologram",
+          "destination": "/prisma.html"
+        },
+        {
+          "source": "/viewer",
+          "destination": "/viewer.html"
+        },
+        {
+          "source": "/studi",
+          "destination": "/worklist.html"
+        },
+        {
+          "source": "/login",
+          "destination": "/masuk.html"
+        }
+      ],
+      "headers": [
+        {
+          "source": "**/*.@(js|css)",
+          "headers": [
+            {
+              "key": "Cache-Control",
+              "value": "public, max-age=3600"
+            }
+          ]
+        },
+        {
+          "source": "**/*.dcm",
+          "headers": [
+            {
+              "key": "Cache-Control",
+              "value": "public, max-age=86400"
+            },
+            {
+              "key": "Content-Type",
+              "value": "application/dicom"
+            }
+          ]
+        },
+        {
+          "source": "**",
+          "headers": [
+            {
+              "key": "X-Content-Type-Options",
+              "value": "nosniff"
+            },
+            {
+              "key": "Referrer-Policy",
+              "value": "strict-origin-when-cross-origin"
+            }
+          ]
+        }
+      ],
+      "target": "medivox"
+    },
+    {
+      "target": "lama",
+      "public": "alih",
+      "ignore": [
+        "**/.*"
+      ],
+      "redirects": [
+        {
+          "regex": "^/(?P<jalur>.*)$",
+          "destination": "https://medivox-id.web.app/:jalur",
+          "type": 301
+        }
+      ]
+    }
+  ],
   "firestore": {
     "rules": "firestore.rules",
     "indexes": "firestore.indexes.json"

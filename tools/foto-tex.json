@@ -1,0 +1,12 @@
+[
+ {"url":"http://localhost:8099/viewer.html?demo=ST-2409-0143","w":1440,"h":900,"dpr":1.3334,"tunggu":6000,"out":"build/foto/t-viewer.png"},
+ {"url":"http://localhost:8099/worklist.html","w":390,"h":844,"dpr":2,"mobile":true,"tunggu":5000,"out":"build/foto/t-worklist-m.png"},
+ {"url":"http://localhost:8099/prisma.html","w":390,"h":844,"dpr":2,"mobile":true,"tunggu":12000,"out":"build/foto/t-prisma-m.png"},
+ {"url":"http://localhost:8099/index.html","w":1440,"h":900,"dpr":1.3334,"tunggu":5000,"out":"build/foto/t-landing.png"},
+ {"url":"http://localhost:8099/worklist.html","w":1440,"h":900,"dpr":1.3334,"tunggu":5000,"out":"build/foto/t-worklist.png"},
+ {"url":"http://localhost:8099/prisma.html","w":1440,"h":900,"dpr":1.3334,"tunggu":12000,"out":"build/foto/t-prisma.png"},
+ {"url":"http://localhost:8099/masuk.html","w":1440,"h":900,"dpr":1.3334,"tunggu":4000,"out":"build/foto/t-masuk.png"},
+ {"url":"http://localhost:8099/viewer.html?demo=ST-2409-0143","w":390,"h":844,"dpr":2,"mobile":true,"tunggu":6000,"out":"build/foto/t-viewer-m.png"},
+ {"url":"http://localhost:8099/index.html","w":390,"h":844,"dpr":2,"mobile":true,"tunggu":5000,"out":"build/foto/t-landing-m.png"},
+ {"url":"http://localhost:8099/index.html","w":1440,"h":900,"dpr":1,"tunggu":5000,"out":"build/foto/t-landing-penuh.png","penuh":true}
+]

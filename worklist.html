@@ -20,18 +20,17 @@
   <header class="app-bar">
     <a class="brand" href="index.html"><span class="mark">M</span><span class="wordmark">Medivox</span></a>
     <div class="app-tabs">
-      <a href="prisma.html" data-short="3D">Hologram</a>
-      <a href="viewer.html" data-short="2D">Viewer 2D</a>
-      <a href="worklist.html" class="active" data-short="Studi">Studi</a>
+      <a href="prisma.html" data-short="3D"><img class="ikon ikon-tab" src="assets/ui/ikon/hologram.webp" alt="" aria-hidden="true" decoding="async">Hologram</a>
+      <a href="viewer.html" data-short="2D"><img class="ikon ikon-tab" src="assets/ui/ikon/viewer.webp" alt="" aria-hidden="true" decoding="async">Viewer 2D</a>
+      <a href="worklist.html" class="active" data-short="Studi"><img class="ikon ikon-tab" src="assets/ui/ikon/studi.webp" alt="" aria-hidden="true" decoding="async">Studi</a>
     </div>
     <span class="spacer"></span>
     <button class="btn btn-sm only-mobile" id="btnFilter" aria-expanded="false" aria-controls="wlSide">
-      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-           stroke-linecap="round" aria-hidden="true"><path d="M3 6h18M6 12h12M10 18h4"/></svg>
+      <img class="ikon" src="assets/ui/ikon/studi.webp" alt="" aria-hidden="true" decoding="async">
       Filter
     </button>
-    <button class="btn btn-sm" id="btnOpenFiles" title="Buka berkas DICOM"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 2H7a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7z"/><path d="M14 2v5h5"/></svg><span class="btn-teks">Buka File DICOM</span></button>
-    <button class="btn btn-sm hide-narrow" id="btnOpenFolder">Buka Folder</button>
+    <button class="btn btn-sm" id="btnOpenFiles" title="Buka berkas DICOM"><img class="ikon" src="assets/ui/ikon/unggah.webp" alt="" aria-hidden="true" decoding="async"><span class="btn-teks">Buka File DICOM</span></button>
+    <button class="btn btn-sm hide-narrow" id="btnOpenFolder"><img class="ikon" src="assets/ui/ikon/folder.webp" alt="" aria-hidden="true" decoding="async">Buka Folder</button>
     <input type="file" id="fileInput" multiple accept=".dcm,.dicom,application/dicom,*/*" hidden>
     <input type="file" id="dirInput" webkitdirectory directory multiple hidden>
     <div class="user-chip" id="userChip"></div>
@@ -91,7 +90,7 @@
     <main class="wl-main" id="konten">
       <div class="wl-tools">
         <div class="search-box">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+          <img class="ikon" src="assets/ui/ikon/cari.webp" alt="" aria-hidden="true" decoding="async">
           <input class="field" id="q" placeholder="Cari nama pasien, No. RM, accession, atau deskripsi…">
         </div>
         <select class="field" id="fDate" style="width:auto;min-width:150px">
@@ -101,9 +100,9 @@
           <option value="30">30 hari terakhir</option>
         </select>
         <span class="spacer"></span>
-        <button class="btn btn-sm" id="btnRefresh">Segarkan</button>
-        <button class="btn btn-sm" id="btnOpen2D" disabled>Viewer 2D</button>
-        <button class="btn btn-sm btn-primary" id="btnOpen" disabled>Tampilkan Hologram</button>
+        <button class="btn btn-sm" id="btnRefresh"><img class="ikon" src="assets/ui/ikon/sinkron.webp" alt="" aria-hidden="true" decoding="async">Segarkan</button>
+        <button class="btn btn-sm" id="btnOpen2D" disabled><img class="ikon" src="assets/ui/ikon/viewer.webp" alt="" aria-hidden="true" decoding="async">Viewer 2D</button>
+        <button class="btn btn-sm btn-primary" id="btnOpen" disabled><img class="ikon" src="assets/ui/ikon/hologram.webp" alt="" aria-hidden="true" decoding="async">Tampilkan Hologram</button>
       </div>
 
       <div class="wl-scroll">
@@ -128,7 +127,7 @@
           <tbody id="rows"></tbody>
         </table>
         <div class="empty hide" id="empty">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M22 12h-6l-2 3h-4l-2-3H2"/><path d="M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"/></svg>
+          <img class="ikon ikon-raksasa" src="assets/ui/ikon/inbox.webp" alt="" aria-hidden="true" decoding="async">
           <p>Tidak ada studi yang cocok dengan filter saat ini.</p>
         </div>
       </div>

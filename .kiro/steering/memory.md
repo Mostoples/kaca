@@ -5,7 +5,7 @@ dikerjakan, dan apa yang masih tersisa. Dibaca lebih dulu sebelum mengubah kode.
 
 ## Ringkas
 
-**Kaca** — **viewer hologram prisma** untuk citra DICOM. Live di <https://kaca-id.web.app>
+**Kaca** — **viewer hologram prisma** untuk citra DICOM. Live di <https://medivox-id.web.app>
 (Firebase project `kaca-id`, Firestore region `asia-southeast2`).
 
 **INTI SISTEM ADALAH PANGGUNG HOLOGRAM PRISMA (`prisma.html`).** Ini ditegaskan sendiri oleh

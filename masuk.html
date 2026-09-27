@@ -17,7 +17,9 @@
 
 <main class="auth-wrap">
   <!-- kolom kiri: formulir -->
-  <section class="auth-card" aria-labelledby="judulMasuk">
+  <img class="ornamen o-auth-cincin lambat" src="assets/ui/ornamen/cincin.webp" alt="" aria-hidden="true" width="514" height="513">
+  <img class="ornamen o-auth-kapsul balik" src="assets/ui/ornamen/kapsul.webp" alt="" aria-hidden="true" width="515" height="411">
+  <section class="auth-card kaca hud" aria-labelledby="judulMasuk">
     <a class="brand" href="index.html" style="margin-bottom:26px">
       <span class="mark" aria-hidden="true">M</span>
       <span class="wordmark">Medivox<small>See. Speak. Understand.</small></span>
@@ -56,9 +58,7 @@
         <div class="pw">
           <input class="field" id="inSandi" type="password" autocomplete="current-password"
                  placeholder="Minimal 6 karakter" required minlength="6">
-          <button type="button" class="pw-toggle" id="btnLihatSandi" aria-label="Tampilkan kata sandi">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
-              <path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg>
+          <button type="button" class="pw-toggle" id="btnLihatSandi" aria-label="Tampilkan kata sandi"><img class="ikon" src="assets/ui/ikon/mata.webp" alt="" aria-hidden="true" decoding="async">
           </button>
         </div>
       </div>
@@ -84,12 +84,17 @@
 
   <!-- kolom kanan: konteks -->
   <aside class="auth-aside" aria-hidden="true">
+    <img class="ornamen o-auth-bola" src="assets/ui/ornamen/bola.webp" alt="" width="450" height="451">
+    <img class="ornamen o-auth-heliks lambat" src="assets/ui/ornamen/heliks.webp" alt="" width="302" height="630">
     <div class="aside-inner">
       <span class="pill pill-accent"><span class="dot"></span> Zero-footprint</span>
       <h2>Piksel tidak pernah meninggalkan perangkat Anda.</h2>
       <p>Medivox hanya menyimpan status baca dan isi laporan. Berkas DICOM dibaca lewat File API
         dan diurai di memori peramban — tidak ada unggahan.</p>
-      <div class="aside-mock">
+      <div class="aside-produk">
+        <img src="assets/3d/putih-tigaper.webp" alt="" width="903" height="787" decoding="async">
+      </div>
+      <div class="aside-mock hud">
         <canvas id="authCanvas" width="440" height="330"></canvas>
         <div class="ovl tl">PHANTOM SINTETIS<br>CT TORAKS</div>
         <div class="ovl br">W: 1500 L: -500</div>

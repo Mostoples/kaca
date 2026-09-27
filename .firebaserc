@@ -1,5 +1,17 @@
 {
   "projects": {
     "default": "kaca-id"
+  },
+  "targets": {
+    "kaca-id": {
+      "hosting": {
+        "medivox": [
+          "medivox-id"
+        ],
+        "lama": [
+          "kaca-id"
+        ]
+      }
+    }
   }
 }

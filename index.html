@@ -42,36 +42,48 @@
 
 <!-- ============ HERO ============ -->
 <section class="hero">
+  <img class="ornamen o-cincin lambat" src="assets/ui/ornamen/cincin.webp" width="514" height="513" alt="" aria-hidden="true" decoding="async">
+  <img class="ornamen o-bola" src="assets/ui/ornamen/bola.webp" width="450" height="451" alt="" aria-hidden="true" decoding="async">
+  <img class="ornamen o-kapsul balik" src="assets/ui/ornamen/kapsul.webp" width="515" height="411" alt="" aria-hidden="true" decoding="async">
+  <img class="ornamen o-palang lambat balik" src="assets/ui/ornamen/palang.webp" width="327" height="264" alt="" aria-hidden="true" decoding="async">
+  <img class="ornamen o-heliks" src="assets/ui/ornamen/heliks.webp" width="302" height="630" alt="" aria-hidden="true" decoding="async">
   <div class="wrap">
-    <div>
-      <span class="pill pill-accent" style="margin-bottom:18px"><span class="dot"></span> Hologram prisma · berjalan penuh di peramban</span>
+    <div class="hero-teks">
+      <span class="eyebrow">Hologram prisma &middot; berjalan di peramban</span>
       <h1>Citra CT dan MRI yang <span class="grad">mengambang</span> di dalam prisma kaca.</h1>
       <p class="lead">
         Medivox menyusun tumpukan irisan DICOM menjadi volume tiga dimensi, lalu memancarkannya
-        sebagai empat pandangan yang saling berhadapan. Letakkan prisma kaca di atas layar dan
-        pantulan keempat bidangnya bertemu jadi satu bentuk yang benar-benar tampak melayang —
-        bisa diputar, tanpa kacamata khusus.
+        sebagai empat pandangan yang saling berhadapan. Letakkan prisma di atas layar dan
+        keempat pantulannya bertemu jadi satu bentuk yang tampak melayang &mdash; bisa diputar,
+        tanpa kacamata.
       </p>
       <div class="hero-cta">
-        <a class="btn btn-primary" href="prisma.html">Buka Panggung Hologram</a>
-        <a class="btn" href="#perangkat">Prisma apa yang dibutuhkan?</a>
+        <a class="btn btn-primary" href="prisma.html"><img class="ikon" src="assets/ui/ikon/hologram.webp" alt="" aria-hidden="true" decoding="async">Buka Panggung Hologram</a>
+        <a class="btn" href="worklist.html"><img class="ikon" src="assets/ui/ikon/studi.webp" alt="" aria-hidden="true" decoding="async">Lihat Daftar Studi</a>
       </div>
       <div class="hero-meta">
-        <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg> Tanpa kacamata &amp; tanpa proyektor</span>
-        <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg> Volume dihitung di perangkat Anda</span>
-        <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg> Berkas tidak pernah diunggah</span>
+        <span><img class="ikon" src="assets/ui/ikon/centang.webp" alt="" aria-hidden="true" decoding="async"> Tanpa kacamata &amp; proyektor</span>
+        <span><img class="ikon" src="assets/ui/ikon/centang.webp" alt="" aria-hidden="true" decoding="async"> Volume dihitung di perangkat</span>
+        <span><img class="ikon" src="assets/ui/ikon/centang.webp" alt="" aria-hidden="true" decoding="async"> Berkas tidak pernah diunggah</span>
+      </div>
+      <div class="hero-angka kaca hud">
+        <div><b>127</b><span>uji inti lulus</span></div>
+        <div><b>24</b><span>sudut hologram</span></div>
+        <div><b>0</b><span>berkas diunggah</span></div>
       </div>
     </div>
 
-    <figure class="produk-3d produk-3d--hero">
-      <img src="assets/3d/medivox-hero.webp" width="1500" height="1170" fetchpriority="high"
-           alt="MEDIVOX-1: basis aluminium dengan prisma piramida terbalik, hologram otak
-                bercahaya mengambang di dalamnya">
-      <figcaption>
-        <b>MEDIVOX&#8209;1</b>
-        <span>Basis aluminium &middot; prisma empat bidang &middot; volume CT/MRI</span>
-      </figcaption>
-    </figure>
+    <div class="hero-panggung" aria-label="Perangkat MEDIVOX-1">
+      <div class="orbit" aria-hidden="true"><i></i><i></i><i></i></div>
+      <img class="hero-produk" src="assets/3d/putih-hero.webp" width="852" height="764"
+           fetchpriority="high"
+           alt="MEDIVOX-1: basis keramik putih berpita biru dengan prisma piramida terbalik,
+                hologram otak bercahaya mengambang di dalamnya">
+      <div class="hero-chip kaca chip-a"><img class="ikon" src="assets/ui/ikon/otak.webp" alt="" aria-hidden="true" decoding="async" style="--ikon:30px"><div><b>Volume CT</b><span>512 &times; 512 &times; 248</span></div></div>
+      <div class="hero-chip kaca chip-b"><img class="ikon" src="assets/ui/ikon/hologram.webp" alt="" aria-hidden="true" decoding="async" style="--ikon:30px"><div><b>4 pandangan</b><span>Pepper&rsquo;s ghost</span></div></div>
+      <div class="hero-chip kaca chip-c"><img class="ikon" src="assets/ui/ikon/perisai.webp" alt="" aria-hidden="true" decoding="async" style="--ikon:30px"><div><b>Tetap lokal</b><span>tanpa unggahan</span></div></div>
+      <div class="hero-label"><b>MEDIVOX&#8209;1</b><span>Volumetric review system</span></div>
+    </div>
   </div>
 </section>
 
@@ -86,28 +98,28 @@
     </div>
 
     <div class="produk-galeri">
-      <figure class="produk-3d produk-3d--besar">
-        <img src="assets/3d/medivox-tigaper.webp" width="1200" height="936" loading="lazy"
+      <figure class="produk-3d produk-3d--besar pola pola-lingkar hud">
+        <img src="assets/3d/putih-tigaper.webp" width="903" height="787" loading="lazy"
              alt="MEDIVOX-1 dilihat dari sudut tiga perempat">
         <figcaption><b>Tiga perempat</b><span>Prisma, basis, dan panel pemancar</span></figcaption>
       </figure>
-      <figure class="produk-3d">
-        <img src="assets/3d/medivox-atas.webp" width="1100" height="858" loading="lazy"
+      <figure class="produk-3d pola pola-titik">
+        <img src="assets/3d/putih-atas.webp" width="924" height="932" loading="lazy"
              alt="MEDIVOX-1 dilihat dari atas, memperlihatkan panel empat kuadran">
         <figcaption><b>Dari atas</b><span>Empat kuadran pandangan</span></figcaption>
       </figure>
-      <figure class="produk-3d">
-        <img src="assets/3d/medivox-samping.webp" width="1100" height="858" loading="lazy"
+      <figure class="produk-3d pola pola-titik">
+        <img src="assets/3d/putih-samping.webp" width="878" height="778" loading="lazy"
              alt="MEDIVOX-1 dilihat dari samping">
         <figcaption><b>Samping</b><span>Sudut bidang pemantul</span></figcaption>
       </figure>
-      <figure class="produk-3d">
-        <img src="assets/3d/medivox-toraks.webp" width="1000" height="780" loading="lazy"
+      <figure class="produk-3d pola pola-titik">
+        <img src="assets/3d/putih-toraks.webp" width="682" height="612" loading="lazy"
              alt="MEDIVOX-1 menampilkan volume toraks">
         <figcaption><b>Volume toraks</b><span>Seri CT dada</span></figcaption>
       </figure>
-      <figure class="produk-3d">
-        <img src="assets/3d/medivox-tengkorak.webp" width="1000" height="780" loading="lazy"
+      <figure class="produk-3d pola pola-titik">
+        <img src="assets/3d/putih-tengkorak.webp" width="682" height="612" loading="lazy"
              alt="MEDIVOX-1 menampilkan volume tengkorak">
         <figcaption><b>Volume tengkorak</b><span>Rekonstruksi permukaan</span></figcaption>
       </figure>

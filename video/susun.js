@@ -277,7 +277,7 @@ function promo() {
   r.push(kartu({
     nama: 'p00', durasi: 3.4, besar: 170,
     judul: 'KACA', sub: 'viewer hologram prisma untuk citra DICOM',
-    kaki: 'kaca-id.web.app'
+    kaki: 'medivox-id.web.app'
   }));
   r.push(klip({ nama: 'p01', mp4: 'prisma-mip', durasi: 5.5,
     teks: 'Empat pandangan, satu hologram', sub: 'CT toraks · TCIA' }));
@@ -299,7 +299,7 @@ function promo() {
     teks: 'Semuanya di dalam peramban' }));
   r.push(kartu({
     nama: 'p10', durasi: 4.2, besar: 96,
-    judul: 'kaca-id.web.app',
+    judul: 'medivox-id.web.app',
     sub: 'tanpa framework, tanpa bundler, tanpa dependensi',
     kaki: 'prototipe antarmuka, bukan perangkat medis'
   }));
@@ -314,10 +314,10 @@ function tutorial() {
   r.push(kartu({
     nama: 't00', durasi: 3.6, besar: 108,
     judul: 'Cara pakai Kaca', sub: 'dari membuka situs sampai hologram menyala',
-    kaki: 'kaca-id.web.app'
+    kaki: 'medivox-id.web.app'
   }));
   r.push(geserTegak({ nama: 't01', png: '02-landing-penuh', durasi: 8.5,
-    teks: '1 · Buka kaca-id.web.app', sub: 'tidak ada yang perlu dipasang' }));
+    teks: '1 · Buka medivox-id.web.app', sub: 'tidak ada yang perlu dipasang' }));
   r.push(gambar({ nama: 't02', png: '03-masuk', durasi: 5.0, zoom: 1.1,
     teks: '2 · Masuk, atau lanjut sebagai tamu', sub: 'mode tamu tidak menunggu jaringan' }));
   r.push(gambar({ nama: 't03', png: '04-studi', durasi: 5.5, zoom: 1.12,
@@ -337,7 +337,7 @@ function tutorial() {
   r.push(gambar({ nama: 't10', png: '11-viewer-3d', durasi: 5.5, zoom: 1.12,
     teks: '10 · Bangun 3D & MPR', sub: 'tujuh seri turunan sekali tekan' }));
   r.push(gambar({ nama: 't11', png: '12-uji', durasi: 4.5, zoom: 1.1,
-    teks: '11 · Ujinya bisa Anda jalankan sendiri', sub: 'kaca-id.web.app/tests/' }));
+    teks: '11 · Ujinya bisa Anda jalankan sendiri', sub: 'medivox-id.web.app/tests/' }));
   r.push(kartu({
     nama: 't12', durasi: 5.0, besar: 74,
     judul: 'Matikan lampu ruangan',

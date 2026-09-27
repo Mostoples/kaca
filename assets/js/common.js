@@ -124,10 +124,18 @@
     file: '<path d="M14 2H7a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7z"/><path d="M14 2v5h5"/>',
     lock: '<rect x="4" y="10" width="16" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/>'
   };
-  function icon(name, size) {
-    return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" ' +
-      'stroke-linecap="round" stroke-linejoin="round"' + (size ? ' width="' + size + '" height="' + size + '"' : '') +
-      '>' + (ICONS[name] || '') + '</svg>';
+  /* Ikon 3D hasil Blender (tools/blender/bangun-kit-ui.py). Nama lama
+     tetap diterima supaya pemanggil yang ada tidak perlu diubah. */
+  var IKON_3D = {
+    search: 'cari', inbox: 'inbox', clock: 'jam', check: 'centang', flag: 'bendera',
+    user: 'pengguna', layers: 'lapisan', shield: 'perisai', zap: 'petir', cloud: 'awan',
+    ruler: 'panjang', brain: 'otak', file: 'berkas', lock: 'kunci'
+  };
+  function icon(name, size, kelas) {
+    var berkas = IKON_3D[name] || name;
+    var ukuran = size ? ' style="--ikon:' + size + 'px"' : '';
+    return '<img class="ikon' + (kelas ? ' ' + kelas : '') + '" src="assets/ui/ikon/' + berkas +
+      '.webp" alt="" aria-hidden="true" decoding="async"' + ukuran + '>';
   }
 
   global.MEDIVOX = {

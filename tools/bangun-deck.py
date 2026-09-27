@@ -3,76 +3,84 @@
 ==========================================================
 MEDIVOX — pembangun deck presentasi (16:9)
 ----------------------------------------------------------
-Menyusun PPTX bergaya neumorphic terang: latar, kartu, dan
-diagram digambar dengan Pillow lalu ditempel sebagai gambar,
-karena PowerPoint tidak bisa membuat bayangan lembut ganda
-dan gradien halus yang dipakai bahasa visual Medivox.
+Gaya: neumorfisme "aura glass".
+  * latar: putih kebiruan dengan awan cahaya (aura) biru, cyan,
+    dan lila samar, kisi titik halus, ornamen 3D Blender yang
+    melayang — sebagian diburamkan untuk kedalaman
+  * kartu: kaca beku sungguhan (latar di bawahnya diburamkan
+    dan diterangkan), tepi putih bercahaya, bayangan ganda
+    neumorfik (terang kiri-atas, gelap kanan-bawah), pola relief
+  * ikon, ornamen, pola, dan render produk putih semuanya hasil
+    Blender CLI (assets/ui, assets/3d)
 
-Render produk 3D diambil dari assets/3d (hasil Blender CLI).
+Setiap slide = satu kanvas Pillow 2560x1440 (latar + kaca + gambar)
+yang ditempel sebagai gambar, lalu judul dan paragraf ditaruh sebagai
+kotak teks PowerPoint supaya tetap bisa disunting.
 
 Jalankan:  python tools/bangun-deck.py
 Keluaran:  build/MEDIVOX_Deck.pptx
 ==========================================================
 """
-import os, math
-from PIL import Image, ImageDraw, ImageFont, ImageFilter
+import os, math, random
+from PIL import Image, ImageDraw, ImageFont, ImageFilter, ImageEnhance
 from pptx import Presentation
-from pptx.util import Inches, Pt, Emu
+from pptx.util import Inches, Pt
 from pptx.dml.color import RGBColor
-from pptx.enum.text import PP_ALIGN, MSO_ANCHOR
+from pptx.enum.text import PP_ALIGN
 
 AKAR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 GBR = os.path.join(AKAR, 'build', 'deck', 'gbr')
 TIGA_D = os.path.join(AKAR, 'assets', '3d')
+UI = os.path.join(AKAR, 'assets', 'ui')
+FOTO = os.path.join(AKAR, 'build', 'foto')
+KIT = os.path.join(AKAR, 'build', 'kit')
 KELUAR = os.path.join(AKAR, 'build', 'MEDIVOX_Deck.pptx')
-
 os.makedirs(GBR, exist_ok=True)
 
-# ---- kanvas gambar: 2x ukuran slide supaya tajam di layar
 SW, SH = 2560, 1440
 IN_W, IN_H = 13.333, 7.5
-SKALA = SW / IN_W          # piksel per inci
+SKALA = SW / IN_W              # piksel per inci
 
-# ---- warna merek (sama dengan assets/css/base.css)
 PUTIH = (255, 255, 255)
-LATAR = (246, 249, 253)
-LATAR2 = (238, 244, 251)
-NAVY = (18, 35, 60)
-TEKS2 = (65, 96, 138)
+LATAR = (238, 243, 250)
+NAVY = (19, 41, 75)
+TEKS2 = (61, 90, 130)
 MUTED = (90, 114, 144)
 BIRU = (47, 111, 208)
 CYAN = (94, 201, 242)
-GARIS = (222, 231, 242)
+LILA = (150, 150, 255)
 
 
-def inci(px):
-    return Inches(px / SKALA)
+def px(inci):
+    return int(round(inci * SKALA))
 
 
 # ---------------------------------------------------------------- huruf
 _cache = {}
 
 
-def huruf(ukuran, tebal=True, mono=False):
-    kunci = (ukuran, tebal, mono)
+def huruf(ukuran, berat=800, mono=False):
+    kunci = (ukuran, berat, mono)
     if kunci in _cache:
         return _cache[kunci]
-    kandidat = (['consola.ttf'] if mono else
-                (['Manrope-ExtraBold.ttf', 'seguisb.ttf', 'segoeuib.ttf', 'arialbd.ttf']
-                 if tebal else ['Manrope-Regular.ttf', 'segoeui.ttf', 'arial.ttf']))
     f = None
-    for nama in kandidat:
-        for dasar in (r'C:\Windows\Fonts', os.path.join(AKAR, 'assets', 'font')):
-            jalur = os.path.join(dasar, nama)
-            if os.path.exists(jalur):
-                try:
-                    f = ImageFont.truetype(jalur, ukuran)
-                    break
-                except Exception:
-                    pass
-        if f:
-            break
-    f = f or ImageFont.load_default(ukuran)
+    if mono:
+        for j in (os.path.join(AKAR, 'build', 'font', 'JetBrainsMono-Medium.ttf'),
+                  r'C:\Windows\Fonts\consola.ttf'):
+            if os.path.exists(j):
+                f = ImageFont.truetype(j, ukuran)
+                break
+    else:
+        j = os.path.join(AKAR, 'build', 'font', 'Manrope.ttf')
+        if os.path.exists(j):
+            f = ImageFont.truetype(j, ukuran)
+            try:
+                f.set_variation_by_axes([berat])
+            except Exception:
+                pass
+        else:
+            nama = 'segoeuib.ttf' if berat >= 600 else 'segoeui.ttf'
+            f = ImageFont.truetype(os.path.join(r'C:\Windows\Fonts', nama), ukuran)
     _cache[kunci] = f
     return f
 
@@ -85,6 +93,10 @@ def tulis(d, xy, teks, f, warna=NAVY, spasi=0):
     for ch in teks:
         d.text((x, y), ch, font=f, fill=warna)
         x += d.textlength(ch, font=f) + spasi
+
+
+def lebar_spasi(d, teks, f, spasi):
+    return sum(d.textlength(c, font=f) + spasi for c in teks) - spasi
 
 
 def bungkus(d, teks, f, lebar_maks):
@@ -102,194 +114,339 @@ def bungkus(d, teks, f, lebar_maks):
     return baris
 
 
-# ---------------------------------------------------------------- primitif gambar
-def bayangan(im, kotak, radius, kabur=26, kuat=42, geser=10):
-    """Bayangan lembut di bawah kartu — inti tampilan neumorphic terang."""
-    lap = Image.new('RGBA', im.size, (0, 0, 0, 0))
-    d = ImageDraw.Draw(lap)
-    x0, y0, x1, y1 = kotak
-    d.rounded_rectangle([x0, y0 + geser, x1, y1 + geser], radius, fill=(19, 45, 80, kuat))
-    lap = lap.filter(ImageFilter.GaussianBlur(kabur))
-    im.alpha_composite(lap)
-
-
-def kartu(im, kotak, radius=28, isi=PUTIH, garis=GARIS, kabur=26, kuat=42):
-    bayangan(im, kotak, radius, kabur, kuat)
-    d = ImageDraw.Draw(im)
-    d.rounded_rectangle(kotak, radius, fill=isi + (255,), outline=garis + (255,), width=2)
-
-
-def latar_slide(varian='polos'):
-    im = Image.new('RGBA', (SW, SH), LATAR + (255,))
-    # sapuan cahaya halus, digambar kecil lalu diburamkan
-    kecil = Image.new('RGB', (160, 90), LATAR)
-    d = ImageDraw.Draw(kecil)
-    for i in range(26, 0, -1):
-        t = i / 26.0
-        r = int(78 * t)
-        warna = (int(246 - 12 * (1 - t) ** 2), int(249 - 8 * (1 - t) ** 2), 253)
-        d.ellipse([-14 - r, -22 - r, -14 + r, -22 + r], fill=warna)
-    for i in range(22, 0, -1):
-        t = i / 22.0
-        r = int(64 * t)
-        warna = (int(246 - 6 * (1 - t) ** 2), int(250 - 3 * (1 - t) ** 2), 254)
-        d.ellipse([170 - r, 104 - r, 170 + r, 104 + r], fill=warna)
-    kecil = kecil.filter(ImageFilter.GaussianBlur(7))
-    im.alpha_composite(kecil.resize((SW, SH), Image.BICUBIC).convert('RGBA'))
-
-    if varian == 'bab':
-        d = ImageDraw.Draw(im)
-        d.rectangle([0, 0, SW, SH], fill=None)
-        pita = Image.new('RGBA', (SW, SH), (0, 0, 0, 0))
-        pd = ImageDraw.Draw(pita)
-        pd.polygon([(SW * 0.52, 0), (SW, 0), (SW, SH), (SW * 0.30, SH)],
-                   fill=BIRU + (16,))
-        im.alpha_composite(pita.filter(ImageFilter.GaussianBlur(40)))
+# ---------------------------------------------------------------- aset
+def muat(jalur, lebar=None, tinggi=None):
+    im = Image.open(jalur).convert('RGBA')
+    if lebar:
+        im = im.resize((int(lebar), int(im.height * lebar / im.width)), Image.LANCZOS)
+    elif tinggi:
+        im = im.resize((int(im.width * tinggi / im.height), int(tinggi)), Image.LANCZOS)
     return im
 
 
-def simpan(im, nama):
-    """Disimpan sebagai PNG beralfa. convert('RGB') akan mengubah bagian
-    transparan menjadi hitam dan memunculkan blok gelap di slide."""
-    jalur = os.path.join(GBR, nama + '.png')
-    if im.mode != 'RGBA':
-        im = im.convert('RGBA')
-    im.save(jalur, 'PNG', compress_level=6)
-    return jalur
+def ikon(nama, ukuran):
+    """Ikon 3D Blender; PNG 192 px dari build/kit bila ada (lebih tajam)."""
+    besar = os.path.join(KIT, 'ikon', nama + '.png')
+    jalur = besar if os.path.exists(besar) else os.path.join(UI, 'ikon', nama + '.webp')
+    return muat(jalur, ukuran)
 
 
-# ---------------------------------------------------------------- komposisi gambar
-def gbr_latar(nama, varian='polos'):
-    return simpan(latar_slide(varian), nama)
+def ornamen(nama, lebar):
+    return muat(os.path.join(UI, 'ornamen', nama + '.webp'), lebar)
 
 
-MARG = int(0.72 * SKALA)      # sejajar dengan judul slide
+_POLA = {}
 
 
-def gbr_kartu_poin(nama, poin, kolom=3, tinggi=560, ikon_warna=None):
-    """Deretan kartu berisi judul + keterangan."""
-    im = Image.new('RGBA', (SW, tinggi), (0, 0, 0, 0))
+def pola(nama, ukuran):
+    """Lapisan pola relief (alfa) dipetakan berulang seukuran kotak."""
+    k = (nama, ukuran)
+    if k not in _POLA:
+        ubin = Image.open(os.path.join(UI, 'pola', nama + '.webp')).convert('RGBA')
+        ubin = ubin.resize((420, 420), Image.LANCZOS)
+        w, h = ukuran
+        im = Image.new('RGBA', (w, h), (0, 0, 0, 0))
+        for y in range(0, h, 420):
+            for x in range(0, w, 420):
+                im.paste(ubin, (x, y))
+        _POLA[k] = im
+    return _POLA[k].copy()
+
+
+# ---------------------------------------------------------------- kanvas slide
+class Kanvas:
+    """Satu slide sebagai gambar: aura, ornamen, kaca, gambar."""
+
+    def __init__(self, varian='polos', benih=0):
+        self.im = aura(varian, benih)
+        self.d = ImageDraw.Draw(self.im)
+
+    # ---- kaca beku dengan bayangan neumorfik ganda
+    def kaca(self, kotak, radius=40, pekat=0.64, pola_nama=None, sorot=True, datar=False):
+        x0, y0, x1, y1 = [int(v) for v in kotak]
+        w, h = x1 - x0, y1 - y0
+        if not datar:
+            # bayangan terang (kiri-atas) dan gelap (kanan-bawah)
+            lap = Image.new('RGBA', self.im.size, (0, 0, 0, 0))
+            dl = ImageDraw.Draw(lap)
+            dl.rounded_rectangle([x0 - 16, y0 - 16, x1 - 16, y1 - 16], radius, fill=(255, 255, 255, 190))
+            lap = lap.filter(ImageFilter.GaussianBlur(26))
+            self.im.alpha_composite(lap)
+            lap = Image.new('RGBA', self.im.size, (0, 0, 0, 0))
+            dl = ImageDraw.Draw(lap)
+            dl.rounded_rectangle([x0 + 18, y0 + 26, x1 + 18, y1 + 26], radius, fill=(22, 52, 98, 52))
+            lap = lap.filter(ImageFilter.GaussianBlur(34))
+            self.im.alpha_composite(lap)
+        # kaca beku: latar di bawahnya diburamkan lalu dicampur putih
+        pot = self.im.crop((x0, y0, x1, y1)).filter(ImageFilter.GaussianBlur(30))
+        pot = Image.blend(pot, Image.new('RGBA', pot.size, (255, 255, 255, 255)), pekat)
+        topeng = Image.new('L', (w, h), 0)
+        ImageDraw.Draw(topeng).rounded_rectangle([0, 0, w - 1, h - 1], radius, fill=255)
+        if pola_nama:
+            p = pola(pola_nama, (w, h))
+            memudar = Image.linear_gradient('L').rotate(-40, expand=True).resize((w, h))
+            memudar = memudar.point(lambda v: max(0, int((v - 110) * 1.75)))
+            p.putalpha(Image.composite(p.getchannel('A').point(lambda v: int(v * 0.30)),
+                                       Image.new('L', (w, h), 0), memudar))
+            pot.alpha_composite(p)
+        if sorot:
+            # kilau lembut dari atas
+            kilau = Image.new('RGBA', (w, h), (0, 0, 0, 0))
+            ImageDraw.Draw(kilau).ellipse([-w * 0.2, -h * 1.1, w * 1.2, h * 0.35], fill=(255, 255, 255, 60))
+            pot.alpha_composite(kilau.filter(ImageFilter.GaussianBlur(40)))
+        self.im.paste(pot, (x0, y0), topeng)
+        # tepi: putih bercahaya di atas, memudar ke bawah
+        tepi = Image.new('RGBA', (w, h), (0, 0, 0, 0))
+        ImageDraw.Draw(tepi).rounded_rectangle([1, 1, w - 2, h - 2], radius, outline=(255, 255, 255, 255), width=3)
+        grad = Image.linear_gradient('L').resize((w, h)).point(lambda v: 255 - int(v * 0.6))
+        tepi.putalpha(Image.composite(tepi.getchannel('A'), Image.new('L', (w, h), 0), grad))
+        self.im.alpha_composite(tepi, (x0, y0))
+
+    def hud(self, kotak, pjg=30, warna=CYAN):
+        x0, y0, x1, y1 = kotak
+        m = 18
+        for (ax, ay, sx, sy) in [(x0 + m, y0 + m, 1, 1), (x1 - m, y0 + m, -1, 1),
+                                 (x0 + m, y1 - m, 1, -1), (x1 - m, y1 - m, -1, -1)]:
+            self.d.line([(ax, ay), (ax + pjg * sx, ay)], fill=warna + (230,), width=3)
+            self.d.line([(ax, ay), (ax, ay + pjg * sy)], fill=warna + (230,), width=3)
+
+    def tempel(self, gambar, xy, bayang=True, kabur=30, turun=30, gelap=60):
+        x, y = int(xy[0]), int(xy[1])
+        if bayang:
+            a = gambar.getchannel('A')
+            sil = Image.new('RGBA', gambar.size, (22, 52, 98, 0))
+            sil.putalpha(a.point(lambda v: int(v * gelap / 255)))
+            pad = kabur * 3
+            bs = Image.new('RGBA', (gambar.width + pad * 2, gambar.height + pad * 2), (0, 0, 0, 0))
+            bs.alpha_composite(sil, (pad, pad))
+            bs = bs.filter(ImageFilter.GaussianBlur(kabur))
+            self.im.alpha_composite(bs, (x - pad, y - pad + turun))
+        self.im.alpha_composite(gambar, (x, y))
+
+    def ubin_ikon(self, nama, x, y, ukuran=150):
+        """Petak kaca kecil berisi ikon 3D."""
+        self.kaca([x, y, x + ukuran, y + ukuran], int(ukuran * 0.3), 0.72, sorot=True)
+        ik = ikon(nama, int(ukuran * 0.66))
+        self.tempel(ik, (x + (ukuran - ik.width) / 2, y + (ukuran - ik.height) / 2),
+                    kabur=8, turun=8, gelap=50)
+
+    def jadi(self, nama):
+        # satu kanvas penuh per slide: JPEG jauh lebih ringan daripada PNG
+        jalur = os.path.join(GBR, nama + '.jpg')
+        self.im.convert('RGB').save(jalur, 'JPEG', quality=90, subsampling=0)
+        s = PRS.slides.add_slide(KOSONG)
+        s.shapes.add_picture(jalur, 0, 0, Inches(IN_W), Inches(IN_H))
+        return s
+
+
+def aura(varian, benih):
+    """Latar aura: awan cahaya besar yang diburamkan + kisi titik + ornamen."""
+    rnd = random.Random(benih * 7 + 3)
+    kecil = Image.new('RGBA', (256, 144), LATAR + (255,))
+    lap = Image.new('RGBA', (256, 144), (0, 0, 0, 0))
+    d = ImageDraw.Draw(lap)
+    ox = rnd.uniform(-20, 20)
+    d.ellipse([-70 + ox, -80, 110 + ox, 70], fill=CYAN + (120,))
+    d.ellipse([150 - ox, 60, 330 - ox, 210], fill=BIRU + (70,))
+    d.ellipse([170 + ox, -60, 300 + ox, 60], fill=LILA + (46,))
+    d.ellipse([60 - ox, 90, 190 - ox, 200], fill=(255, 255, 255, 150))
+    lap = lap.filter(ImageFilter.GaussianBlur(30))
+    kecil.alpha_composite(lap)
+    im = kecil.resize((SW, SH), Image.BICUBIC)
+    titik = Image.new('RGBA', (SW, SH), (0, 0, 0, 0))
+    dt = ImageDraw.Draw(titik)
+    for y in range(30, SH, 40):
+        for x in range(30, SW, 40):
+            dt.ellipse([x - 1.3, y - 1.3, x + 1.3, y + 1.3], fill=(47, 111, 208, 30))
+    im.alpha_composite(titik)
+
+    def taruh(nama, lebar, x, y, kabur=0, alfa=1.0):
+        o = ornamen(nama, lebar)
+        if kabur:
+            pad = kabur * 3
+            b = Image.new('RGBA', (o.width + pad * 2, o.height + pad * 2), (0, 0, 0, 0))
+            b.alpha_composite(o, (pad, pad))
+            o = b.filter(ImageFilter.GaussianBlur(kabur))
+            x, y = x - pad, y - pad
+        if alfa < 1:
+            o.putalpha(o.getchannel('A').point(lambda v: int(v * alfa)))
+        im.alpha_composite(o, (int(x), int(y)))
+
+    if varian == 'bab':
+        taruh('cincin', 900, 1560, 170, 0, 0.95)
+        taruh('bola', 300, 2150, 900, 6, 0.9)
+        taruh('kapsul', 380, 1380, 980, 0, 1.0)
+        taruh('heliks', 170, 2320, 220, 10, 0.7)
+        taruh('palang', 170, 1250, 280, 14, 0.8)
+    elif varian == 'sampul':
+        taruh('cincin', 620, -190, 900, 10, 0.7)
+        taruh('palang', 150, 1180, 120, 6, 0.9)
+        taruh('heliks', 150, 2380, 900, 8, 0.8)
+    else:
+        pilihan = [('bola', 190), ('palang', 130), ('kapsul', 220), ('heliks', 120), ('cincin', 260)]
+        nama, lebar = pilihan[benih % len(pilihan)]
+        taruh(nama, lebar, SW - lebar - 70, 60, 12, 0.55)
+    return im
+
+
+# ---------------------------------------------------------------- komponen
+MARG = px(0.72)
+
+
+def kartu_poin(k, x, y, w, h, nama_ikon, no, judul, ket, pola_nama='hex'):
+    k.kaca([x, y, x + w, y + h], 40, pola_nama=pola_nama)
+    k.ubin_ikon(nama_ikon, x + 44, y + 44, 136)
+    d = k.d
+    tulis(d, (x + w - 44 - lebar_spasi(d, no, huruf(26, mono=True), 4), y + 58), no,
+          huruf(26, mono=True), BIRU, spasi=4)
+    fj, fk = huruf(44, 800), huruf(29, 500)
+    yy = y + 220
+    for baris in bungkus(d, judul, fj, w - 88):
+        tulis(d, (x + 44, yy), baris, fj, NAVY)
+        yy += 56
+    yy += 12
+    for baris in bungkus(d, ket, fk, w - 88):
+        tulis(d, (x + 44, yy), baris, fk, TEKS2)
+        yy += 42
+
+
+def deret_kartu(k, y, h, poin, kolom=3, pola_nama='hex'):
     guna = SW - MARG * 2
-    lebar = (guna - (kolom - 1) * 44) // kolom
-    fj = huruf(42)
-    fk = huruf(27, tebal=False)
-    fn = huruf(24, mono=True)
-    d = ImageDraw.Draw(im)
-    for i, (no, judul, ket) in enumerate(poin[:kolom]):
-        x = MARG + i * (lebar + 44)
-        kartu(im, [x, 30, x + lebar, tinggi - 30], 30)
-        d = ImageDraw.Draw(im)
-        tulis(d, (x + 44, 78), no, fn, (ikon_warna or CYAN), spasi=5)
-        d.rounded_rectangle([x + 44, 122, x + 44 + 62, 127], 3, fill=BIRU)
-        yy = 158
-        for baris in bungkus(d, judul, fj, lebar - 88):
-            tulis(d, (x + 44, yy), baris, fj, NAVY)
-            yy += 54
-        yy += 10
-        for baris in bungkus(d, ket, fk, lebar - 88):
-            tulis(d, (x + 44, yy), baris, fk, MUTED)
-            yy += 38
-    return simpan(im, nama)
+    jarak = 52
+    lebar = (guna - (kolom - 1) * jarak) // kolom
+    for i, p in enumerate(poin):
+        kartu_poin(k, MARG + i * (lebar + jarak), y, lebar, h, *p,
+                   pola_nama=['hex', 'gelombang', 'titik'][i % 3] if pola_nama == 'campur' else pola_nama)
 
 
-def gbr_angka(nama, angka, tinggi=420):
-    im = Image.new('RGBA', (SW, tinggi), (0, 0, 0, 0))
+def deret_angka(k, y, h, angka):
     guna = SW - MARG * 2
-    lebar = (guna - (len(angka) - 1) * 40) // len(angka)
-    fa = huruf(92)
-    fl = huruf(28, tebal=False)
+    jarak = 48
+    lebar = (guna - (len(angka) - 1) * jarak) // len(angka)
+    fa, fl = huruf(104, 800), huruf(30, 500)
     for i, (nilai, label) in enumerate(angka):
-        x = MARG + i * (lebar + 40)
-        kartu(im, [x, 24, x + lebar, tinggi - 24], 28)
-        d = ImageDraw.Draw(im)
+        x = MARG + i * (lebar + jarak)
+        k.kaca([x, y, x + lebar, y + h], 40, pola_nama='lingkar')
+        k.hud([x, y, x + lebar, y + h])
+        d = k.d
         w = d.textlength(nilai, font=fa)
-        tulis(d, (x + (lebar - w) / 2, 88), nilai, fa, BIRU)
+        # angka bergradien biru -> cyan
+        lap = Image.new('RGBA', (int(w) + 10, 140), (0, 0, 0, 0))
+        ImageDraw.Draw(lap).text((0, 0), nilai, font=fa, fill=(255, 255, 255, 255))
+        grad = Image.new('RGBA', lap.size)
+        gd = ImageDraw.Draw(grad)
+        for gx in range(lap.width):
+            t = gx / max(1, lap.width - 1)
+            gd.line([(gx, 0), (gx, lap.height)],
+                    fill=tuple(int(BIRU[j] + (CYAN[j] - BIRU[j]) * t) for j in range(3)) + (255,))
+        grad.putalpha(lap.getchannel('A'))
+        k.im.alpha_composite(grad, (int(x + (lebar - w) / 2), y + 70))
         for j, baris in enumerate(label.split('\n')):
             bw = d.textlength(baris, font=fl)
-            tulis(d, (x + (lebar - bw) / 2, 214 + j * 40), baris, fl, MUTED)
-    return simpan(im, nama)
+            tulis(d, (x + (lebar - bw) / 2, y + 222 + j * 42), baris, fl, TEKS2)
 
 
-def gbr_diagram_prisma(nama):
-    """Diagram cara kerja Pepper's ghost: panel -> empat bidang -> satu bentuk."""
-    W2, H2, PAD = SW, 900, 30
-    im = Image.new('RGBA', (W2, H2 + PAD * 2), (0, 0, 0, 0))
-    kartu(im, [PAD, PAD, W2 - PAD, H2 + PAD], 32)
-    d = ImageDraw.Draw(im)
-
-    cx, dasar = W2 // 2, 700 + PAD // 2
-    atas_l, atas_r = cx - 430, cx + 430
-    bawah_l, bawah_r = cx - 96, cx + 96
-    puncak = 245
-
-    # prisma
-    d.line([(atas_l, puncak), (atas_r, puncak)], fill=BIRU + (255,), width=5)
-    d.line([(atas_l, puncak), (bawah_l, dasar)], fill=BIRU + (255,), width=5)
-    d.line([(atas_r, puncak), (bawah_r, dasar)], fill=BIRU + (255,), width=5)
-    d.line([(bawah_l, dasar), (bawah_r, dasar)], fill=BIRU + (255,), width=5)
-
-    # panel pemancar
-    d.rounded_rectangle([cx - 300, dasar + 26, cx + 300, dasar + 74], 12,
-                        fill=(232, 243, 253, 255), outline=BIRU + (255,), width=3)
-    fk = huruf(26, tebal=False)
-    fm = huruf(24, mono=True)
-    tulis(d, (cx - 292, dasar + 34), 'PANEL EMPAT KUADRAN', fm, BIRU, spasi=3)
-
-    # berkas cahaya
-    for sisi in (-1, 1):
-        d.line([(cx + sisi * 150, dasar + 22), (cx + sisi * 330, puncak + 130)],
-               fill=CYAN + (170,), width=3)
-
-    # volume yang tampak mengambang
-    d.ellipse([cx - 112, 372, cx + 112, 528], fill=CYAN + (46,), outline=CYAN + (220,), width=3)
-    fw = huruf(30)
-    w = d.textlength('VOLUME', font=fw)
-    tulis(d, (cx - w / 2, 436), 'VOLUME', fw, BIRU)
-
-    # keterangan
-    tulis(d, (110, 100), '01', fm, CYAN, spasi=4)
-    for i, baris in enumerate(['Empat pandangan', 'dipancarkan panel']):
-        tulis(d, (110, 142 + i * 40), baris, fk, MUTED)
-    tulis(d, (W2 - 500, 100), '02', fm, CYAN, spasi=4)
-    for i, baris in enumerate(['Tiap bidang prisma', 'memantulkan satu sisi']):
-        tulis(d, (W2 - 500, 142 + i * 40), baris, fk, MUTED)
-    lbl = '03  KEEMPATNYA BERTEMU'
-    w = sum(d.textlength(c, font=fm) + 3 for c in lbl) - 3
-    tulis(d, (cx - w / 2, 150), lbl, fm, BIRU, spasi=3)
-    return simpan(im, nama)
+def produk_di_kaca(k, kotak, berkas, lebar_gbr, pola_nama='lingkar', label=None):
+    x0, y0, x1, y1 = kotak
+    k.kaca(kotak, 48, pola_nama=pola_nama)
+    k.hud(kotak)
+    g = muat(os.path.join(TIGA_D, berkas), lebar_gbr)
+    maks_t = (y1 - y0) - (130 if label else 60)
+    if g.height > maks_t:
+        g = g.resize((int(g.width * maks_t / g.height), maks_t), Image.LANCZOS)
+    k.tempel(g, (x0 + (x1 - x0 - g.width) / 2, y0 + 30 + (maks_t - g.height) / 2), kabur=26, turun=34, gelap=70)
+    if label:
+        judul, sub = label
+        tulis(k.d, (x0 + 44, y1 - 104), judul, huruf(34, 800), NAVY)
+        tulis(k.d, (x0 + 44, y1 - 58), sub, huruf(22, mono=True), MUTED)
 
 
-def gbr_gambar_berbingkai(nama, sumber, lebar=SW, radius=30):
-    """Render produk (latar gelap) dibingkai kartu."""
-    foto = Image.open(sumber).convert('RGB')
-    r = lebar / foto.width
-    foto = foto.resize((int(lebar), int(foto.height * r)), Image.LANCZOS)
-    pad = 26
-    im = Image.new('RGBA', (foto.width + pad * 2, foto.height + pad * 2), (0, 0, 0, 0))
-    bayangan(im, [pad, pad, pad + foto.width, pad + foto.height], radius, 28, 52)
-    masker = Image.new('L', foto.size, 0)
-    ImageDraw.Draw(masker).rounded_rectangle([0, 0, foto.width, foto.height], radius, fill=255)
-    im.paste(foto, (pad, pad), masker)
-    return simpan(im, nama)
+def jendela(k, gambar, x, y, lebar, url):
+    im = Image.open(gambar).convert('RGB')
+    t_isi = int(im.height * lebar / im.width)
+    im = im.resize((lebar, t_isi), Image.LANCZOS)
+    bar = 56
+    kotak = [x, y, x + lebar + 20, y + t_isi + bar + 10]
+    k.kaca(kotak, 30, 0.7)
+    d = k.d
+    for i, c in enumerate([(236, 106, 94), (244, 191, 79), (97, 197, 84)]):
+        d.ellipse([x + 26 + i * 24, y + 21, x + 40 + i * 24, y + 35], fill=c)
+    fu = huruf(19, mono=True)
+    uw = d.textlength(url, font=fu) + 70
+    ux = x + (lebar + 20 - uw) / 2
+    d.rounded_rectangle([ux, y + 12, ux + uw, y + 44], 16, fill=(236, 242, 250))
+    d.ellipse([ux + 16, y + 23, ux + 26, y + 33], fill=CYAN)
+    d.text((ux + 38, y + 15), url, font=fu, fill=MUTED)
+    topeng = Image.new('L', im.size, 0)
+    ImageDraw.Draw(topeng).rounded_rectangle([0, 0, im.width - 1, im.height - 1], 18, fill=255)
+    k.im.paste(im, (x + 10, y + bar), topeng)
+    return kotak
 
 
-# ---------------------------------------------------------------- slide
+def ponsel(k, gambar, x, y, tinggi):
+    im = Image.open(gambar).convert('RGB')
+    lh = tinggi - 30
+    lw = int(im.width * lh / im.height)
+    im = im.resize((lw, lh), Image.LANCZOS)
+    Wp = lw + 30
+    badan = Image.new('RGBA', (Wp, tinggi), (0, 0, 0, 0))
+    d = ImageDraw.Draw(badan)
+    d.rounded_rectangle([0, 0, Wp - 1, tinggi - 1], int(Wp * 0.16), fill=(228, 234, 243, 255),
+                        outline=(255, 255, 255, 255), width=4)
+    d.rounded_rectangle([8, 8, Wp - 9, tinggi - 9], int(Wp * 0.14), fill=(10, 14, 22, 255))
+    topeng = Image.new('L', im.size, 0)
+    ImageDraw.Draw(topeng).rounded_rectangle([0, 0, lw - 1, lh - 1], int(Wp * 0.12), fill=255)
+    badan.paste(im, (15, 15), topeng)
+    cx = Wp // 2
+    d.rounded_rectangle([cx - Wp * 0.15, 26, cx + Wp * 0.15, 26 + Wp * 0.08], int(Wp * 0.04), fill=(0, 0, 0, 255))
+    k.tempel(badan, (x, y), kabur=34, turun=36, gelap=80)
+    return Wp
+
+
+def diagram_prisma(k, kotak):
+    x0, y0, x1, y1 = kotak
+    k.kaca(kotak, 48, pola_nama='gelombang')
+    k.hud(kotak)
+    d = k.d
+    cx = (x0 + x1) // 2
+    dasar = y1 - 190
+    atas_l, atas_r, bawah_l, bawah_r, puncak = cx - 430, cx + 430, cx - 96, cx + 96, y0 + 150
+    for a, b in [((atas_l, puncak), (atas_r, puncak)), ((atas_l, puncak), (bawah_l, dasar)),
+                 ((atas_r, puncak), (bawah_r, dasar)), ((bawah_l, dasar), (bawah_r, dasar))]:
+        d.line([a, b], fill=BIRU, width=6)
+    # volume bercahaya
+    pijar = Image.new('RGBA', k.im.size, (0, 0, 0, 0))
+    ImageDraw.Draw(pijar).ellipse([cx - 150, puncak + 100, cx + 150, puncak + 300], fill=CYAN + (120,))
+    k.im.alpha_composite(pijar.filter(ImageFilter.GaussianBlur(30)))
+    otak = ikon('otak', 190)
+    k.tempel(otak, (cx - 95, puncak + 105), kabur=10, turun=10, gelap=40)
+    d = k.d
+    d.rounded_rectangle([cx - 320, dasar + 30, cx + 320, dasar + 88], 20, fill=(236, 245, 254),
+                        outline=BIRU, width=3)
+    fm, fk = huruf(24, mono=True), huruf(30, 500)
+    t = 'PANEL EMPAT KUADRAN'
+    tulis(d, (cx - lebar_spasi(d, t, fm, 4) / 2, dasar + 44), t, fm, BIRU, spasi=4)
+    for s in (-1, 1):
+        d.line([(cx + s * 160, dasar + 26), (cx + s * 340, puncak + 150)], fill=CYAN, width=4)
+    for (tx, no, baris) in [(x0 + 90, '01', ['Empat pandangan', 'dipancarkan panel']),
+                            (x1 - 460, '02', ['Tiap bidang prisma', 'memantulkan satu sisi'])]:
+        tulis(d, (tx, y0 + 110), no, fm, BIRU, spasi=4)
+        for i, b in enumerate(baris):
+            tulis(d, (tx, y0 + 152 + i * 44), b, fk, TEKS2)
+    t = '03  KEEMPATNYA BERTEMU DI SATU TITIK'
+    tulis(d, (cx - lebar_spasi(d, t, fm, 4) / 2, y0 + 70), t, fm, BIRU, spasi=4)
+
+
+# ---------------------------------------------------------------- teks pptx
 PRS = Presentation()
 PRS.slide_width = Inches(IN_W)
 PRS.slide_height = Inches(IN_H)
 KOSONG = PRS.slide_layouts[6]
-TOTAL = 20
-
-
-def slide(varian='polos'):
-    s = PRS.slides.add_slide(KOSONG)
-    s.shapes.add_picture(gbr_latar('latar_' + varian, varian), 0, 0,
-                         Inches(IN_W), Inches(IN_H))
-    return s
+TOTAL = 24
 
 
 def teks(s, x, y, w, h, isi, ukuran, warna=NAVY, tebal=True, spasi=0,
-         rata=PP_ALIGN.LEFT, mono=False, jarak_baris=1.18):
+         rata=PP_ALIGN.LEFT, mono=False, jarak_baris=1.15):
     kotak = s.shapes.add_textbox(Inches(x), Inches(y), Inches(w), Inches(h))
     tf = kotak.text_frame
     tf.word_wrap = True
@@ -305,34 +462,54 @@ def teks(s, x, y, w, h, isi, ukuran, warna=NAVY, tebal=True, spasi=0,
         r.font.color.rgb = RGBColor(*warna)
         r.font.name = 'Consolas' if mono else 'Segoe UI'
         if spasi:
-            from pptx.oxml.ns import qn
             r.font._rPr.set('spc', str(int(spasi * 100)))
     return kotak
 
 
 def kop(s, bab, nomor):
     if bab:
-        teks(s, 0.72, 0.52, 8, 0.3, bab.upper(), 10.5, BIRU, spasi=2.2, mono=True)
-    teks(s, IN_W - 1.9, 0.52, 1.2, 0.3, '%02d / %d' % (nomor, TOTAL), 10.5,
+        teks(s, 0.98, 0.5, 8, 0.3, bab.upper(), 10.5, BIRU, spasi=2.2, mono=True)
+    teks(s, IN_W - 1.9, 0.5, 1.2, 0.3, '%02d / %d' % (nomor, TOTAL), 10.5,
          MUTED, tebal=False, spasi=1.4, rata=PP_ALIGN.RIGHT, mono=True)
 
 
-def garis_aksen(s, x, y, w=0.62):
-    from pptx.enum.shapes import MSO_SHAPE
-    bentuk = s.shapes.add_shape(MSO_SHAPE.ROUNDED_RECTANGLE,
-                                Inches(x), Inches(y), Inches(w), Inches(0.045))
-    bentuk.fill.solid()
-    bentuk.fill.fore_color.rgb = RGBColor(*BIRU)
-    bentuk.line.fill.background()
-    bentuk.shadow.inherit = False
+def titik_kop(k, bab=True):
+    """Titik bercahaya di depan label bab (digambar di kanvas)."""
+    if not bab:
+        return
+    x, y = px(0.78), px(0.585)
+    pijar = Image.new('RGBA', (80, 80), (0, 0, 0, 0))
+    ImageDraw.Draw(pijar).ellipse([26, 26, 54, 54], fill=CYAN + (200,))
+    k.im.alpha_composite(pijar.filter(ImageFilter.GaussianBlur(8)), (x - 40, y - 40))
+    k.d.ellipse([x - 9, y - 9, x + 9, y + 9], fill=CYAN)
 
 
-def judul_slide(s, judul, sub=None, y=1.25):
-    garis_aksen(s, 0.72, y - 0.22)
-    teks(s, 0.72, y, 11.5, 1.2, judul, 40)
+def garis_aksen(k, x, y, w=0.62):
+    x0, y0 = px(x), px(y)
+    x1 = x0 + px(w)
+    for gx in range(x0, x1):
+        t = (gx - x0) / max(1, x1 - x0)
+        k.d.line([(gx, y0), (gx, y0 + 8)], fill=tuple(int(BIRU[j] + (CYAN[j] - BIRU[j]) * t) for j in range(3)))
+
+
+def judul_slide(s, judul, sub=None, y=1.25, lebar=11.5):
+    teks(s, 0.72, y, lebar, 1.2, judul, 40)
     if sub:
-        teks(s, 0.74, y + 0.70 * len(judul.split('\n')) + 0.28, 10.4, 1.0, sub, 15,
+        teks(s, 0.74, y + 0.70 * len(judul.split('\n')) + 0.3, 10.4, 1.0, sub, 15,
              TEKS2, tebal=False, jarak_baris=1.35)
+
+
+def slide_bab(no, judul, sub, nomor):
+    k = Kanvas('bab', nomor)
+    k.kaca([px(0.5), px(2.35), px(8.2), px(5.9)], 60, 0.5, pola_nama='hex')
+    k.hud([px(0.5), px(2.35), px(8.2), px(5.9)], 40)
+    garis_aksen(k, 0.98, 3.35)
+    s = k.jadi('bab%s' % no)
+    kop(s, None, nomor)
+    teks(s, 0.98, 2.85, 3, 0.4, no, 13, BIRU, spasi=3, mono=True)
+    teks(s, 0.98, 3.55, 7, 1.2, judul, 54)
+    teks(s, 1.0, 4.85, 6.8, 1.0, sub, 17, TEKS2, tebal=False, jarak_baris=1.3)
+    return s
 
 
 # ================================================================ isi deck
@@ -344,265 +521,335 @@ def bangun():
         return n[0]
 
     # ---- 01 sampul
-    s1 = slide()
-    kop(s1, None, nx())
-    teks(s1, 0.72, 0.5, 6, 0.4, 'MEDIVOX', 15, BIRU, spasi=3)
-    garis_aksen(s1, 0.72, 2.05)
-    teks(s1, 0.72, 2.2, 6.0, 1.7, 'Citra CT dan MRI\nyang mengambang', 36)
-    teks(s1, 0.74, 3.75, 5.9, 1.5,
-         'MEDIVOX-1 menyusun tumpukan irisan DICOM menjadi volume tiga '
-         'dimensi, lalu memantulkannya lewat prisma menjadi satu bentuk '
-         'yang benar-benar tampak melayang.', 14.5, TEKS2, tebal=False, jarak_baris=1.4)
-    teks(s1, 0.74, 5.55, 6, 0.3, 'SEE.  SPEAK.  UNDERSTAND.', 10.5, CYAN, spasi=3, mono=True)
-    teks(s1, 0.74, 5.95, 6, 0.3, 'Prototipe antarmuka — bukan perangkat medis',
-         10, MUTED, tebal=False, mono=True)
-    g = gbr_gambar_berbingkai('sampul', os.path.join(TIGA_D, 'medivox-hero.webp'), 1500)
-    s1.shapes.add_picture(g, Inches(7.15), Inches(1.5), Inches(5.75))
+    k = Kanvas('sampul', 1)
+    k.kaca([px(7.0), px(0.9), px(12.75), px(6.75)], 90, 0.42, pola_nama='lingkar')
+    k.hud([px(7.0), px(0.9), px(12.75), px(6.75)], 44)
+    g = muat(os.path.join(TIGA_D, 'putih-hero.webp'), px(5.3))
+    k.tempel(g, (px(7.2), px(1.25)), kabur=40, turun=50, gelap=80)
+    garis_aksen(k, 0.74, 2.05)
+    # lambang
+    k.ubin_ikon('hologram', px(0.72), px(0.62), 150)
+    s = k.jadi('s01')
+    kop(s, None, nx())
+    teks(s, 1.66, 0.78, 5, 0.4, 'MEDIVOX', 18, NAVY, spasi=3)
+    teks(s, 0.72, 2.2, 6.2, 1.7, 'Citra CT dan MRI\nyang mengambang', 38)
+    teks(s, 0.74, 3.85, 5.8, 1.5,
+         'MEDIVOX-1 menyusun tumpukan irisan DICOM menjadi volume tiga dimensi, '
+         'lalu memantulkannya lewat prisma menjadi satu bentuk yang tampak melayang.',
+         14.5, TEKS2, tebal=False, jarak_baris=1.4)
+    teks(s, 0.74, 5.55, 6, 0.3, 'SEE.  SPEAK.  UNDERSTAND.', 10.5, BIRU, spasi=3, mono=True)
+    teks(s, 0.74, 5.95, 6, 0.3, 'Prototipe antarmuka — bukan perangkat medis', 10, MUTED,
+         tebal=False, mono=True)
 
     # ---- 02 agenda
-    s2 = slide()
-    kop(s2, None, nx())
-    judul_slide(s2, 'Agenda', 'Lima bagian, dari persoalan pembacaan sampai bukti pengujian.')
-    g = gbr_kartu_poin('agenda1', [
-        ('01', 'Persoalan', 'Volume dibaca sebagai tumpukan irisan datar.'),
-        ('02', 'Sistem', 'Perangkat MEDIVOX-1 dan cara kerjanya.'),
-        ('03', 'Perangkat lunak', 'Parser DICOM, viewer, dan panggung hologram.'),
-    ], 3, 430)
-    s2.shapes.add_picture(g, 0, Inches(3.2), Inches(IN_W))
-    g = gbr_kartu_poin('agenda2', [
-        ('04', 'Bukti', 'Pengujian otomatis dan data nyata.'),
-        ('05', 'Rencana', 'Yang sudah jalan dan yang berikutnya.'),
-        ('—', 'Catatan', 'Batas penggunaan dan status regulasi.'),
-    ], 3, 430)
-    s2.shapes.add_picture(g, 0, Inches(5.3), Inches(IN_W))
+    k = Kanvas('polos', 2)
+    deret_kartu(k, px(2.75), px(2.05), [
+        ('otak', '01', 'Persoalan', 'Volume dibaca sebagai irisan datar.'),
+        ('hologram', '02', 'Sistem', 'MEDIVOX-1 dan cara kerjanya.'),
+        ('viewer', '03', 'Perangkat lunak', 'Parser, viewer, panggung hologram.'),
+    ], pola_nama='campur')
+    deret_kartu(k, px(5.05), px(2.05), [
+        ('centang', '04', 'Bukti', 'Pengujian otomatis dan data nyata.'),
+        ('sinkron', '05', 'Rencana', 'Yang sudah jalan dan berikutnya.'),
+        ('perisai', '—', 'Catatan', 'Batas penggunaan dan regulasi.'),
+    ], pola_nama='campur')
+    s = k.jadi('s02')
+    kop(s, None, nx())
+    judul_slide(s, 'Agenda', 'Lima bagian, dari persoalan pembacaan sampai bukti pengujian.', y=0.95)
 
-    # ---- 03 kop bab 1
-    s3 = slide('bab')
-    kop(s3, None, nx())
-    teks(s3, 0.72, 2.9, 3, 0.4, '01', 13, CYAN, spasi=3, mono=True)
-    garis_aksen(s3, 0.72, 3.35)
-    teks(s3, 0.72, 3.6, 9, 1.2, 'Persoalan', 54)
-    teks(s3, 0.74, 4.9, 7.6, 1.0,
-         'Volume tiga dimensi dinilai lewat layar dua dimensi.', 17, TEKS2, tebal=False)
+    # ---- 03 bab 1
+    slide_bab('01', 'Persoalan', 'Volume tiga dimensi dinilai lewat layar dua dimensi.', nx())
 
     # ---- 04 masalah
-    s4 = slide()
-    kop(s4, '01 · Persoalan', nx())
-    judul_slide(s4, 'Hubungan ruang harus\ndibayangkan sendiri',
-                'Radiolog menggulir ratusan irisan aksial, lalu menyusun bentuknya di kepala. '
-                'Yang paling sulit bukan melihat satu irisan, melainkan menahan '
-                'hubungan antar-irisan.')
-    g = gbr_kartu_poin('masalah', [
-        ('A', 'Beban kognitif', 'Bentuk tiga dimensi disusun ulang dari potongan datar.'),
-        ('B', 'Sulit dikomunikasikan', 'Menjelaskan letak lesi ke klinisi memakan waktu.'),
-        ('C', 'Butuh pelatihan', 'Kemampuan membaca ruang tumbuh lambat.'),
-    ], 3, 520)
-    s4.shapes.add_picture(g, 0, Inches(4.35), Inches(IN_W))
+    k = Kanvas('polos', 4)
+    titik_kop(k)
+    deret_kartu(k, px(3.95), px(3.0), [
+        ('otak', 'A', 'Beban kognitif', 'Bentuk tiga dimensi disusun ulang dari potongan datar.'),
+        ('pengguna', 'B', 'Sulit dikomunikasikan', 'Menjelaskan letak lesi ke klinisi memakan waktu.'),
+        ('lapisan', 'C', 'Butuh pelatihan', 'Kemampuan membaca ruang tumbuh lambat.'),
+    ], pola_nama='campur')
+    s = k.jadi('s04')
+    kop(s, '01 · Persoalan', nx())
+    judul_slide(s, 'Hubungan ruang harus\ndibayangkan sendiri',
+                'Radiolog menggulir ratusan irisan aksial lalu menyusun bentuknya di kepala.')
 
     # ---- 05 dampak
-    s5 = slide()
-    kop(s5, '01 · Persoalan', nx())
-    judul_slide(s5, 'Dampaknya terukur')
-    g = gbr_angka('dampak', [('512³', 'ukuran volume CT\nyang lazim'),
-                             ('200+', 'irisan digulir\nper satu studi'),
-                             ('2D', 'dimensi layar\ntempat menilainya'),
-                             ('0', 'kedalaman nyata\npada monitor')])
-    s5.shapes.add_picture(g, 0, Inches(3.5), Inches(IN_W))
-    teks(s5, 0.72, 6.35, 11.5, 0.5,
+    k = Kanvas('polos', 5)
+    titik_kop(k)
+    deret_angka(k, px(3.0), px(2.35), [('512³', 'ukuran volume CT\nyang lazim'),
+                                       ('200+', 'irisan digulir\nper satu studi'),
+                                       ('2D', 'dimensi layar\ntempat menilainya'),
+                                       ('0', 'kedalaman nyata\npada monitor')])
+    s = k.jadi('s05')
+    kop(s, '01 · Persoalan', nx())
+    judul_slide(s, 'Dampaknya terukur')
+    teks(s, 0.72, 6.25, 11.5, 0.5,
          'Angka di atas menggambarkan skala data, bukan klaim kinerja klinis.',
          11.5, MUTED, tebal=False)
 
-    # ---- 06 kop bab 2
-    s6 = slide('bab')
-    kop(s6, None, nx())
-    teks(s6, 0.72, 2.9, 3, 0.4, '02', 13, CYAN, spasi=3, mono=True)
-    garis_aksen(s6, 0.72, 3.35)
-    teks(s6, 0.72, 3.6, 9, 1.2, 'Sistem', 54)
-    teks(s6, 0.74, 4.9, 7.6, 1.0,
-         'Satu basis, satu prisma, dan volume yang tampak mengambang.', 17,
-         TEKS2, tebal=False)
+    # ---- 06 bab 2
+    slide_bab('02', 'Sistem', 'Satu basis, satu prisma, dan volume yang tampak mengambang.', nx())
 
     # ---- 07 produk
-    s7 = slide()
-    kop(s7, '02 · Sistem', nx())
-    judul_slide(s7, 'MEDIVOX-1')
-    teks(s7, 0.74, 2.5, 4.6, 2.6,
-         'Basis aluminium menahan panel empat kuadran yang memancarkan pandangan '
-         'volume. Prisma piramida terbalik di atasnya memantulkan keempatnya '
-         'sehingga bertemu sebagai satu bentuk di udara.', 14.5, TEKS2,
-         tebal=False, jarak_baris=1.45)
-    teks(s7, 0.74, 5.2, 5, 0.3, 'EFEK PEPPER’S GHOST', 10.5, BIRU, spasi=2.2, mono=True)
-    teks(s7, 0.74, 5.6, 5, 0.9, 'Tanpa kacamata, tanpa proyektor,\ntanpa headset.',
-         14, MUTED, tebal=False)
-    g = gbr_gambar_berbingkai('produk7', os.path.join(TIGA_D, 'medivox-tigaper.webp'), 1300)
-    s7.shapes.add_picture(g, Inches(6.05), Inches(1.75), Inches(6.9))
+    k = Kanvas('polos', 7)
+    titik_kop(k)
+    produk_di_kaca(k, [px(6.1), px(0.95), px(12.75), px(6.85)], 'putih-tigaper.webp', px(6.0))
+    for i, (ik, a, b) in enumerate([('hologram', 'Prisma kaca', 'empat bidang pemantul'),
+                                    ('lapisan', 'Panel pemancar', 'empat kuadran')]):
+        x = px(0.72) + i * px(2.65)
+        k.kaca([x, px(5.2), x + px(2.45), px(6.55)], 34, pola_nama='titik')
+        k.ubin_ikon(ik, x + 28, px(5.2) + 32, 110)
+        tulis(k.d, (x + 160, px(5.2) + 44), a, huruf(30, 800), NAVY)
+        tulis(k.d, (x + 160, px(5.2) + 90), b, huruf(22, mono=True), MUTED)
+    s = k.jadi('s07')
+    kop(s, '02 · Sistem', nx())
+    judul_slide(s, 'MEDIVOX-1', lebar=5)
+    teks(s, 0.74, 2.2, 4.9, 2.6,
+         'Basis keramik putih menahan panel empat kuadran yang memancarkan pandangan '
+         'volume. Prisma piramida terbalik di atasnya memantulkan keempatnya sehingga '
+         'bertemu sebagai satu bentuk di udara.', 14.5, TEKS2, tebal=False, jarak_baris=1.45)
+    teks(s, 0.74, 4.45, 5, 0.3, 'EFEK PEPPER’S GHOST', 10.5, BIRU, spasi=2.2, mono=True)
 
     # ---- 08 cara kerja
-    s8 = slide()
-    kop(s8, '02 · Sistem', nx())
-    judul_slide(s8, 'Cara kerjanya')
-    g = gbr_diagram_prisma('diagram')
-    s8.shapes.add_picture(g, Inches(0.9), Inches(2.5), Inches(11.5))
+    k = Kanvas('polos', 8)
+    titik_kop(k)
+    diagram_prisma(k, [px(0.72), px(2.25), px(12.6), px(6.9)])
+    s = k.jadi('s08')
+    kop(s, '02 · Sistem', nx())
+    judul_slide(s, 'Cara kerjanya')
 
     # ---- 09 galeri
-    s9 = slide()
-    kop(s9, '02 · Sistem', nx())
-    judul_slide(s9, 'Dari segala sisi')
-    for i, (berkas, label) in enumerate([
-            ('medivox-atas.webp', 'Panel empat kuadran'),
-            ('medivox-samping.webp', 'Sudut bidang pemantul'),
-            ('medivox-dekat.webp', 'Detail basis')]):
-        g = gbr_gambar_berbingkai('gal%d' % i, os.path.join(TIGA_D, berkas), 900)
-        s9.shapes.add_picture(g, Inches(0.62 + i * 4.06), Inches(2.6), Inches(3.9))
-        teks(s9, 0.72 + i * 4.06, 5.85, 3.8, 0.4, label, 12.5, NAVY)
-    teks(s9, 0.72, 6.5, 11.8, 0.6,
-         'Seluruh gambar adalah render tiga dimensi yang dibangun lewat skrip '
-         'Blender CLI — bukan foto dan bukan gambar stok.', 11.5, MUTED, tebal=False)
+    k = Kanvas('polos', 9)
+    titik_kop(k)
+    for i, (berkas, a, b) in enumerate([('putih-atas.webp', 'Dari atas', 'Panel empat kuadran'),
+                                        ('putih-samping.webp', 'Samping', 'Sudut bidang pemantul'),
+                                        ('putih-dekat.webp', 'Dekat', 'Detail basis & prisma')]):
+        x0 = px(0.72) + i * px(4.08)
+        produk_di_kaca(k, [x0, px(2.3), x0 + px(3.8), px(6.55)], berkas, px(3.3),
+                       ['lingkar', 'titik', 'hex'][i], (a, b))
+    s = k.jadi('s09')
+    kop(s, '02 · Sistem', nx())
+    judul_slide(s, 'Dari segala sisi')
+    teks(s, 0.72, 6.8, 11.8, 0.4, 'Render tiga dimensi dari skrip Blender CLI — bukan foto, bukan gambar stok.',
+         11, MUTED, tebal=False)
 
     # ---- 10 modalitas
-    s10 = slide()
-    kop(s10, '02 · Sistem', nx())
-    judul_slide(s10, 'Volume apa pun yang konsisten')
-    for i, (berkas, judul, ket) in enumerate([
-            ('medivox-toraks.webp', 'CT toraks', 'Paru, mediastinum, dinding dada'),
-            ('medivox-tengkorak.webp', 'Tengkorak', 'Rekonstruksi permukaan tulang')]):
-        g = gbr_gambar_berbingkai('mod%d' % i, os.path.join(TIGA_D, berkas), 1100)
-        s10.shapes.add_picture(g, Inches(0.62 + i * 6.15), Inches(2.3), Inches(4.9))
-        teks(s10, 0.74 + i * 6.15, 6.3, 5.6, 0.4, judul, 17)
-        teks(s10, 0.74 + i * 6.15, 6.72, 5.6, 0.4, ket, 12.5, MUTED, tebal=False)
+    k = Kanvas('polos', 10)
+    titik_kop(k)
+    for i, (berkas, a, b) in enumerate([('putih-toraks.webp', 'CT toraks', 'Paru, mediastinum, dinding dada'),
+                                        ('putih-tengkorak.webp', 'Tengkorak', 'Rekonstruksi permukaan tulang')]):
+        x0 = px(0.72) + i * px(6.1)
+        produk_di_kaca(k, [x0, px(2.2), x0 + px(5.8), px(6.85)], berkas, px(4.4),
+                       ['gelombang', 'lingkar'][i], (a, b))
+    s = k.jadi('s10')
+    kop(s, '02 · Sistem', nx())
+    judul_slide(s, 'Volume apa pun yang konsisten')
 
-    # ---- 11 kop bab 3
-    s11 = slide('bab')
-    kop(s11, None, nx())
-    teks(s11, 0.72, 2.9, 3, 0.4, '03', 13, CYAN, spasi=3, mono=True)
-    garis_aksen(s11, 0.72, 3.35)
-    teks(s11, 0.72, 3.6, 9, 1.2, 'Perangkat lunak', 54)
-    teks(s11, 0.74, 4.9, 7.6, 1.0,
-         'Berjalan di peramban, tanpa framework dan tanpa WebGL.', 17, TEKS2, tebal=False)
+    # ---- 11 ekosistem (render Blender: perangkat keras + lunak)
+    k = Kanvas('polos', 11)
+    titik_kop(k)
+    ekos = sorted(__import__('glob').glob(os.path.join(AKAR, 'build', 'reel2', 'shot-ekosistem', 'f*.jpg')))
+    kotak = [px(0.72), px(2.4), px(12.6), px(6.95)]
+    k.kaca(kotak, 48, 0.4)
+    if ekos:
+        im = Image.open(ekos[len(ekos) * 2 // 3]).convert('RGB')
+        w, h = kotak[2] - kotak[0] - 40, kotak[3] - kotak[1] - 40
+        r = max(w / im.width, h / im.height)
+        im = im.resize((int(im.width * r), int(im.height * r)), Image.LANCZOS)
+        im = im.crop(((im.width - w) // 2, (im.height - h) // 2, (im.width - w) // 2 + w, (im.height - h) // 2 + h))
+        topeng = Image.new('L', (w, h), 0)
+        ImageDraw.Draw(topeng).rounded_rectangle([0, 0, w - 1, h - 1], 32, fill=255)
+        k.im.paste(im, (kotak[0] + 20, kotak[1] + 20), topeng)
+    k.hud(kotak, 40)
+    s = k.jadi('s11')
+    kop(s, '02 · Sistem', nx())
+    judul_slide(s, 'Satu ekosistem',
+                'MEDIVOX-1, laptop, dan ponsel membaca studi yang sama — perangkat keras dan lunak jadi satu.', y=0.95)
 
-    # ---- 12 parser
-    s12 = slide()
-    kop(s12, '03 · Perangkat lunak', nx())
-    judul_slide(s12, 'Parser DICOM ditulis dari nol',
-                'Bukan pembungkus pustaka orang lain: berkas diurai sendiri, '
-                'sehingga perilakunya bisa dipertanggungjawabkan baris demi baris.')
-    g = gbr_kartu_poin('parser', [
-        ('VR', 'Implicit & Explicit', 'Little endian, big endian, dan deflate.'),
-        ('PX', 'Piksel native', '8/16 bit, signed, multi-frame, palette color.'),
-        ('HU', 'Rescale', 'Slope dan intercept diterapkan ke nilai Hounsfield.'),
-    ], 3, 520)
-    s12.shapes.add_picture(g, 0, Inches(4.35), Inches(IN_W))
+    # ---- 12 bab 3
+    slide_bab('03', 'Perangkat lunak', 'Berjalan di peramban, tanpa framework dan tanpa WebGL.', nx())
 
-    # ---- 13 alur kerja
-    s13 = slide()
-    kop(s13, '03 · Perangkat lunak', nx())
-    judul_slide(s13, 'Alur kerja')
-    g = gbr_kartu_poin('alur1', [
-        ('01', 'Studi', 'Daftar studi, buka berkas atau folder DICOM.'),
-        ('02', 'Viewer 2D', 'Window/level, ukur, ROI, laporan.'),
-        ('03', 'Volume', 'MPR, MIP, rekonstruksi permukaan, ekspor STL/OBJ.'),
-    ], 3, 400)
-    s13.shapes.add_picture(g, 0, Inches(2.5), Inches(IN_W))
-    g = gbr_kartu_poin('alur2', [
-        ('04', 'Panggung', 'Empat pandangan berputar siap dipantulkan prisma.'),
-        ('05', 'Kendali', 'Gestur tangan dan perintah suara, diproses lokal.'),
-        ('06', 'Laporan', 'Temuan dan kesan tersinkron ke akun.'),
-    ], 3, 400)
-    s13.shapes.add_picture(g, 0, Inches(4.72), Inches(IN_W))
+    # ---- 13 parser
+    k = Kanvas('polos', 13)
+    titik_kop(k)
+    deret_kartu(k, px(3.95), px(3.0), [
+        ('berkas', 'VR', 'Implicit & Explicit', 'Little endian, big endian, dan deflate.'),
+        ('lapisan', 'PX', 'Piksel native', '8/16 bit, signed, multi-frame, palette color.'),
+        ('wwwc', 'HU', 'Rescale', 'Slope dan intercept diterapkan ke nilai Hounsfield.'),
+    ], pola_nama='campur')
+    s = k.jadi('s13')
+    kop(s, '03 · Perangkat lunak', nx())
+    judul_slide(s, 'Parser DICOM ditulis dari nol',
+                'Berkas diurai sendiri, sehingga perilakunya bisa dipertanggungjawabkan baris demi baris.')
 
-    # ---- 14 privasi
-    s14 = slide()
-    kop(s14, '03 · Perangkat lunak', nx())
-    judul_slide(s14, 'Piksel tidak pernah\nmeninggalkan perangkat',
+    # ---- 14 antarmuka desktop
+    k = Kanvas('polos', 14)
+    titik_kop(k)
+    jendela(k, os.path.join(FOTO, 't-viewer.png'), px(4.35), px(1.05), px(8.2),
+            'medivox-id.web.app/viewer')
+    for i, (ik, a, b) in enumerate([('wwwc', 'Window/level', 'preset CT & MR'),
+                                    ('panjang', 'Ukur & ROI', 'mm, derajat, HU'),
+                                    ('kubus', 'Volume & MPR', 'MIP, permukaan, STL')]):
+        y = px(2.9) + i * px(1.35)
+        k.kaca([px(0.72), y, px(3.95), y + px(1.18)], 34, pola_nama='titik')
+        k.ubin_ikon(ik, px(0.72) + 26, y + 26, 112)
+        tulis(k.d, (px(0.72) + 160, y + 44), a, huruf(32, 800), NAVY)
+        tulis(k.d, (px(0.72) + 160, y + 92), b, huruf(22, mono=True), MUTED)
+    s = k.jadi('s14')
+    kop(s, '03 · Perangkat lunak', nx())
+    judul_slide(s, 'Antarmuka\ndesktop', lebar=3.6)
+
+    # ---- 15 alur kerja (tiga jendela)
+    k = Kanvas('polos', 15)
+    titik_kop(k)
+    for i, (g, u) in enumerate([('t-worklist.png', 'medivox-id.web.app/studi'),
+                                ('t-viewer.png', 'medivox-id.web.app/viewer'),
+                                ('t-prisma.png', 'medivox-id.web.app/hologram')]):
+        x = px(0.72) + i * px(4.1)
+        jendela(k, os.path.join(FOTO, g), x, px(2.45), px(3.75), u)
+        lbl = ['01  STUDI', '02  VIEWER 2D', '03  HOLOGRAM'][i]
+        fe = huruf(22, mono=True)
+        w = lebar_spasi(k.d, lbl, fe, 3) + 48
+        k.d.rounded_rectangle([x + 24, px(4.95), x + 24 + w, px(4.95) + 52], 26, fill=BIRU)
+        tulis(k.d, (x + 48, px(4.95) + 12), lbl, fe, PUTIH, spasi=3)
+        ket = ['Buka berkas atau folder DICOM, cari & saring studi.',
+               'Window/level, ukur, anotasi, dan laporan.',
+               'Empat pandangan berputar, siap dipantulkan prisma.'][i]
+        yy = px(5.45)
+        for b in bungkus(k.d, ket, huruf(28, 500), px(3.6)):
+            tulis(k.d, (x + 24, yy), b, huruf(28, 500), TEKS2)
+            yy += 40
+    s = k.jadi('s15')
+    kop(s, '03 · Perangkat lunak', nx())
+    judul_slide(s, 'Alur kerja', 'Dari daftar studi ke hologram dalam tiga langkah.', y=0.95)
+
+    # ---- 16 seluler
+    k = Kanvas('polos', 16)
+    titik_kop(k)
+    for i, g in enumerate(('t-landing-m.png', 't-worklist-m.png', 't-viewer-m.png')):
+        ponsel(k, os.path.join(FOTO, g), px(5.55) + i * px(2.5), px(0.95) + (0 if i == 1 else px(0.3)), px(5.5))
+    for i, (ik, a, b) in enumerate([('tangan', 'Sentuh & gestur', 'pinch, geser, ketuk'),
+                                    ('lapisan', 'Laci & bilah bawah', 'panel tidak menutup citra')]):
+        y = px(4.1) + i * px(1.4)
+        k.kaca([px(0.72), y, px(4.9), y + px(1.22)], 34, pola_nama='gelombang')
+        k.ubin_ikon(ik, px(0.72) + 26, y + 26, 112)
+        tulis(k.d, (px(0.72) + 160, y + 44), a, huruf(32, 800), NAVY)
+        tulis(k.d, (px(0.72) + 160, y + 92), b, huruf(22, mono=True), MUTED)
+    s = k.jadi('s16')
+    kop(s, '03 · Perangkat lunak', nx())
+    judul_slide(s, 'Nyaman di\ngenggaman', 'Satu kode HTML, CSS & JS native\nuntuk semua layar.', lebar=4.5)
+
+    # ---- 17 bahasa visual
+    k = Kanvas('polos', 17)
+    titik_kop(k)
+    kotak = [px(0.72), px(2.4), px(7.9), px(6.95)]
+    k.kaca(kotak, 48, pola_nama='hex')
+    k.hud(kotak, 40)
+    nama_ikon = sorted(os.path.splitext(f)[0] for f in os.listdir(os.path.join(UI, 'ikon')))
+    kol, uk = 8, 134
+    for i, nm in enumerate(nama_ikon[:48]):
+        cx = kotak[0] + 80 + (i % kol) * (uk + 34)
+        cy = kotak[1] + 26 + (i // kol) * (uk + 9)
+        ik = ikon(nm, 96)
+        k.tempel(ik, (cx + (uk - ik.width) / 2, cy + (uk - ik.height) / 2), kabur=6, turun=6, gelap=40)
+    kotak2 = [px(8.2), px(2.4), px(12.6), px(6.95)]
+    k.kaca(kotak2, 48, pola_nama='lingkar')
+    for nm, lb, x, y in [('cincin', 300, 0.25, 0.08), ('kapsul', 250, 0.52, 0.12), ('bola', 200, 0.12, 0.52),
+                         ('heliks', 120, 0.72, 0.46), ('palang', 150, 0.42, 0.56)]:
+        o = ornamen(nm, lb)
+        k.tempel(o, (kotak2[0] + (kotak2[2] - kotak2[0]) * x, kotak2[1] + (kotak2[3] - kotak2[1]) * y),
+                 kabur=18, turun=22, gelap=50)
+    s = k.jadi('s17')
+    kop(s, '03 · Perangkat lunak', nx())
+    judul_slide(s, 'Bahasa visual dari Blender',
+                '48 ikon, ornamen, dan pola relief kartu dirender lewat Blender CLI — putih, bersih, futuristik.',
+                y=0.95)
+
+    # ---- 18 privasi
+    k = Kanvas('polos', 18)
+    titik_kop(k)
+    deret_angka(k, px(4.1), px(2.35), [('0', 'berkas citra\ndiunggah'),
+                                       ('13/13', 'pemeriksaan aturan\nkeamanan lulus'),
+                                       ('403', 'balasan untuk akses\nlintas pengguna'),
+                                       ('lokal', 'citra kamera gestur\ndiproses & dibuang')])
+    s = k.jadi('s18')
+    kop(s, '03 · Perangkat lunak', nx())
+    judul_slide(s, 'Piksel tidak pernah\nmeninggalkan perangkat',
                 'Berkas dibaca lewat File API dan diurai di memori peramban. '
-                'Yang tersimpan ke awan hanya status baca dan teks laporan.')
-    g = gbr_angka('privasi', [('0', 'berkas citra\ndiunggah'),
-                              ('13/13', 'pemeriksaan aturan\nkeamanan lulus'),
-                              ('403', 'balasan untuk akses\nlintas pengguna'),
-                              ('lokal', 'citra kamera gestur\ndiproses & dibuang')])
-    s14.shapes.add_picture(g, 0, Inches(4.5), Inches(IN_W))
+                'Ke awan hanya status baca dan teks laporan.')
 
-    # ---- 15 kop bab 4
-    s15 = slide('bab')
-    kop(s15, None, nx())
-    teks(s15, 0.72, 2.9, 3, 0.4, '04', 13, CYAN, spasi=3, mono=True)
-    garis_aksen(s15, 0.72, 3.35)
-    teks(s15, 0.72, 3.6, 9, 1.2, 'Bukti', 54)
-    teks(s15, 0.74, 4.9, 7.6, 1.0, 'Yang diuji, dan bagaimana diujinya.', 17,
-         TEKS2, tebal=False)
+    # ---- 19 bab 4
+    slide_bab('04', 'Bukti', 'Yang diuji, dan bagaimana diujinya.', nx())
 
-    # ---- 16 pengujian
-    s16 = slide()
-    kop(s16, '04 · Bukti', nx())
-    judul_slide(s16, 'Pengujian berjalan tanpa peramban')
-    g = gbr_angka('uji', [('127', 'uji parser, volume,\npermukaan, kendali'),
-                          ('79', 'uji asap halaman\ndi tiruan DOM'),
-                          ('20', 'berkas .dcm nyata\ndiperiksa ulang'),
-                          ('0', 'dependensi\npihak ketiga')])
-    s16.shapes.add_picture(g, 0, Inches(2.6), Inches(IN_W))
-    teks(s16, 0.72, 4.85, 11.8, 1.6,
-         'Uji asap memuat berkas HTML sungguhan ke tiruan DOM, menjalankan setiap '
-         'skrip apa adanya, lalu menekan tombol dan memicu pintasan seperti pengguna. '
-         'Yang tidak teruji tetap sama: hasil gambar, tata letak, dan gaya — '
-         'untuk itu perlu dilihat mata di peramban.', 13.5, TEKS2, tebal=False,
-         jarak_baris=1.5)
-
-    # ---- 17 data nyata
-    s17 = slide()
-    kop(s17, '04 · Bukti', nx())
-    judul_slide(s17, 'Diuji dengan data nyata',
-                'Selain phantom sintetis, parser diadu dengan berkas dari pydicom-data '
-                'dan seri volumetrik dari The Cancer Imaging Archive.')
-    g = gbr_kartu_poin('data', [
-        ('OK', 'Yang harus terbaca', 'Deflate, palette color, RGB planar, big endian, multi-frame.'),
-        ('X', 'Yang harus ditolak', 'JPEG 2000, JPEG-LS, RLE — dengan pesan jelas, bukan sampah.'),
-        ('!', 'Yang ditemukan', 'Bug sequence pada Implicit VR ketahuan lewat berkas nyata.'),
-    ], 3, 560)
-    s17.shapes.add_picture(g, 0, Inches(4.2), Inches(IN_W))
-
-    # ---- 18 kop bab 5
-    s18 = slide('bab')
-    kop(s18, None, nx())
-    teks(s18, 0.72, 2.9, 3, 0.4, '05', 13, CYAN, spasi=3, mono=True)
-    garis_aksen(s18, 0.72, 3.35)
-    teks(s18, 0.72, 3.6, 9, 1.2, 'Rencana', 54)
-    teks(s18, 0.74, 4.9, 7.6, 1.0, 'Yang sudah jalan, dan yang berikutnya.', 17,
-         TEKS2, tebal=False)
-
-    # ---- 19 peta jalan
-    s19 = slide()
-    kop(s19, '05 · Rencana', nx())
-    judul_slide(s19, 'Peta jalan')
-    g = gbr_kartu_poin('peta', [
-        ('SUDAH', 'Berjalan hari ini', 'Parser, viewer 2D, volume, MPR/MIP, permukaan, '
-                                       'panggung prisma, gestur dan suara.'),
-        ('BERIKUT', 'Sedang disiapkan', 'Dekoder JPEG 2000, integrasi DICOMweb, '
-                                        'kalibrasi prisma otomatis.'),
-        ('KELAK', 'Perlu pihak lain', 'Validasi klinis, kalibrasi monitor, '
-                                      'dan izin edar sesuai wilayah.'),
-    ], 3, 600)
-    s19.shapes.add_picture(g, 0, Inches(2.7), Inches(IN_W))
-    teks(s19, 0.72, 6.35, 11.8, 0.5,
-         'Kolom terakhir bukan pekerjaan rekayasa — itu syarat regulasi yang '
-         'harus dipenuhi sebelum dipakai untuk keputusan klinis.', 11.5, MUTED, tebal=False)
-
-    # ---- 20 penutup
-    s20 = slide('bab')
-    kop(s20, None, nx())
-    garis_aksen(s20, 0.72, 2.6)
-    teks(s20, 0.72, 2.85, 8.5, 2.0, 'See. Speak.\nUnderstand.', 50)
-    teks(s20, 0.74, 5.0, 6.4, 0.8, 'medivox  ·  kaca-id.web.app', 16, BIRU, mono=True)
-    teks(s20, 0.74, 5.65, 7.2, 1.2,
-         'Prototipe antarmuka, bukan perangkat medis. Seluruh data pasien fiktif dan '
-         'citra yang ditampilkan adalah phantom sintetis.', 12.5, MUTED, tebal=False,
+    # ---- 20 pengujian
+    k = Kanvas('polos', 20)
+    titik_kop(k)
+    deret_angka(k, px(2.35), px(2.35), [('127', 'uji parser, volume,\npermukaan, kendali'),
+                                        ('79', 'uji asap halaman\ndi tiruan DOM'),
+                                        ('20', 'berkas .dcm nyata\ndiperiksa ulang'),
+                                        ('0', 'dependensi\npihak ketiga')])
+    k.kaca([px(0.72), px(4.95), px(12.6), px(6.85)], 40, pola_nama='gelombang')
+    s = k.jadi('s20')
+    kop(s, '04 · Bukti', nx())
+    judul_slide(s, 'Pengujian berjalan tanpa peramban')
+    teks(s, 1.0, 5.25, 11.3, 1.4,
+         'Uji asap memuat berkas HTML sungguhan ke tiruan DOM, menjalankan setiap skrip apa adanya, '
+         'lalu menekan tombol dan memicu pintasan seperti pengguna. Hasil gambar dan tata letak '
+         'tetap diperiksa dengan tangkapan layar desktop & ponsel.', 13.5, TEKS2, tebal=False,
          jarak_baris=1.45)
-    g = gbr_gambar_berbingkai('penutup', os.path.join(TIGA_D, 'medivox-atas.webp'), 1000)
-    s20.shapes.add_picture(g, Inches(8.3), Inches(2.3), Inches(4.5))
+
+    # ---- 21 data nyata
+    k = Kanvas('polos', 21)
+    titik_kop(k)
+    deret_kartu(k, px(3.95), px(3.0), [
+        ('centang', 'OK', 'Harus terbaca', 'Deflate, palette color, RGB planar, big endian, multi-frame.'),
+        ('perisai', 'X', 'Harus ditolak', 'JPEG 2000, JPEG-LS, RLE — dengan pesan jelas.'),
+        ('probe', '!', 'Yang ditemukan', 'Bug sequence Implicit VR ketahuan lewat berkas nyata.'),
+    ], pola_nama='campur')
+    s = k.jadi('s21')
+    kop(s, '04 · Bukti', nx())
+    judul_slide(s, 'Diuji dengan data nyata',
+                'Parser diadu dengan berkas pydicom-data dan seri volumetrik The Cancer Imaging Archive.')
+
+    # ---- 22 bab 5
+    slide_bab('05', 'Rencana', 'Yang sudah jalan, dan yang berikutnya.', nx())
+
+    # ---- 23 peta jalan
+    k = Kanvas('polos', 23)
+    titik_kop(k)
+    deret_kartu(k, px(2.3), px(3.55), [
+        ('centang', 'SUDAH', 'Berjalan hari ini', 'Parser, viewer 2D, volume, MPR/MIP, permukaan, panggung prisma, gestur & suara.'),
+        ('sinkron', 'BERIKUT', 'Sedang disiapkan', 'Dekoder JPEG 2000, integrasi DICOMweb, kalibrasi prisma otomatis.'),
+        ('perisai', 'KELAK', 'Perlu pihak lain', 'Validasi klinis, kalibrasi monitor, dan izin edar sesuai wilayah.'),
+    ], pola_nama='campur')
+    s = k.jadi('s23')
+    kop(s, '05 · Rencana', nx())
+    judul_slide(s, 'Peta jalan')
+    teks(s, 0.72, 6.3, 11.8, 0.5,
+         'Kolom terakhir bukan pekerjaan rekayasa — itu syarat regulasi sebelum dipakai untuk keputusan klinis.',
+         11.5, MUTED, tebal=False)
+
+    # ---- 24 penutup
+    k = Kanvas('bab', 24)
+    k.kaca([px(0.5), px(1.9), px(7.6), px(6.4)], 60, 0.5, pola_nama='lingkar')
+    k.hud([px(0.5), px(1.9), px(7.6), px(6.4)], 40)
+    garis_aksen(k, 0.98, 2.55)
+    g = muat(os.path.join(TIGA_D, 'putih-hero.webp'), px(4.6))
+    k.tempel(g, (px(8.0), px(1.7)), kabur=40, turun=50, gelap=80)
+    k.d.rounded_rectangle([px(0.98), px(5.0), px(0.98) + px(3.6), px(5.0) + px(0.46)], px(0.23),
+                          fill=(255, 255, 255), outline=CYAN, width=3)
+    s = k.jadi('s24')
+    kop(s, None, nx())
+    teks(s, 0.98, 2.8, 6.5, 2.0, 'See. Speak.\nUnderstand.', 50)
+    teks(s, 1.2, 5.08, 3.4, 0.4, 'medivox-id.web.app', 15, BIRU, mono=True)
+    teks(s, 1.0, 5.65, 6.3, 1.0,
+         'Prototipe antarmuka, bukan perangkat medis. Data pasien fiktif; citra adalah phantom sintetis.',
+         12, MUTED, tebal=False, jarak_baris=1.4)
 
     PRS.save(KELUAR)
     jumlah = len(PRS.slides._sldIdLst)
-    print('deck: %s (%d slide, %.1f MB)' % (KELUAR, jumlah,
-                                            os.path.getsize(KELUAR) / 1048576))
+    assert jumlah == TOTAL, jumlah
+    print('deck: %s (%d slide, %.1f MB)' % (KELUAR, jumlah, os.path.getsize(KELUAR) / 1048576))
 
 
 if __name__ == '__main__':

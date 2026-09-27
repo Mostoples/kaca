@@ -20,9 +20,9 @@
   <header class="app-bar">
     <a class="brand" href="index.html"><span class="mark">M</span><span class="wordmark">Medivox</span></a>
     <div class="app-tabs">
-      <a href="prisma.html" data-short="3D">Hologram</a>
-      <a href="viewer.html" class="active" data-short="2D">Viewer 2D</a>
-      <a href="worklist.html" data-short="Studi">Studi</a>
+      <a href="prisma.html" data-short="3D"><img class="ikon ikon-tab" src="assets/ui/ikon/hologram.webp" alt="" aria-hidden="true" decoding="async">Hologram</a>
+      <a href="viewer.html" class="active" data-short="2D"><img class="ikon ikon-tab" src="assets/ui/ikon/viewer.webp" alt="" aria-hidden="true" decoding="async">Viewer 2D</a>
+      <a href="worklist.html" data-short="Studi"><img class="ikon ikon-tab" src="assets/ui/ikon/studi.webp" alt="" aria-hidden="true" decoding="async">Studi</a>
     </div>
 
     <div style="margin-left:14px;min-width:0" id="studyHead">
@@ -38,9 +38,9 @@
       <button class="btn btn-sm" data-layout="2x2" title="Tata letak 2×2">2×2</button>
       <button class="btn btn-sm" data-layout="1x3" title="Tata letak 1×3">1×3</button>
     </div>
-    <button class="btn btn-sm only-mobile" id="btnSeries" aria-expanded="false" aria-controls="seriesPanel">Seri</button>
-    <button class="btn btn-sm only-mobile" id="btnPanel" aria-expanded="false" aria-controls="sidePanel">Panel</button>
-    <button class="btn btn-sm" id="btnOpenLocal" title="Buka berkas DICOM"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 2H7a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7z"/><path d="M14 2v5h5"/></svg><span class="btn-teks">Buka File</span></button>
+    <button class="btn btn-sm only-mobile" id="btnSeries" aria-expanded="false" aria-controls="seriesPanel" aria-label="Daftar seri" title="Daftar seri"><img class="ikon" src="assets/ui/ikon/lapisan.webp" alt="" aria-hidden="true" decoding="async"></button>
+    <button class="btn btn-sm only-mobile" id="btnPanel" aria-expanded="false" aria-controls="sidePanel" aria-label="Panel info &amp; alat" title="Panel info &amp; alat"><img class="ikon" src="assets/ui/ikon/setelan.webp" alt="" aria-hidden="true" decoding="async"></button>
+    <button class="btn btn-sm" id="btnOpenLocal" title="Buka berkas DICOM"><img class="ikon" src="assets/ui/ikon/unggah.webp" alt="" aria-hidden="true" decoding="async"><span class="btn-teks">Buka File</span></button>
     <input type="file" id="fileInput" multiple hidden>
     <button class="btn btn-sm" id="btnFull" title="Layar penuh">⤢</button>
     <div class="user-chip" id="userChip"></div>
@@ -52,52 +52,52 @@
     <!-- toolbar -->
     <nav class="toolrail" id="toolrail">
       <button class="trbtn on" data-tool="wwwc" data-tip="Window / Level (W)"><span class="kbd">W</span>
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><path d="M12 3a9 9 0 0 0 0 18z" fill="currentColor" stroke="none"/></svg></button>
+        <img class="ikon" src="assets/ui/ikon/wwwc.webp" alt="" aria-hidden="true" decoding="async"></button>
       <button class="trbtn" data-tool="pan" data-tip="Geser (P)"><span class="kbd">P</span>
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M12 3v18M3 12h18"/><path d="m8 7 4-4 4 4M8 17l4 4 4-4M7 8l-4 4 4 4M17 8l4 4-4 4"/></svg></button>
+        <img class="ikon" src="assets/ui/ikon/geser.webp" alt="" aria-hidden="true" decoding="async"></button>
       <button class="trbtn" data-tool="zoom" data-tip="Perbesar (Z)"><span class="kbd">Z</span>
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5M8 11h6M11 8v6"/></svg></button>
+        <img class="ikon" src="assets/ui/ikon/zoom.webp" alt="" aria-hidden="true" decoding="async"></button>
       <button class="trbtn" data-tool="stack" data-tip="Gulir irisan (S)"><span class="kbd">S</span>
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="m12 3 9 5-9 5-9-5 9-5z"/><path d="m3 13 9 5 9-5"/></svg></button>
+        <img class="ikon" src="assets/ui/ikon/tumpuk.webp" alt="" aria-hidden="true" decoding="async"></button>
 
       <div class="trsep"></div>
 
       <button class="trbtn" data-tool="length" data-tip="Ukur panjang (L)"><span class="kbd">L</span>
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 15 15 3l6 6L9 21z"/><path d="m7 11 2 2M10 8l2 2M13 5l2 2"/></svg></button>
+        <img class="ikon" src="assets/ui/ikon/panjang.webp" alt="" aria-hidden="true" decoding="async"></button>
       <button class="trbtn" data-tool="angle" data-tip="Ukur sudut (A)"><span class="kbd">A</span>
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M4 20h16M4 20 16 5"/><path d="M9 20a7 7 0 0 0 1.6-4.4"/></svg></button>
+        <img class="ikon" src="assets/ui/ikon/sudut.webp" alt="" aria-hidden="true" decoding="async"></button>
       <button class="trbtn" data-tool="rect" data-tip="ROI persegi (R)"><span class="kbd">R</span>
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="4" y="5" width="16" height="14" rx="2"/></svg></button>
+        <img class="ikon" src="assets/ui/ikon/persegi.webp" alt="" aria-hidden="true" decoding="async"></button>
       <button class="trbtn" data-tool="ellipse" data-tip="ROI elips (E)"><span class="kbd">E</span>
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><ellipse cx="12" cy="12" rx="8" ry="6"/></svg></button>
+        <img class="ikon" src="assets/ui/ikon/elips.webp" alt="" aria-hidden="true" decoding="async"></button>
       <button class="trbtn" data-tool="probe" data-tip="Probe nilai piksel (D)"><span class="kbd">D</span>
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M12 3v6M12 15v6M3 12h6M15 12h6"/><circle cx="12" cy="12" r="2"/></svg></button>
+        <img class="ikon" src="assets/ui/ikon/probe.webp" alt="" aria-hidden="true" decoding="async"></button>
       <button class="trbtn" data-tool="note" data-tip="Anotasi teks (T)"><span class="kbd">T</span>
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M5 6h14M9 6v13"/></svg></button>
+        <img class="ikon" src="assets/ui/ikon/teks.webp" alt="" aria-hidden="true" decoding="async"></button>
 
       <div class="trsep"></div>
 
       <button class="trbtn" id="btnInvert" data-tip="Inversi (I)"><span class="kbd">I</span>
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><path d="M12 3v18a9 9 0 0 0 0-18z" fill="currentColor" stroke="none"/></svg></button>
+        <img class="ikon" src="assets/ui/ikon/inversi.webp" alt="" aria-hidden="true" decoding="async"></button>
       <button class="trbtn" id="btnRotate" data-tip="Putar 90°">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M21 12a9 9 0 1 1-3-6.7"/><path d="M21 3v6h-6"/></svg></button>
+        <img class="ikon" src="assets/ui/ikon/rotasi.webp" alt="" aria-hidden="true" decoding="async"></button>
       <button class="trbtn" id="btnFlipH" data-tip="Cermin horizontal">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M12 3v18"/><path d="M9 7 4 12l5 5zM15 7l5 5-5 5z"/></svg></button>
+        <img class="ikon" src="assets/ui/ikon/cermin.webp" alt="" aria-hidden="true" decoding="async"></button>
       <button class="trbtn" id="btnFlipV" data-tip="Cermin vertikal (V)"><span class="kbd">V</span>
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M3 12h18"/><path d="M7 9 12 4l5 5zM7 15l5 5 5-5z"/></svg></button>
+        <img class="ikon" src="assets/ui/ikon/cerminv.webp" alt="" aria-hidden="true" decoding="async"></button>
       <button class="trbtn" id="btnFit" data-tip="Pas ke layar (F)"><span class="kbd">F</span>
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg></button>
+        <img class="ikon" src="assets/ui/ikon/pas.webp" alt="" aria-hidden="true" decoding="async"></button>
       <button class="trbtn" id="btnReset" data-tip="Reset tampilan (0)"><span class="kbd">0</span>
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M3 12a9 9 0 1 0 3-6.7"/><path d="M3 3v6h6"/></svg></button>
+        <img class="ikon" src="assets/ui/ikon/reset.webp" alt="" aria-hidden="true" decoding="async"></button>
 
       <div class="trsep"></div>
 
       <button class="trbtn" id="btnClearMeas" data-tip="Hapus semua pengukuran">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13"/></svg></button>
+        <img class="ikon" src="assets/ui/ikon/hapus.webp" alt="" aria-hidden="true" decoding="async"></button>
       <button class="trbtn" id="btnHideOvl" data-tip="Sembunyikan overlay (H)"><span class="kbd">H</span>
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg></button>
+        <img class="ikon" src="assets/ui/ikon/mata.webp" alt="" aria-hidden="true" decoding="async"></button>
       <button class="trbtn" id="btnSnap" data-tip="Simpan PNG">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M4 8h3l2-3h6l2 3h3v12H4z"/><circle cx="12" cy="14" r="3.5"/></svg></button>
+        <img class="ikon" src="assets/ui/ikon/kamera.webp" alt="" aria-hidden="true" decoding="async"></button>
     </nav>
 
     <!-- panel seri -->
