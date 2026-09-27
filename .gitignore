@@ -48,3 +48,17 @@ video/tmp/
 # Video akhir hasil `node video/susun.js` — puluhan megabita dan bisa
 # disusun ulang dari tangkapan + klip kapan saja.
 video/*.mp4
+
+# Keluaran perakitan showreel, deck, dan render — bisa dibangun ulang dari
+# tools/blender/bangun-produk.py, tools/bangun-showreel.py, tools/bangun-deck.py.
+# Sekuens frame di dalamnya mencapai lebih dari satu gigabita.
+build/
+output/
+*.blend1
+tools/__pycache__/
+
+# Berkas referensi desain dari pihak lain — dipakai sebagai acuan, bukan
+# bagian dari produk, dan tidak kita distribusikan ulang.
+KACA-1_Compilation*.pdf
+AQUENT_*.pptx
+RePulse_*.mp4

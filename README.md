@@ -613,6 +613,71 @@ secara manual, bukan sebagai bagian pipeline.
 Seluruh isi `video/` dikecualikan dari deploy dan dari git kecuali skripnya: tangkapan, klip,
 dan video akhirnya bisa dibuat ulang kapan saja.
 
+## Aset 3D produk, showreel, dan deck
+
+Perangkat **MEDIVOX-1** — basis aluminium, panel empat kuadran, prisma piramida terbalik, dan
+volume hologram — dibangun sepenuhnya lewat skrip Blender. Bentuknya mengikuti kompilasi
+`KACA-1_Compilation_1.pdf`. Tidak ada model unduhan dan tidak ada foto.
+
+```bash
+BL="C:/Program Files/Blender Foundation/Blender 5.2/blender.exe"
+
+# render diam untuk web (5 sudut) + berkas .blend
+"$BL" -b -P tools/blender/bangun-produk.py -- --mode still --res 1500 --samples 96 --opaque --save-blend --out assets/3d
+"$BL" -b -P tools/blender/bangun-produk.py -- --mode still --organ toraks    --opaque --out build/organ-toraks
+"$BL" -b -P tools/blender/bangun-produk.py -- --mode still --organ tengkorak --opaque --out build/organ-tengkorak
+
+# empat shot kamera bergerak untuk showreel (±20 menit, 690 frame JPEG, ±90 MB)
+bash tools/render-shot.sh        # atau: --mode shot --shot masuk|orbit|panel|app --frames N
+
+python tools/bangun-showreel.py  # → build/MEDIVOX_Showreel.mp4
+python tools/bangun-deck.py      # → build/MEDIVOX_Deck.pptx
+```
+
+Render PNG dari Blender dikonversi ke WebP sebelum masuk `assets/3d/` — tujuh gambar turun
+dari 10,6 MB menjadi ±200 KB tanpa perbedaan yang terlihat di layar.
+
+**Perhatikan ruang disk.** Shot dirender sebagai JPEG, bukan PNG: 690 frame PNG 1080p memakan
+lebih dari satu gigabita dan pernah menghabiskan sisa ruang drive di tengah render. Render
+opak tidak membutuhkan kanal alfa, jadi JPEG kualitas 94 tidak mengurangi apa pun.
+
+### Jebakan Blender 5.2 yang sudah dibereskan
+
+- **Cycles tidak tersedia pada build ini** — daftar mesin hanya `BLENDER_EEVEE`. Skrip memilih
+  mesin dari daftar yang benar-benar ada, bukan dari nama yang diandaikan.
+- **Principled BSDF dengan Alpha rendah tetap dirender pekat** oleh EEVEE di sini, walaupun
+  `surface_render_method = 'BLENDED'` sudah dipasang. Kaca prisma karena itu memakai
+  campuran node *Transparent + Glossy* yang digerakkan Fresnel.
+- **`blend_method` sudah diganti `surface_render_method`** mulai EEVEE Next. Fungsi `tembus()`
+  mencoba keduanya.
+- **`Action.fcurves` tidak ada lagi** (API animasi berlapis). Turntable dan shot karena itu
+  memutar objek langsung per frame dalam loop Python, tanpa keyframe.
+- **Metaball tidak meyakinkan sebagai organ.** Hologram dibangun dari bola yang diregangkan
+  lalu diberi *Displace* bertekstur awan, sehingga berlekuk seperti girus.
+- **Parenting sebelum transformasi.** Layar tablet dipasangkan ke badannya selagi keduanya
+  masih di titik nol; memindah badan lebih dulu membuat layar tertinggal.
+
+### Showreel
+
+Strukturnya mengikuti showcase RePulse: pembuka lambang bercahaya, empat potongan kamera
+bergerak dengan *depth of field* dan sorot dari atas, keterangan kecil di kiri bawah,
+penutup nama produk di atas adegan yang diburamkan. 1920×1080, 30 fps, ±32 detik.
+
+**Musiknya disintesis**, bukan diambil dari mana pun: akor A mayor-sembilan dari gelombang
+sinus yang bernapas pelan, disaring dan diberi gema oleh ffmpeg. Jadi tidak ada persoalan
+lisensi — alasan video promo lama sengaja tanpa musik.
+
+### Deck
+
+20 slide 16:9 bergaya neumorphic terang, mengikuti susunan deck AQUENT: kop bab bernomor,
+judul besar, nomor halaman, dan kartu bayangan lembut. Kartu, angka, dan diagram digambar
+dengan Pillow lalu ditempel sebagai PNG **beralfa** — `convert('RGB')` akan mengubah bagian
+transparan menjadi blok hitam. Pratinjau tiap slide bisa diekspor lewat PowerPoint COM
+(`tools/pptx2png.ps1`).
+
+Semua keluaran ada di `build/` dan dikecualikan dari git dan deploy — semuanya bisa dibangun
+ulang dari skrip di atas.
+
 ## Catatan
 
 Ini prototipe antarmuka, **bukan perangkat medis**. Seluruh data pasien fiktif dan citra

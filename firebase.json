@@ -29,34 +29,74 @@
       "tools/buat-atlas.js",
       "tools/unduh-contoh.js",
       "tools/unduh-volume.js",
-      "video/**"
+      "video/**",
+      "build/**",
+      "output/**",
+      "tools/**",
+      "*.pdf",
+      "*.pptx",
+      "*.mp4",
+      "assets/3d/*.blend",
+      "assets/3d/*.blend1"
     ],
     "cleanUrls": false,
     "trailingSlash": false,
     "rewrites": [
-      { "source": "/app", "destination": "/prisma.html" },
-      { "source": "/hologram", "destination": "/prisma.html" },
-      { "source": "/viewer", "destination": "/viewer.html" },
-      { "source": "/studi", "destination": "/worklist.html" },
-      { "source": "/login", "destination": "/masuk.html" }
+      {
+        "source": "/app",
+        "destination": "/prisma.html"
+      },
+      {
+        "source": "/hologram",
+        "destination": "/prisma.html"
+      },
+      {
+        "source": "/viewer",
+        "destination": "/viewer.html"
+      },
+      {
+        "source": "/studi",
+        "destination": "/worklist.html"
+      },
+      {
+        "source": "/login",
+        "destination": "/masuk.html"
+      }
     ],
     "headers": [
       {
         "source": "**/*.@(js|css)",
-        "headers": [{ "key": "Cache-Control", "value": "public, max-age=3600" }]
+        "headers": [
+          {
+            "key": "Cache-Control",
+            "value": "public, max-age=3600"
+          }
+        ]
       },
       {
         "source": "**/*.dcm",
         "headers": [
-          { "key": "Cache-Control", "value": "public, max-age=86400" },
-          { "key": "Content-Type", "value": "application/dicom" }
+          {
+            "key": "Cache-Control",
+            "value": "public, max-age=86400"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/dicom"
+          }
         ]
       },
       {
         "source": "**",
         "headers": [
-          { "key": "X-Content-Type-Options", "value": "nosniff" },
-          { "key": "Referrer-Policy", "value": "strict-origin-when-cross-origin" }
+          {
+            "key": "X-Content-Type-Options",
+            "value": "nosniff"
+          },
+          {
+            "key": "Referrer-Policy",
+            "value": "strict-origin-when-cross-origin"
+          }
         ]
       }
     ]
