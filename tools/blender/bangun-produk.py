@@ -19,8 +19,11 @@ Keluaran PNG beralfa (latar transparan) supaya bisa
 ditempatkan di atas tema terang maupun gelap.
 ==========================================================
 """
-import bpy, bmesh, math, os, sys, argparse
+import bpy, bmesh, math, os, sys, argparse, json
 from mathutils import Vector
+from bpy_extras.object_utils import world_to_camera_view
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import orang
 
 # ---------------------------------------------------------------- argumen
 def argumen():
@@ -44,6 +47,10 @@ def argumen():
                    help='panggung putih lapang (lantai & latar terang) untuk shot')
     p.add_argument('--layar-laptop', default='')
     p.add_argument('--layar-ponsel', default='')
+    p.add_argument('--adegan', default='', choices=['', 'tim', 'gestur', 'suara', 'ledak'],
+                   help='scene with people (tim, gestur, suara) or the exploded design view (ledak)')
+    p.add_argument('--hanya-frame', type=int, default=-1,
+                   help='render only this frame of the timeline (for checking poses)')
     return p.parse_args(argv)
 
 ARG = argumen()
@@ -297,6 +304,45 @@ def basis():
         bagian.append(kaki)
 
     return bagian
+
+
+def sensor_perangkat():
+    """Voice and gesture hardware on the base: a ring of microphone
+    ports with a thin light ring around the shoulder, and a camera /
+    time-of-flight window on the front. The light ring pulses while
+    the device is listening (see the 'suara' scene)."""
+    gelap = bahan('lubang_mik', (0.02, 0.025, 0.035, 1), kasar=0.8)
+    for i in range(16):
+        a = 2 * math.pi * i / 16
+        bpy.ops.mesh.primitive_cylinder_add(vertices=12, radius=1.1 * MM, depth=1.6 * MM,
+                                            location=(math.cos(a) * 60.6 * MM, math.sin(a) * 60.6 * MM, 38.5 * MM),
+                                            rotation=(0, math.radians(90), a))
+        o = bpy.context.object
+        o.name = 'mik_%02d' % i
+        pasang(o, gelap)
+    bpy.ops.mesh.primitive_torus_add(major_radius=60.9 * MM, minor_radius=0.45 * MM,
+                                     location=(0, 0, 34.6 * MM))
+    cincin = bpy.context.object
+    cincin.name = 'mik_cincin'
+    pasang(cincin, bahan('cincin_mik', (0.2, 0.6, 1.0, 1), emisi=(0.25, 0.75, 1.0, 1), kuat=1.5))
+    # camera / ToF window on the front of the lower body
+    bpy.ops.mesh.primitive_cube_add(size=1, location=(0, -60.4 * MM, 21.5 * MM))
+    jendela = bpy.context.object
+    jendela.name = 'kamera_jendela'
+    jendela.scale = (22 * MM, 1.4 * MM, 7 * MM)
+    bpy.ops.object.transform_apply(scale=True)
+    bevel(jendela, 1.2 * MM, 3)
+    pasang(jendela, bahan('kaca_kamera', (0.01, 0.012, 0.02, 1), kasar=0.05))
+    for k, x in enumerate((-6 * MM, 6 * MM)):
+        bpy.ops.mesh.primitive_uv_sphere_add(radius=2.0 * MM, location=(x, -61.2 * MM, 21.5 * MM))
+        lensa = bpy.context.object
+        lensa.name = 'kamera_lensa_%d' % k
+        lensa.scale = (1, 0.35, 1)
+        pasang(lensa, bahan('lensa', (0.05, 0.12, 0.25, 1), logam=0.6, kasar=0.08))
+    bpy.ops.mesh.primitive_uv_sphere_add(radius=0.8 * MM, location=(0, -61.1 * MM, 21.5 * MM))
+    led = bpy.context.object
+    led.name = 'kamera_led'
+    pasang(led, bahan('led_kamera', (0.2, 0.7, 1, 1), emisi=(0.3, 0.8, 1, 1), kuat=4))
 
 
 def prisma():
@@ -852,6 +898,7 @@ def bangun():
     # mesin ditetapkan lebih dulu: pilihan material kaca bergantung padanya
     siapkan_render(ARG.res, ARG.res)
     basis()
+    sensor_perangkat()
     prisma()
     tepi_prisma()
     hologram(ARG.organ)
@@ -900,6 +947,11 @@ SHOT = {
                       lihat_a=(-0.04, 0.06, 0.07), lihat_b=(-0.06, 0.06, 0.075), lensa=44, f=5.6),
     # mendekat ke layar laptop / ponsel; titik dihitung dari MOCKUP
     'laptop': dict(mockup='laptop', jarak=(0.62, 0.40), geser=(0.10, 0.02), lensa=50, f=3.2),
+    # people and the exploded design view (scene set up by --adegan)
+    'tim':    dict(orbit=(-34, 26), radius=3.3, z=1.75, lihat_a=(0, 0.25, 0.1), lihat_b=(0, 0.25, 0.15), lensa=35, f=6.0),
+    'gestur': dict(awal=(1.45, -2.05, 1.1), akhir=(1.15, -1.65, 0.95), lihat_a=(0, 0.3, 0.42), lihat_b=(0, 0.3, 0.4), lensa=40, f=5.0),
+    'suara':  dict(awal=(-1.7, -2.1, 1.3), akhir=(-1.3, -1.65, 1.1), lihat_a=(0.34, 0.3, 0.45), lihat_b=(0.34, 0.3, 0.42), lensa=40, f=5.0),
+    'ledak':  dict(orbit=(-42, 18), radius=1.0, z=0.44, lihat_a=(0, 0, 0.16), lihat_b=(0, 0, 0.17), lensa=50, f=11.0),
     'ponsel': dict(mockup='ponsel', jarak=(0.62, 0.42), geser=(-0.10, -0.03), lensa=60, f=3.2),
 }
 
@@ -966,6 +1018,165 @@ def halus_t(t):
     return t * t * (3 - 2 * t)
 
 
+# ================================================================ scenes with people
+SKALA_ALAT = 2.0      # the device is shown larger next to people so the hologram reads
+KELOMPOK_LEDAK = [    # (prefix, lift in metres, label) for the exploded view
+    (('basis_bawah', 'celah', 'kaki_', 'nama_produk', 'sub_produk', 'kamera_'), 0.0, 'base'),
+    (('basis_atas', 'sekrup_', 'mik_'), 0.05, 'shoulder'),
+    (('panel_', 'pandangan_'), 0.105, 'panel'),
+    (('prisma', 'tepi', 'bingkai_'), 0.175, 'prism'),
+    (('holo_', 'irisan_', 'poros_holo'), 0.255, 'volume'),
+]
+
+
+def proyeksi(sc, kam, co):
+    v = world_to_camera_view(sc, kam, Vector(co))
+    return [round(v.x, 4), round(1 - v.y, 4), round(v.z, 3)]
+
+
+def siapkan_ruang():
+    """Floor 0.74 m below the device, a white round table under it, and
+    stronger soft lights sized for people instead of a small object."""
+    lantai = bpy.data.objects.get('lantai')
+    if lantai:
+        lantai.location.z -= 0.74
+        m = lantai.data.materials[0]
+        for n in m.node_tree.nodes:
+            if n.type == 'MAP_RANGE':
+                if abs(n.inputs['From Max'].default_value - 0.10) < 1e-3:
+                    n.inputs['From Min'].default_value = -0.70
+                    n.inputs['From Max'].default_value = -0.55
+                else:
+                    n.inputs['From Min'].default_value = 2.4
+                    n.inputs['From Max'].default_value = 4.6
+    putih = bahan('meja_putih', (0.9, 0.92, 0.95, 1), kasar=0.25)
+    bpy.ops.mesh.primitive_cylinder_add(vertices=96, radius=0.46, depth=0.03, location=(0, 0, -0.016))
+    daun = bpy.context.object
+    daun.name = 'meja_daun'
+    bevel(daun, 0.008, 4)
+    halus(daun)
+    pasang(daun, putih)
+    bpy.ops.mesh.primitive_cylinder_add(vertices=48, radius=0.055, depth=0.7, location=(0, 0, -0.38))
+    tiang = bpy.context.object
+    tiang.name = 'meja_tiang'
+    halus(tiang)
+    pasang(tiang, putih)
+    bpy.ops.mesh.primitive_cylinder_add(vertices=64, radius=0.3, depth=0.025, location=(0, 0, -0.73))
+    kaki = bpy.context.object
+    kaki.name = 'meja_kaki'
+    bevel(kaki, 0.006, 3)
+    halus(kaki)
+    pasang(kaki, putih)
+
+    def area(nama, lok, ukuran, daya, warna=(1, 1, 1)):
+        d = bpy.data.lights.new(nama, 'AREA')
+        d.energy, d.size, d.color = daya, ukuran, warna
+        o = bpy.data.objects.new(nama, d)
+        o.location = lok
+        o.rotation_euler = (Vector((0, 0.2, 0.3)) - Vector(lok)).to_track_quat('-Z', 'Y').to_euler()
+        bpy.context.collection.objects.link(o)
+    area('kunci_ruang', (-1.8, -2.2, 2.9), 2.6, 560)
+    area('isi_ruang', (2.4, -1.4, 1.8), 3.0, 200, (0.85, 0.92, 1.0))
+    area('tepi_ruang', (0.4, 2.6, 2.4), 2.0, 420, (0.8, 0.9, 1.0))
+
+
+def skalakan_alat(poros):
+    """Parent every device part (and the hologram pivot) to one empty
+    and scale it. Called after the hologram pivot exists, so the
+    hologram keeps its own pivot inside the scaled device."""
+    induk = bpy.data.objects.new('perangkat', None)
+    bpy.context.collection.objects.link(induk)
+    lewati = ('lantai', 'meja_', 'kunci', 'isi', 'tepi_ruang', 'kunci_ruang', 'isi_ruang', 'sorot', 'kam_', 'perangkat')
+    for o in list(bpy.context.scene.objects):
+        if o.parent is not None or o.type in {'LIGHT', 'CAMERA'} or o.name.startswith(lewati):
+            continue
+        if o.name.startswith('holo_'):
+            continue
+        o.parent = induk
+    induk.scale = (SKALA_ALAT,) * 3
+    return induk
+
+
+def siapkan_adegan(jenis, poros):
+    """Returns a per-frame function f(i, t, sc, kam) -> dict of overlay data."""
+    if jenis == 'ledak':
+        kelompok = []
+        for awalan, naik, label in KELOMPOK_LEDAK:
+            objs = [o for o in bpy.context.scene.objects
+                    if o.parent is None and o.name.startswith(awalan) and o.type != 'LIGHT']
+            if awalan[0] == 'holo_':
+                objs = [poros]
+            for o in objs:
+                o['z0'] = o.location.z
+            kelompok.append((objs, naik, label))
+        jangkar = {'base': (0.062, 0, 0.012), 'shoulder': (0.062, 0, 0.038), 'panel': (0.05, 0, 0.045),
+                   'prism': (0.06, 0, 0.1), 'volume': (0.03, 0, 0.092)}
+
+        def langkah(i, t, sc, kam):
+            buka = halus_t(min(1.0, t / 0.55))
+            data = {}
+            for objs, naik, label in kelompok:
+                for o in objs:
+                    o.location.z = o['z0'] + naik * buka
+                jx, jy, jz = jangkar[label]
+                data[label] = proyeksi(sc, kam, (jx, jy, jz + naik * buka))
+            data['buka'] = round(buka, 3)
+            return data
+        return langkah
+
+    siapkan_ruang()
+    alat = skalakan_alat(poros)
+    orangs = []
+    if jenis == 'tim':
+        tata = [((-0.95, 0.4), 'Ayu'), ((0.95, 0.45), 'Budi'), ((0.05, 1.05), 'Citra')]
+        warna = [(0.93, 0.95, 0.98, 1), (0.9, 0.94, 0.99, 1), (0.95, 0.96, 0.98, 1)]
+        for k, ((x, y), nm) in enumerate(tata):
+            # a figure faces +Y by default; rotate so it faces the device
+            sendi = orang.bangun_orang('orang_' + nm, (x, y, -0.74), jas=warna[k])
+            sendi['akar'].rotation_euler = (0, 0, math.atan2(x, -y))
+            orangs.append(sendi)
+
+        def langkah(i, t, sc, kam):
+            orang.pose_tunjuk(orangs[0], halus_t(min(1, max(0, (t - 0.1) / 0.3))))
+            orang.pose_bicara(orangs[1], t)
+            orangs[2]['kepala'].rotation_euler = (math.radians(14), 0, math.radians(6 * math.sin(t * 4)))
+            return {}
+        return langkah
+
+    if jenis == 'gestur':
+        sendi = orang.bangun_orang('orang_dok', (0.0, 0.64, -0.74))
+        sendi['akar'].rotation_euler = (0, 0, math.pi)          # faces the device (-Y)
+
+        def langkah(i, t, sc, kam):
+            # sweep twice; the hologram follows the hand
+            f = math.sin(t * math.pi * 3.0)
+            angkat = halus_t(min(1, t / 0.18))
+            orang.pose_swipe(sendi, f, angkat=angkat)
+            poros.rotation_euler[2] = math.radians(35 * f * angkat)
+            tangan = orang.titik_dunia(sendi['pg_ka'], (0, 0, -0.06))
+            return {'tangan': proyeksi(sc, kam, tangan), 'fase': round(f * angkat, 3)}
+        return langkah
+
+    if jenis == 'suara':
+        sendi = orang.bangun_orang('orang_dok', (0.62, 0.58, -0.74))
+        sendi['akar'].rotation_euler = (0, 0, math.atan2(0.62, -0.58))
+        cincin = bpy.data.materials.get('cincin_mik')
+        bsdf = cincin.node_tree.nodes['Principled BSDF'] if cincin else None
+
+        def langkah(i, t, sc, kam):
+            orang.pose_bicara(sendi, t)
+            bicara = 0.12 < t < 0.42
+            if bsdf:
+                bsdf.inputs['Emission Strength'].default_value = (6 + 4 * math.sin(i * 0.9)) if bicara else 1.5
+            # after the spoken "rotate left" the hologram turns left
+            putar = halus_t(min(1, max(0, (t - 0.45) / 0.45)))
+            poros.rotation_euler[2] = math.radians(-120 * putar)
+            kepala = orang.titik_dunia(sendi['kepala'], (0, 0, 0.12))
+            return {'kepala': proyeksi(sc, kam, kepala), 'bicara': bicara, 'putar': round(putar, 3)}
+        return langkah
+    return None
+
+
 def render_shot(nama, frames, out):
     cfg = SHOT[nama]
     sc = siapkan_render(1920, 1080)
@@ -993,6 +1204,8 @@ def render_shot(nama, frames, out):
         o.matrix_parent_inverse = poros.matrix_world.inverted()
     folder = os.path.join(out, 'shot-' + nama)
     os.makedirs(folder, exist_ok=True)
+    adegan = siapkan_adegan(ARG.adegan, poros) if ARG.adegan else None
+    jejak = []
 
     for i in range(frames):
         t = halus_t(i / max(1, frames - 1))
@@ -1017,11 +1230,18 @@ def render_shot(nama, frames, out):
 
         # hologram berputar pelan: volume terasa hidup, bukan gambar diam
         poros.rotation_euler[2] = math.radians(0.9 * i)
+        if adegan:
+            bpy.context.view_layer.update()
+            jejak.append(adegan(i, t, sc, kam))
 
+        if ARG.hanya_frame >= 0 and i != ARG.hanya_frame:
+            continue
         sc.render.filepath = os.path.join(folder, 'f%04d.jpg' % i)
         bpy.ops.render.render(write_still=True)
         if i % 30 == 0:
             print('  %s %d/%d' % (nama, i, frames))
+    if jejak:
+        json.dump(jejak, open(os.path.join(folder, 'jejak.json'), 'w'))
     print('  shot %s selesai' % nama)
 
 

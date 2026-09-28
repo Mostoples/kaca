@@ -25,95 +25,57 @@ tanpa proses build, dan tanpa WebGL. Seluruh perhitungan volume, ray-cast, dan r
 permukaan berjalan di CPU lewat canvas 2D. Satu-satunya dependensi eksternal adalah SDK
 Firebase dari CDN untuk autentikasi dan penyimpanan laporan.
 
-## Peta halaman
+## Pages
 
-| Halaman | Kedudukan | Isi |
+The interface is in **English**. (Code comments and this README's older sections stay in Indonesian.)
+
+| Page | Role | Contents |
 |---|---|---|
-| `prisma.html` | **utama** | Panggung hologram: pemilih studi, empat pandangan berputar, semua penyetelan |
-| `viewer.html` | pendukung | Viewer 2D, tempat volume 3D & MPR dibangun, ekspor STL/OBJ |
-| `worklist.html` | pendukung | Daftar studi, buka berkas & folder, kelola cache lokal |
-| `masuk.html` | — | Masuk / daftar / mode tamu |
-| `index.html` | — | Halaman web pengenalan |
+| `prisma.html` | **main** | Hologram stage: dark navy stage, control dock, voice & gesture cards, rendering settings |
+| `viewer.html` | supporting | 2D viewer, where the 3D volume & MPR are built; STL/OBJ export |
+| `worklist.html` | supporting | Studies: search, filters, open files & folders, local cache |
+| `home.html` | dashboard | Resume the latest study, quick actions, device status, recent studies, voice & gesture guide |
+| `masuk.html` | — | Sign in / create account / guest mode |
+| `index.html` | — | Public landing page |
 
-Jalur pendek: `/app` dan `/hologram` → panggung hologram, `/viewer`, `/studi`, `/login`.
-Setelah masuk, tujuan bawaannya panggung hologram.
+Short paths: `/app` and `/hologram` → hologram stage, `/viewer`, `/studi`, `/login`.
+After sign-in the default destination is still the hologram stage.
 
-## Bahasa visual
+## Visual language
 
-**Putih bersih futuristik.** Latar putih kebiruan dengan aura cahaya biru-cyan dan kisi titik
-halus; bilah dan panel berupa kaca beku (`backdrop-filter`) yang melayang; siku HUD cyan tipis
-di pojok kartu penting; eyebrow bermono dengan titik bercahaya. Aksen memakai gradien biru
-royal → cyan yang diambil dari huruf M pada logo, dan navy wordmark sebagai warna judul.
+**White neumorphism, clean and futuristic**, following the `medivox.html` reference the owner
+provided (the reference itself is kept out of git and hosting). Soft raised and inset surfaces on
+`#EDF1F8`, a royal-blue → cyan gradient (`#2552EE → #3E8BFF → #58D8FF`) for primary actions and
+active states, **Sora** for display type, **Plus Jakarta Sans** for text, **JetBrains Mono** for
+data and overlays. All tokens live in `assets/css/base.css`.
 
-**Seluruh ikon, ornamen, dan pola kartu dibuat dengan Blender CLI** (`tools/blender/bangun-kit-ui.py`),
-bukan pustaka ikon:
+App shell: a raised **sidebar** (Home · Hologram · 2D View · Studies, device status, sign out)
+on desktop, compact on the dense workspaces; on phones it becomes a floating **bottom navigation
+with a central Hologram button**. The line-icon sprite is `assets/ui/ikon-garis.svg`; the logo mark
+is `assets/ui/logo-mark.svg`.
 
-| Kit | Isi | Dipakai di |
-|---|---|---|
-| `assets/ui/ikon/` | 48 ikon bergaya tombol perangkat medis: tile keramik putih, glyph biru→cyan timbul, pijar cyan di bawahnya, dan lampu status kecil | tab aplikasi, rel alat viewer, tombol, kartu fitur, sidebar |
-| `assets/ui/ornamen/` | cincin, bola kaca, kapsul, palang medis, heliks DNA, latar hero | hero landing, halaman masuk, kartu ajakan, showreel, deck |
-| `assets/ui/pola/` | relief heksagon, titik, gelombang, lingkaran — sebagai lapisan alfa | latar kartu (`.pola`, kartu fitur/langkah/harga), sidebar & panel aplikasi |
-| `assets/3d/putih-*.webp` | render MEDIVOX-1 varian keramik putih | hero, galeri perangkat, halaman masuk |
+The 3D icons, ornaments and patterns are still our own Blender CLI renders (`assets/ui/…`, built by
+`tools/blender/bangun-kit-ui.py` + `tools/optimasi-kit.py`); the reference's third-party icon
+URLs are deliberately not used.
 
-Pola dirender sebagai relief putih bercahaya samping, lalu `tools/optimasi-kit.py` mengubahnya
-menjadi lapisan transparan (bayangan navy + sorotan putih) supaya bisa ditaruh di atas warna
-kartu apa pun. `K.icon()` di `common.js` kini mengembalikan `<img>` ikon 3D ini.
+**Image areas stay dark.** 2D viewports, series thumbnails and the hologram stage remain black or
+deep navy: tissue contrast is judged against black, so a light frame around the image would bias
+window/level.
 
-```bash
-"$BL" -b -P tools/blender/bangun-kit-ui.py -- --mode semua --out build/kit
-python tools/optimasi-kit.py        # build/kit -> assets/ui (WebP), build/putih* -> assets/3d
-```
+Muted text is `#5B6A8C` rather than the reference's `#7483A3`, which falls below 4.5:1 on `#EDF1F8`.
 
-| Peran | Nilai | Asal |
-|---|---|---|
-| Biru merek / aksen | `#2f6fd0` | sisi kiri huruf M |
-| Cyan | `#5ec9f2` | sisi kanan huruf M |
-| Navy judul | `#1b3a63` | wordmark MEDI |
-| Permukaan | `#ffffff` | — |
-| Latar halaman | `#f6f9fd` | — |
-| Gradien merek | `linear-gradient(120deg,#2f6fd0,#5ec9f2)` | — |
+### Voice and gesture
 
-Tipografi **Manrope** untuk antarmuka dan **JetBrains Mono** untuk angka, tag DICOM, serta
-overlay citra. Seluruh token ada di `assets/css/base.css`; mengubah paletnya cukup di sana.
+The hologram page has a **Voice** card (microphone button, language choice EN-US / EN-GB /
+Indonesian, tappable command chips, command log) and a **Gesture** card (camera preview, swipe to
+rotate, push/pull to scale, smoothing). Chips, the stage dock, keyboard shortcuts and speech all go
+through the same `jalankanPerintah()` handler. The vocabulary in `assets/js/kendali.js` accepts
+English and Indonesian (`rotate`, `stop`, `rotate left`, `zoom in`, `show bone`, `faster`, `reset`…).
+In Chrome, speech recognition sends audio to Google; the app says so before the microphone
+starts. Camera frames are processed in the browser and discarded.
 
-**Area citra dikecualikan dari tema terang.** Viewport 2D, thumbnail seri, dan panggung
-hologram tetap hitam. Jaringan dinilai di atas hitam — latar terang di belakang gambar
-menggeser persepsi kontras dan membuat penilaian window/level tidak dapat diandalkan. Jadi
-polanya: kerangka terang, gambar gelap, sama seperti stasiun kerja PACS.
-
-### Kontras teks
-
-Warna teks dipilih dengan mengukur, bukan menebak. Setiap warna yang dipakai untuk teks kecil
-mencapai minimal 4,5:1 di atas putih maupun `--bg`:
-
-| Token | Nilai | Rasio di atas `--bg` |
-|---|---|---|
-| `--text` | `#12233c` | 14,9:1 |
-| `--text-2` | `#41608a` | 6,1:1 |
-| `--muted` | `#5a7290` | 4,7:1 |
-| `--accent` | `#2f6fd0` | 4,6:1 |
-| `--ok` | `#0f7d57` | 4,9:1 |
-| `--warn` | `#9a5d04` | 5,1:1 |
-| `--danger` | `#c13333` | 5,3:1 |
-
-`--muted-2` sengaja lebih pucat dan dipakai hanya untuk garis serta ikon dekoratif, tidak
-pernah untuk teks.
-
-### Ponsel dan desktop
-
-Satu tata letak menyesuaikan diri, bukan dua halaman terpisah:
-
-- Di bawah 900 px sidebar worklist, panel seri, dan panel kanan menjadi laci geser; rel alat
-  viewer berpindah ke bawah sebagai baris yang dapat digulir; label tab diringkas.
-- Di bawah 720 px tabel worklist menjadi kartu — hanya kolom yang dipakai untuk memilih studi
-  yang ditampilkan; regio, jumlah citra, dan accession disembunyikan agar kartu tetap pendek.
-- Di bawah 720 px tab Hologram / Viewer / Studi pindah ke **bilah tab bawah** seperti aplikasi
-  native (dalam jangkauan ibu jari), lengkap dengan `env(safe-area-inset-bottom)` untuk ponsel
-  berponi/gesture bar. Catatan: header tidak boleh memakai `backdrop-filter` di ukuran ini —
-  properti itu menjadikan header blok acuan `position:fixed` sehingga bilah tab menempel di atas.
-- Di atas 1700 px panel diberi ruang lebih lebar.
-- Seluruh interaksi viewer memakai Pointer Events, sehingga tetikus, pena, dan sentuh berjalan
-  lewat jalur yang sama, lengkap dengan cubit dua jari.
+Stored reading-status values (`Belum dibaca`, `Sedang dibaca`, `Selesai`, report `Draf`…) are kept as
+internal keys for compatibility with data already saved; only their labels are translated.
 
 ## Menjalankan secara lokal
 
@@ -710,43 +672,38 @@ opak tidak membutuhkan kanal alfa, jadi JPEG kualitas 94 tidak mengurangi apa pu
   berupa siklorama yang bagian jauhnya memancarkan cahaya sendiri, sementara lantai di sekitar
   produk tetap diterangi lampu biasa (lengkap dengan bayangan).
 
-### Showreel
+### Scientific video (English)
 
-Film berbahasa Inggris (±82 detik, 1920×1080, 30 fps) yang menyatukan **perangkat keras dan
-perangkat lunak**, dengan alur cerita latar belakang → produk → fitur. Tiap bab dibuka kartu
-judul navy:
+`tools/bangun-video-ilmiah.py` builds `build/MEDIVOX_Scientific_Video.mp4` (~4.5 min): a "living
+slide deck" of animated neumorphic slides intercut with Blender shots. Chapters: background,
+state of the art (a qualitative comparison matrix, labelled as such), research gap & novelty,
+system design (architecture, Pepper's-ghost optics, exploded hardware, rendering), features
+(device, desktop and Android apps, **voice control** and **gesture control** with clinicians
+using the device), in use (tumour board), validation, limitations & future work, conclusion.
 
-1. **01 Background** — tumpukan irisan CT yang naik satu per satu ("Radiology is read one slice
-   at a time"), lalu kartu angka ("Depth is imagined, not seen")
-2. **02 The product** — MEDIVOX-1 keramik putih di studio siklorama (masuk, orbit, panel)
-3. **03 Features** — ekosistem (MEDIVOX-1 + laptop + ponsel Android dalam satu adegan
-   Blender), laptop mendekat, mockup laptop 2D menggulir situs, alur worklist → viewer →
-   hologram di layar laptop, ponsel Android mendekat, tiga ponsel Android, kartu fitur
-4. penutup — produk, ponsel, nama, tagline, dan `medivox-id.web.app`
+People are stylised mannequin clinicians built from primitives (`tools/blender/orang.py`); the
+product script adds a microphone array, light ring and camera window to MEDIVOX-1
+(`sensor_perangkat()`). Scenes with people are rendered with `--adegan tim|gestur|suara`, the
+exploded view with `--adegan ledak`; each writes `jejak.json` with per-frame screen positions of
+the hand, head or parts so the video can draw hand-tracking boxes, speech bubbles and callouts
+exactly over the render. Frames are streamed straight into ffmpeg; the music is synthesised with
+numpy.
 
-Ponsel mockup bergaya **Android** (20:9, kamera punch-hole, bilah status, gesture bar, tombol
-di sisi kanan) baik di Blender maupun di adegan 2D; teksturnya disusun `tools/layar-mockup.py`.
-Nadanya sengaja diredupkan: eksposur studio −1,3, latar siklorama biru-abu, render diberi
-sedikit kontras, dan semua frame diberi vinyet navy tipis. `--app` merakit bab fitur saja.
+```bash
+bash tools/render-reel.sh                    # all Blender shots (≈45 min)
+python tools/bangun-video-ilmiah.py          # → build/MEDIVOX_Scientific_Video.mp4
+python tools/bangun-video-ilmiah.py --pratinjau   # one still per scene → build/pv-ilmiah/
+python tools/bangun-deck.py                  # → build/MEDIVOX_Deck.pptx
+```
 
-**Musiknya disintesis**, bukan diambil dari mana pun: akor D mayor-sembilan dari gelombang
-sinus yang bernapas pelan plus denyut halus, disaring dan diberi gema oleh ffmpeg — tanpa
-persoalan lisensi.
+The older showreel builder (`tools/bangun-showreel.py`) remains and provides the laptop and
+Android mockup scenes that the scientific video reuses.
 
-### Deck
+### Deck (English)
 
-24 slide 16:9 bergaya **neumorfisme aura glass**: latar aura biru-cyan-lila dengan kisi titik,
-kartu kaca beku sungguhan (latar di bawahnya diburamkan), bayangan ganda terang/gelap, siku
-HUD, pola relief, ikon dan ornamen 3D Blender, render produk putih, serta tangkapan UI asli
-(desktop, alur kerja, ponsel). Setiap slide adalah satu kanvas JPEG 2560×1440, lalu judul dan
-paragraf ditaruh sebagai kotak teks PowerPoint supaya tetap bisa disunting. Pratinjau tiap
-slide bisa diekspor lewat PowerPoint COM (`tools/pptx2png.ps1`).
-
-Huruf Manrope/JetBrains Mono untuk teks yang digambar diunduh ke `build/font/` (diabaikan
-git); bila tidak ada, skrip jatuh ke Segoe UI/Consolas.
-
-Semua keluaran ada di `build/` dan dikecualikan dari git dan deploy — semuanya bisa dibangun
-ulang dari skrip di atas.
+`tools/bangun-deck.py` renders 36 slides with the same slide code as the video, so deck, video and
+app share one design. Each slide is a full-bleed image with **complete speaker notes** containing
+the talk track.
 
 ## Catatan
 
