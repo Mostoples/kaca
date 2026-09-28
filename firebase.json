@@ -39,7 +39,8 @@
         "*.mp4",
         "assets/3d/*.blend",
         "assets/3d/*.blend1",
-        "alih/**"
+        "alih/**",
+        "medivox.html"
       ],
       "cleanUrls": false,
       "trailingSlash": false,
