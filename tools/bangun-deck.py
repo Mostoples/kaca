@@ -225,8 +225,8 @@ class Kanvas:
 
     def ubin_ikon(self, nama, x, y, ukuran=150):
         """Petak kaca kecil berisi ikon 3D."""
-        self.kaca([x, y, x + ukuran, y + ukuran], int(ukuran * 0.3), 0.72, sorot=True)
-        ik = ikon(nama, int(ukuran * 0.66))
+        # ikon Blender kini sudah berupa tombol keramik putih
+        ik = ikon(nama, int(ukuran * 1.0))
         self.tempel(ik, (x + (ukuran - ik.width) / 2, y + (ukuran - ik.height) / 2),
                     kabur=8, turun=8, gelap=50)
 
@@ -750,7 +750,7 @@ def bangun():
     for i, nm in enumerate(nama_ikon[:48]):
         cx = kotak[0] + 80 + (i % kol) * (uk + 34)
         cy = kotak[1] + 26 + (i // kol) * (uk + 9)
-        ik = ikon(nm, 96)
+        ik = ikon(nm, 124)
         k.tempel(ik, (cx + (uk - ik.width) / 2, cy + (uk - ik.height) / 2), kabur=6, turun=6, gelap=40)
     kotak2 = [px(8.2), px(2.4), px(12.6), px(6.95)]
     k.kaca(kotak2, 48, pola_nama='lingkar')

@@ -287,6 +287,45 @@ def impor_svg(isi):
     return [o for o in bpy.data.objects if o not in sebelum and o.type == 'CURVE']
 
 
+def ubin_putih(mat_ubin, mat_pijar):
+    """Tombol keramik putih tempat glyph duduk, dengan pijar cyan tipis di
+    bawahnya — seperti tombol perangkat medis yang menyala lembut."""
+    import bmesh
+
+    def slab(nama, lebar, jari, z0, tebal, mat, bev):
+        me = bpy.data.meshes.new(nama)
+        bm = bmesh.new()
+        x = lebar / 2
+        vs = [bm.verts.new(v) for v in ((-x, -x, z0), (x, -x, z0), (x, x, z0), (-x, x, z0))]
+        bm.faces.new(vs)
+        bmesh.ops.bevel(bm, geom=list(bm.verts), offset=jari, segments=12, affect='VERTICES',
+                        profile=0.5, offset_type='OFFSET')
+        hasil = bmesh.ops.extrude_face_region(bm, geom=list(bm.faces))
+        naik = [e for e in hasil['geom'] if isinstance(e, bmesh.types.BMVert)]
+        bmesh.ops.translate(bm, verts=naik, vec=(0, 0, tebal))
+        bmesh.ops.recalc_face_normals(bm, faces=list(bm.faces))
+        bm.to_mesh(me)
+        bm.free()
+        o = bpy.data.objects.new(nama, me)
+        bpy.context.scene.collection.objects.link(o)
+        if bev:
+            m = o.modifiers.new('bev', 'BEVEL')
+            m.width, m.segments = bev, 6
+            m.limit_method = 'ANGLE'
+        for pol in me.polygons:
+            pol.use_smooth = True
+        me.materials.append(mat)
+        return o
+
+    slab('pijar', 1.25, 0.31, -0.13, 0.03, mat_pijar, 0)
+    slab('ubin', 1.18, 0.29, -0.11, 0.11, mat_ubin, 0.045)
+    # lampu status kecil di pojok kanan atas
+    bpy.ops.mesh.primitive_uv_sphere_add(radius=0.034, location=(0.43, 0.43, 0.0))
+    led = bpy.context.object
+    led.scale.z = 0.45
+    led.data.materials.append(mat_pijar)
+
+
 def satu_ikon(nama, spek, mat, mat_isi):
     for o in list(bpy.data.objects):
         if o.type in {'CURVE', 'MESH'}:
@@ -302,7 +341,8 @@ def satu_ikon(nama, spek, mat, mat_isi):
     # skala: importer memakai satuan 1 px = 1/90 inci; ukur dari 24 satuan
     # viewBox agar ketebalan tabung sama untuk setiap ikon
     satu_px = 1.0 / 90 * 0.0254
-    skala = 1.0 / (24 * satu_px)
+    # glyph mengisi ±62% tombol putih di bawahnya
+    skala = 0.80 / (24 * satu_px)
     for o in semua:
         o.scale = (skala, skala, skala)
 
@@ -310,7 +350,7 @@ def satu_ikon(nama, spek, mat, mat_isi):
         c = o.data
         c.dimensions = '3D'
         c.fill_mode = 'FULL'
-        c.bevel_depth = 0.9 * satu_px          # separuh stroke-width 1.8
+        c.bevel_depth = 1.05 * satu_px         # sedikit lebih tebal: terbaca di ukuran kecil
         c.bevel_resolution = 6
         if hasattr(c, 'use_fill_caps'):
             c.use_fill_caps = True
@@ -336,10 +376,14 @@ def satu_ikon(nama, spek, mat, mat_isi):
             mx = Vector((max(mx.x, w.x), max(mx.y, w.y), max(mx.z, w.z)))
     tengah = (mn + mx) / 2
     for o in semua:
-        o.location -= Vector((tengah.x, tengah.y, 0))
+        o.location -= Vector((tengah.x, tengah.y, -0.035))
+    ubin_putih(MAT_UBIN[0], MAT_UBIN[1])
 
     print('  ukuran %s: %.2f x %.2f' % (nama, mx.x - mn.x, mx.y - mn.y))
     render(os.path.join(OUT, 'ikon', nama + '.png'), 192, 192)
+
+
+MAT_UBIN = []
 
 
 def mode_ikon():
@@ -349,8 +393,11 @@ def mode_ikon():
     lampu_studio(kuat=0.14, dunia_putih=0.85, kuat_dunia=0.18)
     # AgX meredam kejenuhan; ikon butuh biru merek yang tetap hidup
     sc.view_settings.view_transform = 'Standard'
-    # sedikit miring agar tabung terasa bervolume, tapi glyph tetap terbaca
-    kamera_orto(1.16, lok=(0, -3.5, 20), rot=(math.radians(10), 0, 0))
+    # sedikit miring agar tombol terasa bervolume, tapi glyph tetap terbaca
+    kamera_orto(1.42, lok=(0, -3.5, 20), rot=(math.radians(10), 0, 0))
+    MAT_UBIN[:] = [bahan('ubin_putih', (0.93, 0.95, 0.985, 1), kasar=0.2, coat=1.0,
+                         emisi=(0.93, 0.955, 1.0, 1), kuat=0.62),
+                   bahan('pijar_cyan', (0.2, 0.7, 1.0, 1), emisi=(0.25, 0.78, 1.0, 1), kuat=4.0)]
     os.makedirs(os.path.join(OUT, 'ikon'), exist_ok=True)
     mat = bahan_kilap_merek()
     mat_isi = bahan_kilap_merek('kilap_isi')

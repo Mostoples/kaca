@@ -4,6 +4,7 @@
 BL="/c/Program Files/Blender Foundation/Blender 5.2/blender.exe"
 cd "$(dirname "$0")/.."
 SAMPEL=${SAMPEL:-24}
+python tools/layar-mockup.py
 for pasang in "masuk 150 -" "orbit 150 -" "panel 120 -" "ekosistem 180 m" "laptop 150 m" "ponsel 150 m"; do
   set -- $pasang
   ekstra=""

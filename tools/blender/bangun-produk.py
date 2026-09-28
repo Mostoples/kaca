@@ -527,8 +527,9 @@ def panggung_putih():
     maks = nt.nodes.new('ShaderNodeMath')
     maks.operation = 'MAXIMUM'
     pancar = nt.nodes.new('ShaderNodeEmission')
-    pancar.inputs['Color'].default_value = (0.90, 0.945, 1.0, 1)
-    pancar.inputs['Strength'].default_value = 1.75
+    # latar biru-abu yang lembut, bukan putih menyilaukan
+    pancar.inputs['Color'].default_value = (0.80, 0.87, 0.97, 1)
+    pancar.inputs['Strength'].default_value = 1.45
     campur = nt.nodes.new('ShaderNodeMixShader')
     nt.links.new(geo.outputs['Position'], pisah.inputs[0])
     nt.links.new(pisah.outputs['Z'], petak.inputs['Value'])
@@ -547,7 +548,7 @@ def panggung_putih():
     dunia.node_tree.nodes['Background'].inputs[0].default_value = (0.86, 0.91, 0.98, 1)
     dunia.node_tree.nodes['Background'].inputs[1].default_value = 0.45
     # lampu studio dirancang untuk panggung gelap; di atas putih diredam
-    bpy.context.scene.view_settings.exposure = -0.9
+    bpy.context.scene.view_settings.exposure = -1.3
     return lantai
 
 
@@ -651,7 +652,7 @@ def laptop(gambar):
     bezel.parent = engsel
     # layar 16:10
     lw, lh = 0.286, 0.1788
-    layar = bidang('laptop_layar', lw, lh, bahan_layar('layar_laptop', gambar, 1.9))
+    layar = bidang('laptop_layar', lw, lh, bahan_layar('layar_laptop', gambar, 2.3))
     layar.rotation_euler = (math.radians(90), 0, 0)
     layar.location = (0, -0.0006, 0.106)
     layar.parent = engsel
@@ -667,30 +668,45 @@ def laptop(gambar):
 
 
 def ponsel(gambar):
-    """Ponsel pada penyangga kecil, menampilkan Medivox versi seluler."""
-    badan_m = bahan('ponsel_badan', (0.90, 0.92, 0.95, 1), logam=0.5, kasar=0.22)
+    """Ponsel Android 20:9 berwarna porselen putih: bezel tipis seragam,
+    kamera punch-hole (digambar di tekstur layar), tombol daya dan volume
+    di sisi kanan, bersandar pada penyangga kecil."""
+    badan_m = bahan('ponsel_badan', (0.90, 0.92, 0.95, 1), logam=0.35, kasar=0.26)
+    rangka = bahan('ponsel_rangka', (0.80, 0.84, 0.89, 1), logam=0.9, kasar=0.2)
     bingkai = bahan('ponsel_bingkai', (0.012, 0.015, 0.02, 1), kasar=0.08)
-    W, H = 0.0716, 0.1512
+    W, H, T = 0.0718, 0.1600, 0.0086
     induk = bpy.data.objects.new('ponsel', None)
     bpy.context.collection.objects.link(induk)
-    badan = kotak_bulat('ponsel_badan', W, H, 0.0078, 0.0105, 12)
+    badan = kotak_bulat('ponsel_badan', W, H, T, 0.0080, 12)
     pasang(badan, badan_m)
     badan.parent = induk
-    kaca = kotak_bulat('ponsel_kaca', W - 0.0016, H - 0.0016, 0.0003, 0.0098, 12)
-    kaca.location = (0, 0, 0.0078)
+    # rangka logam tipis mengelilingi sisi
+    sisi = kotak_bulat('ponsel_rangka', W + 0.0006, H + 0.0006, 0.0034, 0.0083, 12)
+    sisi.location = (0, 0, T * 0.35)
+    pasang(sisi, rangka)
+    sisi.parent = induk
+    kaca = kotak_bulat('ponsel_kaca', W - 0.0010, H - 0.0010, 0.0003, 0.0075, 12)
+    kaca.location = (0, 0, T)
     pasang(kaca, bingkai)
     kaca.parent = induk
-    layar = bidang('ponsel_layar', W - 0.0052, H - 0.0052, bahan_layar('layar_ponsel', gambar, 1.9))
-    layar.location = (0, 0, 0.00815)
+    layar = bidang('ponsel_layar', W - 0.0040, H - 0.0040, bahan_layar('layar_ponsel', gambar, 2.3))
+    layar.location = (0, 0, T + 0.00035)
     layar.parent = induk
+    # tombol daya (pendek) dan volume (panjang) di sisi kanan
+    for nama, y, pjg in (('tombol_daya', 0.018, 0.011), ('tombol_volume', 0.040, 0.024)):
+        bpy.ops.mesh.primitive_cube_add(size=1, location=(W / 2 + 0.0005, y, T * 0.5))
+        t = bpy.context.object
+        t.name = nama
+        t.scale = (0.0012, pjg, 0.0026)
+        pasang(t, rangka)
+        t.parent = induk
 
-    # penyangga: balok putih membulat
     peny = kotak_bulat('ponsel_penyangga', 0.058, 0.040, 0.014, 0.008)
     pasang(peny, bahan('penyangga', (0.92, 0.935, 0.955, 1), kasar=0.3))
-    peny.location = (0.206, 0.012, 0)
+    peny.location = (0.206, 0.016, 0)
     peny.rotation_euler = (0, 0, math.radians(8))
 
-    induk.location = (0.200, -0.030, 0.070)
+    induk.location = (0.200, -0.030, 0.076)
     induk.rotation_euler = (math.radians(72), 0, math.radians(8))
     bpy.context.view_layer.update()
     MOCKUP['ponsel'] = (layar.matrix_world.translation.copy(),
@@ -881,7 +897,7 @@ SHOT = {
                   lihat_a=(0.10, 0.02, 0.07), lihat_b=(0.10, 0.02, 0.07), lensa=58, f=4.0),
     # perangkat keras + perangkat lunak dalam satu bingkai
     'ekosistem': dict(awal=(0.34, -0.78, 0.36), akhir=(0.04, -0.72, 0.27),
-                      lihat_a=(-0.06, 0.06, 0.07), lihat_b=(-0.08, 0.06, 0.075), lensa=36, f=5.6),
+                      lihat_a=(-0.04, 0.06, 0.07), lihat_b=(-0.06, 0.06, 0.075), lensa=44, f=5.6),
     # mendekat ke layar laptop / ponsel; titik dihitung dari MOCKUP
     'laptop': dict(mockup='laptop', jarak=(0.62, 0.40), geser=(0.10, 0.02), lensa=50, f=3.2),
     'ponsel': dict(mockup='ponsel', jarak=(0.62, 0.42), geser=(-0.10, -0.03), lensa=60, f=3.2),

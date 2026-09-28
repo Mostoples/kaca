@@ -50,7 +50,7 @@ bukan pustaka ikon:
 
 | Kit | Isi | Dipakai di |
 |---|---|---|
-| `assets/ui/ikon/` | 48 ikon 3D keramik biru bergradien (hologram, viewer, studi, alat ukur, dll.) | tab aplikasi, rel alat viewer, tombol, kartu fitur, sidebar |
+| `assets/ui/ikon/` | 48 ikon bergaya tombol perangkat medis: tile keramik putih, glyph biru→cyan timbul, pijar cyan di bawahnya, dan lampu status kecil | tab aplikasi, rel alat viewer, tombol, kartu fitur, sidebar |
 | `assets/ui/ornamen/` | cincin, bola kaca, kapsul, palang medis, heliks DNA, latar hero | hero landing, halaman masuk, kartu ajakan, showreel, deck |
 | `assets/ui/pola/` | relief heksagon, titik, gelombang, lingkaran — sebagai lapisan alfa | latar kartu (`.pola`, kartu fitur/langkah/harga), sidebar & panel aplikasi |
 | `assets/3d/putih-*.webp` | render MEDIVOX-1 varian keramik putih | hero, galeri perangkat, halaman masuk |
@@ -107,6 +107,10 @@ Satu tata letak menyesuaikan diri, bukan dua halaman terpisah:
   viewer berpindah ke bawah sebagai baris yang dapat digulir; label tab diringkas.
 - Di bawah 720 px tabel worklist menjadi kartu — hanya kolom yang dipakai untuk memilih studi
   yang ditampilkan; regio, jumlah citra, dan accession disembunyikan agar kartu tetap pendek.
+- Di bawah 720 px tab Hologram / Viewer / Studi pindah ke **bilah tab bawah** seperti aplikasi
+  native (dalam jangkauan ibu jari), lengkap dengan `env(safe-area-inset-bottom)` untuk ponsel
+  berponi/gesture bar. Catatan: header tidak boleh memakai `backdrop-filter` di ukuran ini —
+  properti itu menjadikan header blok acuan `position:fixed` sehingga bilah tab menempel di atas.
 - Di atas 1700 px panel diberi ruang lebih lebar.
 - Seluruh interaksi viewer memakai Pointer Events, sehingga tetikus, pena, dan sentuh berjalan
   lewat jalur yang sama, lengkap dengan cubit dua jari.
@@ -667,6 +671,7 @@ bash tools/render-reel.sh        # masuk, orbit, panel, ekosistem, laptop, ponse
 node serve.js 8099 &
 node --experimental-websocket tools/foto-cdp.js tools/foto-tex.json
 
+python tools/layar-mockup.py           # tekstur layar laptop & Android untuk Blender
 python tools/bangun-showreel.py        # → build/MEDIVOX_Showreel.mp4   (perangkat keras + lunak)
 python tools/bangun-showreel.py --app  # → build/MEDIVOX_App_Mockup.mp4 (mockup aplikasi saja)
 python tools/bangun-deck.py            # → build/MEDIVOX_Deck.pptx
@@ -707,19 +712,22 @@ opak tidak membutuhkan kanal alfa, jadi JPEG kualitas 94 tidak mengurangi apa pu
 
 ### Showreel
 
-Satu film putih-bersih yang menyatukan **perangkat keras dan perangkat lunak**:
+Film berbahasa Inggris (±82 detik, 1920×1080, 30 fps) yang menyatukan **perangkat keras dan
+perangkat lunak**, dengan alur cerita latar belakang → produk → fitur. Tiap bab dibuka kartu
+judul navy:
 
-1. pembuka — lambang Medivox dan ornamen 3D Blender yang melayang di atas aura
-2. perangkat — MEDIVOX-1 keramik putih di studio siklorama (masuk, orbit, panel)
-3. ekosistem — MEDIVOX-1, laptop, dan ponsel dalam satu adegan Blender; layarnya berisi
-   tangkapan UI Medivox yang asli
-4. aplikasi desktop — kamera mendekat ke laptop, lalu jendela peramban melayang yang
-   menggulir situs, dan alur tiga layar studi → viewer 2D → hologram
-5. aplikasi seluler — kamera mendekat ke ponsel, lalu tiga ponsel naik bergantian
-6. penutup — produk putih, nama, tagline, dan `medivox-id.web.app`
+1. **01 Background** — tumpukan irisan CT yang naik satu per satu ("Radiology is read one slice
+   at a time"), lalu kartu angka ("Depth is imagined, not seen")
+2. **02 The product** — MEDIVOX-1 keramik putih di studio siklorama (masuk, orbit, panel)
+3. **03 Features** — ekosistem (MEDIVOX-1 + laptop + ponsel Android dalam satu adegan
+   Blender), laptop mendekat, mockup laptop 2D menggulir situs, alur worklist → viewer →
+   hologram di layar laptop, ponsel Android mendekat, tiga ponsel Android, kartu fitur
+4. penutup — produk, ponsel, nama, tagline, dan `medivox-id.web.app`
 
-Keterangan tiap adegan berupa kartu kaca dengan siku HUD di kiri bawah. 1920×1080, 30 fps.
-`--app` merakit versi mockup aplikasi saja (adegan 4–6).
+Ponsel mockup bergaya **Android** (20:9, kamera punch-hole, bilah status, gesture bar, tombol
+di sisi kanan) baik di Blender maupun di adegan 2D; teksturnya disusun `tools/layar-mockup.py`.
+Nadanya sengaja diredupkan: eksposur studio −1,3, latar siklorama biru-abu, render diberi
+sedikit kontras, dan semua frame diberi vinyet navy tipis. `--app` merakit bab fitur saja.
 
 **Musiknya disintesis**, bukan diambil dari mana pun: akor D mayor-sembilan dari gelombang
 sinus yang bernapas pelan plus denyut halus, disaring dan diberi gema oleh ffmpeg — tanpa

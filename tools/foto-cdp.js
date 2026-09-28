@@ -38,6 +38,7 @@ function ambilJSON(url) {
     await jeda(j.tunggu || 4000);
     if (j.js) await kirim('Runtime.evaluate', { expression: j.js, awaitPromise: true });
     if (j.js) await jeda(j.jedaJs || 1200);
+    if (j.js) { const t = await kirim('Runtime.evaluate', { expression: 'document.title' }); console.log('JS', t.result.result.value); }
     const opsi = { format: j.out.endsWith('.jpg') ? 'jpeg' : 'png', quality: 92 };
     if (j.penuh) {
       const m = await kirim('Page.getLayoutMetrics');

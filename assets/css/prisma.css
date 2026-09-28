@@ -192,3 +192,8 @@ body.tanpa-panel .prisma-panel{display:none}
   .panggung-info{font-size:10px;left:10px;bottom:8px}
   .prow label{width:76px;font-size:12.5px}
 }
+
+/* ponsel: bilah tab bawah (app.css) butuh header tanpa backdrop-filter */
+@media (max-width:720px){
+  .prisma-bar{backdrop-filter:none;-webkit-backdrop-filter:none;background:rgba(255,255,255,.96)}
+}
