@@ -1,57 +1,76 @@
 <!DOCTYPE html>
-<html lang="id">
+<html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>Prisma Hologram — Medivox</title>
-<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><defs><linearGradient id='g' x1='0' y1='0' x2='1' y2='1'><stop offset='0' stop-color='%232f6fd0'/><stop offset='1' stop-color='%235ec9f2'/></linearGradient></defs><rect width='32' height='32' rx='9' fill='url(%23g)'/><path d='M8 23V9l8 8 8-8v14' fill='none' stroke='%23ffffff' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'/></svg>">
+<title>Hologram · MEDIVOX</title>
+<link rel="icon" href="assets/ui/logo-mark.svg" type="image/svg+xml">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Sora:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap">
 <link rel="stylesheet" href="assets/css/base.css">
 <link rel="stylesheet" href="assets/css/app.css">
 <link rel="stylesheet" href="assets/css/prisma.css">
 </head>
-<body class="app">
-<a class="skip-link" href="#panggung">Lewati ke panggung hologram</a>
+<body class="app padat">
+<a class="skip-link" href="#panggung">Skip to the hologram stage</a>
 
-<div class="prisma-shell">
+<aside class="sidebar" aria-label="Main navigation">
+  <a href="index.html" class="brand"><img class="brand-mark" src="assets/ui/logo-mark.svg" alt=""><span class="brand-word"><b>MEDI</b><i>VOX</i></span></a>
+  <nav class="side-nav">
+    <a href="home.html"><svg class="li"><use href="assets/ui/ikon-garis.svg#i-home"/></svg><span>Home</span></a>
+    <a href="prisma.html" class="on" aria-current="page"><svg class="li"><use href="assets/ui/ikon-garis.svg#i-cube"/></svg><span>Hologram</span></a>
+    <a href="viewer.html"><svg class="li"><use href="assets/ui/ikon-garis.svg#i-grid"/></svg><span>2D View</span></a>
+    <a href="worklist.html"><svg class="li"><use href="assets/ui/ikon-garis.svg#i-folder"/></svg><span>Studies</span></a>
+  </nav>
+  <div class="side-device neu-in">
+    <div class="dev-row"><span class="dot-live"></span><b>Stage ready</b></div>
+    <p>Everything renders in this browser</p>
+    <ul class="dev-list" id="devList"></ul>
+  </div>
+  <button class="side-logout" type="button" data-keluar><svg class="li"><use href="assets/ui/ikon-garis.svg#i-logout"/></svg><span>Sign out</span></button>
+</aside>
 
-  <header class="prisma-bar">
-    <a class="brand" href="index.html"><span class="mark">M</span></a>
-    <div class="app-tabs">
-      <a href="prisma.html" class="active" data-short="Hologram"><img class="ikon ikon-tab" src="assets/ui/ikon/hologram.webp" alt="" aria-hidden="true" decoding="async">Hologram</a>
-      <a href="viewer.html" data-short="Viewer"><img class="ikon ikon-tab" src="assets/ui/ikon/viewer.webp" alt="" aria-hidden="true" decoding="async">Viewer 2D</a>
-      <a href="worklist.html" data-short="Studi"><img class="ikon ikon-tab" src="assets/ui/ikon/studi.webp" alt="" aria-hidden="true" decoding="async">Studi</a>
+<div class="app-shell prisma-shell">
+  <header class="app-bar prisma-bar">
+    <img class="brand-m" src="assets/ui/logo-mark.svg" alt="MEDIVOX">
+    <div class="page-title tit">
+      <small id="hSub">Preparing…</small>
+      <h1 id="hJudul">Hologram</h1>
     </div>
-    <div class="tit">
-      <b id="hJudul">—</b>
-      <span id="hSub">Menyiapkan…</span>
-    </div>
-    <span class="spacer"></span>
-    <button class="btn btn-sm" id="btnPutar" aria-pressed="true">Jeda</button>
-    <button class="btn btn-sm" id="btnPanel" aria-pressed="false" title="Sembunyikan panel (P)">Panel</button>
-    <button class="btn btn-sm" id="btnPenuh" title="Layar penuh (F)">⤢</button>
+    <button class="btn btn-sm" id="btnPutar" aria-pressed="true">Pause</button>
+    <button class="btn btn-sm hide-narrow" id="btnPanel" aria-pressed="false" title="Hide panel (P)">Panel</button>
+    <button class="btn btn-sm" id="btnPenuh" title="Full screen (F)" aria-label="Full screen"><svg class="li"><use href="assets/ui/ikon-garis.svg#i-expand"/></svg></button>
     <div class="user-chip" id="userChip"></div>
   </header>
 
   <div class="prisma-body">
-
-    <!-- ====== PANGGUNG ====== -->
+    <!-- ====== STAGE ====== -->
     <section class="panggung" id="panggung">
-      <canvas id="prismaCanvas" width="600" height="600"
-              aria-label="Empat pandangan volume tersusun untuk prisma hologram"></canvas>
-      <div class="panggung-info">
-        seret untuk memutar · <span id="renderInfo">—</span>
+      <canvas id="prismaCanvas" width="600" height="600" aria-label="Four volume views arranged for a hologram prism"></canvas>
+
+      <div class="stage-ui top">
+        <span class="glass-tag"><span class="dot-live"></span><span id="renderInfo">—</span></span>
+        <span class="glass-tag" id="modeTag">MIP</span>
+      </div>
+      <div class="voice-toast" id="voiceToast" aria-hidden="true"><svg class="li"><use href="assets/ui/ikon-garis.svg#i-mic"/></svg><span></span></div>
+      <div class="panggung-info">drag to rotate &middot; place the prism apex on the centre mark</div>
+
+      <div class="stage-dock" role="toolbar" aria-label="Hologram controls">
+        <button class="dock-btn" data-dock="kiri" title="Rotate left (←)" aria-label="Rotate left"><svg class="li"><use href="assets/ui/ikon-garis.svg#i-back"/></svg></button>
+        <button class="dock-btn" data-dock="kecil" title="Smaller" aria-label="Smaller"><b>&minus;</b></button>
+        <button class="dock-btn dock-main" data-dock="putar" id="dockPutar" title="Play / pause (Space)" aria-label="Play or pause"><svg class="li"><use href="assets/ui/ikon-garis.svg#i-pause"/></svg></button>
+        <button class="dock-btn" data-dock="besar" title="Larger" aria-label="Larger"><b>+</b></button>
+        <button class="dock-btn" data-dock="kanan" title="Rotate right (→)" aria-label="Rotate right"><svg class="li"><use href="assets/ui/ikon-garis.svg#i-arrow"/></svg></button>
       </div>
 
       <div class="pstatus hide" id="status" role="status" aria-live="polite">
         <div class="kotak">
-          <p id="statusTeks">Menyiapkan…</p>
+          <p id="statusTeks">Preparing…</p>
           <small id="statusSub"></small>
           <div class="pbar"><i id="bar"></i></div>
           <p class="hide" id="statusAksi" style="margin-top:16px">
-            <a class="btn btn-sm" href="worklist.html">Kembali ke worklist</a>
+            <a class="btn btn-sm" href="worklist.html">Back to studies</a>
           </p>
         </div>
       </div>
@@ -60,226 +79,160 @@
     <!-- ====== PANEL ====== -->
     <aside class="prisma-panel">
 
-      <h6>Kendali tanpa sentuh</h6>
-      <div class="prow">
-        <label for="swGestur">Gestur tangan</label>
-        <span class="switch"><input type="checkbox" id="swGestur"><span class="tr"></span></span>
-      </div>
-      <div class="prow">
-        <label for="swSuara">Perintah suara</label>
-        <span class="switch"><input type="checkbox" id="swSuara"><span class="tr"></span></span>
-      </div>
-      <div class="kendali-kotak hide" id="gesturKotak">
-        <canvas id="gesturPratinjau" width="160" height="120"></canvas>
-        <div class="prow">
-          <label for="swGesturSkala">Kendalikan skala</label>
-          <span class="switch"><input type="checkbox" id="swGesturSkala" checked><span class="tr"></span></span>
+      <section class="card">
+        <div class="card-head"><h3>Voice</h3>
+          <span class="switch" title="Voice commands"><input type="checkbox" id="swSuara" aria-label="Voice commands"><span class="tr"></span></span>
+        </div>
+        <div class="voice-box">
+          <button class="mic-btn" id="micBtn" type="button" aria-label="Start or stop listening"><svg class="li"><use href="assets/ui/ikon-garis.svg#i-mic"/></svg></button>
+          <div class="wave" id="wave" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
         </div>
         <div class="prow">
-          <label for="rHalus">Kehalusan</label>
-          <input type="range" id="rHalus" min="0.05" max="0.9" step="0.05" value="0.25">
-          <span class="v" id="rHalusVal">0.25</span>
+          <label for="pilihBahasa">Language</label>
+          <select class="field" id="pilihBahasa">
+            <option value="en-US">English (US)</option>
+            <option value="en-GB">English (UK)</option>
+            <option value="id-ID">Bahasa Indonesia</option>
+          </select>
         </div>
-        <div class="prow">
-          <label for="swGerakSaja">Mode gerak</label>
-          <span class="switch"><input type="checkbox" id="swGerakSaja"><span class="tr"></span></span>
+        <div class="cmd-chips" id="cmdChips">
+          <button class="cmd" type="button">rotate</button><button class="cmd" type="button">stop</button>
+          <button class="cmd" type="button">rotate left</button><button class="cmd" type="button">rotate right</button>
+          <button class="cmd" type="button">zoom in</button><button class="cmd" type="button">zoom out</button>
+          <button class="cmd" type="button">show bone</button><button class="cmd" type="button">volume</button>
+          <button class="cmd" type="button">faster</button><button class="cmd" type="button">reset</button>
         </div>
-      </div>
-      <p class="pnote" id="kendaliStatus">Keduanya mati.</p>
-      <p class="pnote" id="kendaliDengar" aria-live="polite"></p>
-      <p class="pnote">
-        Sapukan tangan mendatar untuk memutar; dekatkan atau jauhkan tangan dari kamera untuk
-        mengubah ukuran. <b>Citra kamera tidak pernah keluar dari perangkat</b> — diproses di
-        peramban lalu dibuang.
-      </p>
-      <p class="pnote" id="suaraPeringatan" style="display:none">
-        <b>Perhatian:</b> pengenalan suara di Chrome mengirim audio ke server Google. Ini
-        satu-satunya bagian sistem yang mengirim data keluar dari perangkat Anda. Matikan bila
-        tidak diinginkan. Coba ucapkan: <i>putar</i>, <i>berhenti</i>, <i>perbesar</i>,
-        <i>tulang</i>, <i>atur ulang</i>.
-      </p>
-
-      <h6>Studi</h6>
-      <div class="prow">
-        <label for="pilihStudi">Studi</label>
-        <select class="field" id="pilihStudi" style="flex:1;min-width:0"></select>
-      </div>
-      <div class="prow">
-        <label for="pilihSeri">Seri</label>
-        <select class="field" id="pilihSeri" style="flex:1;min-width:0"></select>
-      </div>
-      <button class="btn btn-sm" id="btnBukaFile" style="width:100%">Buka berkas DICOM…</button>
-      <input type="file" id="fileInput" multiple hidden>
-      <p class="pnote" id="studiInfo">—</p>
-
-      <h6>Cara pakai</h6>
-      <p class="pnote">
-        Letakkan prisma/piramida akrilik dengan <b>puncaknya di titik tengah</b> layar, lalu
-        matikan lampu ruangan. Tiap bidang prisma memantulkan satu pandangan, dan keempatnya
-        bertemu sebagai satu citra yang tampak mengambang di dalam prisma.
-      </p>
-      <p class="pnote">
-        Layar mendatar (tablet atau monitor direbahkan) memberi hasil paling baik. Sesuaikan
-        <b>Ukuran sisi</b> dan <b>Jarak ke pusat</b> sampai keempat pantulan bertumpuk rapi
-        pada prisma yang Anda punya, dan nyalakan <b>Cermin</b> bila citranya terbalik.
-      </p>
-
-      <h6>Mode proyeksi</h6>
-      <div class="pgrid tiga" id="modeGrid" role="group" aria-label="Mode proyeksi">
-        <button class="on" data-mode="maks" aria-pressed="true"><b>MIP</b><span>intensitas maks</span></button>
-        <button data-mode="komposit" aria-pressed="false"><b>Volume</b><span>opasitas</span></button>
-        <button data-mode="rerata" aria-pressed="false"><b>Rerata</b><span>mirip radiograf</span></button>
-        <button data-mode="permukaan" aria-pressed="false"><b>Permukaan</b><span>isosurface</span></button>
-        <button data-mode="atlas" aria-pressed="false"><b>Atlas</b><span>model organ</span></button>
-      </div>
-      <div id="barisPermukaan" class="hide">
-        <div class="prow">
-          <label for="rAmbang">Ambang</label>
-          <input type="range" id="rAmbang" min="-500" max="1500" step="10" value="300">
-          <span class="v" id="rAmbangVal">300</span>
-        </div>
-        <p class="pnote" id="meshInfo">Permukaan belum dibangun.</p>
-      </div>
-
-      <!-- ====== ATLAS ANATOMI ====== -->
-      <div id="barisAtlas" class="hide">
-        <button class="btn btn-sm" id="btnBukaModel" style="width:100%">Buka model OBJ/STL…</button>
-        <input type="file" id="modelInput" multiple hidden
-               accept=".obj,.stl,model/obj,model/stl,application/sla">
-        <p class="pnote" id="atlasInfo">Belum ada model. Muat berkas OBJ atau STL.</p>
-
-        <div id="atlasKendali" class="hide">
-          <div class="prow">
-            <label for="rLedak">Pisahkan</label>
-            <input type="range" id="rLedak" min="0" max="1.5" step="0.02" value="0">
-            <span class="v" id="rLedakVal">0%</span>
-          </div>
-          <div class="pgrid" style="margin-bottom:8px">
-            <button class="btn btn-sm" id="btnAtlasSemua">Tampilkan semua</button>
-            <button class="btn btn-sm" id="btnAtlasUlang">Atur ulang</button>
-          </div>
-          <h6>Organ</h6>
-          <ul class="organ-list" id="daftarOrgan"></ul>
-          <p class="pnote">
-            Klik nama organ untuk menyorotinya; yang lain menjadi tembus cahaya. Klik pada
-            panggung juga memilih organ yang tertunjuk. Dengan suara: sebut nama organ,
-            <b>pisahkan</b>, <b>satukan</b>, atau <b>tampilkan semua</b>.
-          </p>
-        </div>
-
-        <p class="pnote">
-          Model anatomi bukan data pasien dan tidak menggantikannya. Sertakan atribusi
-          sesuai lisensi berkas yang Anda muat.
+        <p class="pnote" id="kendaliDengar" aria-live="polite"></p>
+        <ul class="log" id="cmdLog"><li class="muted">Tap a command or say it out loud.</li></ul>
+        <p class="pnote peringatan" id="suaraPeringatan" style="display:none">
+          <b>Note:</b> speech recognition in Chrome sends audio to Google&rsquo;s servers. It is the only part of the system
+          that sends data off this device. Turn voice off if that is not acceptable.
         </p>
-      </div>
+      </section>
 
-      <h6>Peta warna</h6>
-      <div class="pgrid tiga" id="cmapGrid" role="group" aria-label="Peta warna">
-        <button class="on" data-cmap="" aria-pressed="true"><b>Abu</b></button>
-        <button data-cmap="hot" aria-pressed="false"><b>Hot</b></button>
-        <button data-cmap="bone" aria-pressed="false"><b>Bone</b></button>
-        <button data-cmap="jet" aria-pressed="false"><b>Jet</b></button>
-        <button data-cmap="pet" aria-pressed="false"><b>PET</b></button>
-      </div>
-
-      <h6>Nilai piksel</h6>
-      <div class="prow">
-        <label for="rWW">Lebar (WW)</label>
-        <input type="range" id="rWW" min="1" max="4000" value="1500">
-        <span class="v" id="rWWVal">1500</span>
-      </div>
-      <div class="prow">
-        <label for="rWL">Pusat (WL)</label>
-        <input type="range" id="rWL" min="-1200" max="3000" value="300">
-        <span class="v" id="rWLVal">300</span>
-      </div>
-      <div class="prow">
-        <label for="swInvert">Inversi</label>
-        <span class="switch"><input type="checkbox" id="swInvert"><span class="tr"></span></span>
-      </div>
-      <div id="barisKomposit" class="hide">
-        <div class="prow">
-          <label for="rKepadatan">Kepadatan</label>
-          <input type="range" id="rKepadatan" min="0.1" max="4" step="0.05" value="1">
-          <span class="v" id="rKepadatanVal">1.00</span>
+      <section class="card">
+        <div class="card-head"><h3>Gesture</h3>
+          <span class="switch" title="Hand gestures"><input type="checkbox" id="swGestur" aria-label="Hand gestures"><span class="tr"></span></span>
         </div>
-        <div class="prow">
-          <label for="rGamma">Gamma</label>
-          <input type="range" id="rGamma" min="0.4" max="4" step="0.05" value="1.6">
-          <span class="v" id="rGammaVal">1.60</span>
+        <div class="gesture-box">
+          <div class="kendali-kotak" id="gesturKotakWrap">
+            <canvas id="gesturPratinjau" width="160" height="120"></canvas>
+          </div>
+          <ul class="gest-list">
+            <li><img class="ikon" src="assets/ui/ikon/tangan.webp" alt=""><span><b>Swipe</b><small>Rotate</small></span></li>
+            <li><img class="ikon" src="assets/ui/ikon/zoom.webp" alt=""><span><b>Push / pull</b><small>Scale</small></span></li>
+          </ul>
         </div>
-      </div>
+        <div class="hide" id="gesturKotak">
+          <div class="prow"><label for="swGesturSkala">Hand controls scale</label><span class="switch"><input type="checkbox" id="swGesturSkala" checked><span class="tr"></span></span></div>
+          <div class="prow"><label for="rHalus">Smoothing</label><input type="range" id="rHalus" min="0.05" max="0.9" step="0.05" value="0.25"><span class="v" id="rHalusVal">0.25</span></div>
+          <div class="prow"><label for="swGerakSaja">Motion-only mode</label><span class="switch"><input type="checkbox" id="swGerakSaja"><span class="tr"></span></span></div>
+        </div>
+        <p class="pnote" id="kendaliStatus">Voice and gesture are both off.</p>
+        <p class="pnote">Camera frames are processed in the browser and discarded. They never leave this device.</p>
+      </section>
 
-      <h6>Geometri render</h6>
-      <div class="prow">
-        <label for="rElev">Elevasi</label>
-        <input type="range" id="rElev" min="-60" max="60" step="1" value="0">
-        <span class="v" id="rElevVal">0°</span>
-      </div>
-      <div class="prow">
-        <label for="rSudut">Jumlah sudut</label>
-        <input type="range" id="rSudut" min="8" max="72" step="4" value="24">
-        <span class="v" id="rSudutVal">24 sudut</span>
-      </div>
-      <div class="prow">
-        <label for="rUkuran">Resolusi</label>
-        <input type="range" id="rUkuran" min="128" max="512" step="32" value="256">
-        <span class="v" id="rUkuranVal">256 px</span>
-      </div>
-      <div class="prow">
-        <label for="rMutu">Rapat sinar</label>
-        <input type="range" id="rMutu" min="0.25" max="2" step="0.05" value="1">
-        <span class="v" id="rMutuVal">1.00×</span>
-      </div>
-      <button class="btn btn-sm btn-primary btn-render" id="btnRender">Render ulang</button>
-      <p class="vinfo" id="volInfo">—</p>
-      <p class="pnote">
-        Sudut di-render lebih dulu lalu diputar-ulang, jadi putarannya mulus. Menaikkan
-        jumlah sudut, resolusi, atau rapat sinar memperhalus hasil tetapi memperpanjang
-        waktu render.
-      </p>
+      <section class="card">
+        <div class="card-head"><h3>Study</h3></div>
+        <div class="prow"><label for="pilihStudi">Study</label><select class="field" id="pilihStudi"></select></div>
+        <div class="prow"><label for="pilihSeri">Series</label><select class="field" id="pilihSeri"></select></div>
+        <button class="btn btn-sm btn-block" id="btnBukaFile">Open DICOM files…</button>
+        <input type="file" id="fileInput" multiple hidden>
+        <p class="pnote" id="studiInfo">—</p>
+      </section>
 
-      <h6>Tata letak prisma</h6>
-      <div class="prow">
-        <label for="rSkala">Ukuran sisi</label>
-        <input type="range" id="rSkala" min="0.12" max="0.5" step="0.005" value="0.30">
-        <span class="v" id="rSkalaVal">30%</span>
-      </div>
-      <div class="prow">
-        <label for="rJarak">Jarak ke pusat</label>
-        <input type="range" id="rJarak" min="0" max="0.5" step="0.005" value="0.30">
-        <span class="v" id="rJarakVal">30%</span>
-      </div>
-      <div class="prow">
-        <label for="rKecepatan">Kecepatan</label>
-        <input type="range" id="rKecepatan" min="0" max="30" step="0.5" value="6">
-        <span class="v" id="rKecepatanVal">6.0 rpm</span>
-      </div>
-      <div class="prow">
-        <label for="swCermin">Cermin</label>
-        <span class="switch"><input type="checkbox" id="swCermin"><span class="tr"></span></span>
-      </div>
-      <div class="prow">
-        <label for="swArah">Balik arah</label>
-        <span class="switch"><input type="checkbox" id="swArah"><span class="tr"></span></span>
-      </div>
-      <div class="prow">
-        <label for="swPusat">Penanda pusat</label>
-        <span class="switch"><input type="checkbox" id="swPusat" checked><span class="tr"></span></span>
-      </div>
+      <section class="card">
+        <div class="card-head"><h3>Rendering</h3></div>
+        <div class="pgrid tiga" id="modeGrid" role="group" aria-label="Projection mode">
+          <button class="on" data-mode="maks" aria-pressed="true"><b>MIP</b><span>max intensity</span></button>
+          <button data-mode="komposit" aria-pressed="false"><b>Volume</b><span>opacity</span></button>
+          <button data-mode="rerata" aria-pressed="false"><b>Average</b><span>radiograph-like</span></button>
+          <button data-mode="permukaan" aria-pressed="false"><b>Surface</b><span>isosurface</span></button>
+          <button data-mode="atlas" aria-pressed="false"><b>Atlas</b><span>organ models</span></button>
+        </div>
+        <div id="barisPermukaan" class="hide">
+          <div class="prow"><label for="rAmbang">Threshold</label><input type="range" id="rAmbang" min="-500" max="1500" step="10" value="300"><span class="v" id="rAmbangVal">300</span></div>
+          <p class="pnote" id="meshInfo">Surface not built yet.</p>
+        </div>
+        <div id="barisAtlas" class="hide">
+          <button class="btn btn-sm btn-block" id="btnBukaModel">Open OBJ/STL model…</button>
+          <input type="file" id="modelInput" multiple hidden accept=".obj,.stl,model/obj,model/stl,application/sla">
+          <p class="pnote" id="atlasInfo">No model yet. Load an OBJ or STL file.</p>
+          <div id="atlasKendali" class="hide">
+            <div class="prow"><label for="rLedak">Explode</label><input type="range" id="rLedak" min="0" max="1.5" step="0.02" value="0"><span class="v" id="rLedakVal">0%</span></div>
+            <div class="pgrid" style="margin-bottom:8px">
+              <button class="btn btn-sm" id="btnAtlasSemua">Show all</button>
+              <button class="btn btn-sm" id="btnAtlasUlang">Reset</button>
+            </div>
+            <h6>Organs</h6>
+            <ul class="organ-list" id="daftarOrgan"></ul>
+            <p class="pnote">Click an organ to highlight it; the rest turn translucent. By voice: say an organ name,
+              <b>separate</b>, <b>combine</b> or <b>show all</b>.</p>
+          </div>
+          <p class="pnote">Anatomy models are not patient data. Credit the model according to its licence.</p>
+        </div>
+        <h6>Colour map</h6>
+        <div class="pgrid tiga" id="cmapGrid" role="group" aria-label="Colour map">
+          <button class="on" data-cmap="" aria-pressed="true"><b>Grey</b></button>
+          <button data-cmap="hot" aria-pressed="false"><b>Hot</b></button>
+          <button data-cmap="bone" aria-pressed="false"><b>Bone</b></button>
+          <button data-cmap="jet" aria-pressed="false"><b>Jet</b></button>
+          <button data-cmap="pet" aria-pressed="false"><b>PET</b></button>
+        </div>
+        <h6>Window</h6>
+        <div class="prow"><label for="rWW">Width (WW)</label><input type="range" id="rWW" min="1" max="4000" value="1500"><span class="v" id="rWWVal">1500</span></div>
+        <div class="prow"><label for="rWL">Level (WL)</label><input type="range" id="rWL" min="-1200" max="3000" value="300"><span class="v" id="rWLVal">300</span></div>
+        <div class="prow"><label for="swInvert">Invert</label><span class="switch"><input type="checkbox" id="swInvert"><span class="tr"></span></span></div>
+        <div id="barisKomposit" class="hide">
+          <div class="prow"><label for="rKepadatan">Density</label><input type="range" id="rKepadatan" min="0.1" max="4" step="0.05" value="1"><span class="v" id="rKepadatanVal">1.00</span></div>
+          <div class="prow"><label for="rGamma">Gamma</label><input type="range" id="rGamma" min="0.4" max="4" step="0.05" value="1.6"><span class="v" id="rGammaVal">1.60</span></div>
+        </div>
+      </section>
 
-      <h6>Pintasan</h6>
-      <p class="pnote">
-        <b>Spasi</b> putar/jeda · <b>←</b> <b>→</b> geser satu sudut · <b>F</b> layar penuh ·
-        <b>P</b> sembunyikan panel · seret di panggung untuk memutar manual.
-      </p>
-      <p class="pnote">
-        Prototipe antarmuka, <b>bukan perangkat medis</b>. Volume dihitung dari phantom
-        sintetis atau berkas yang Anda buka sendiri, seluruhnya di peramban ini.
-      </p>
+      <section class="card">
+        <div class="card-head"><h3>Render geometry</h3></div>
+        <div class="prow"><label for="rElev">Elevation</label><input type="range" id="rElev" min="-60" max="60" step="1" value="0"><span class="v" id="rElevVal">0°</span></div>
+        <div class="prow"><label for="rSudut">Angles</label><input type="range" id="rSudut" min="8" max="72" step="4" value="24"><span class="v" id="rSudutVal">24 angles</span></div>
+        <div class="prow"><label for="rUkuran">Resolution</label><input type="range" id="rUkuran" min="128" max="512" step="32" value="256"><span class="v" id="rUkuranVal">256 px</span></div>
+        <div class="prow"><label for="rMutu">Ray density</label><input type="range" id="rMutu" min="0.25" max="2" step="0.05" value="1"><span class="v" id="rMutuVal">1.00×</span></div>
+        <button class="btn btn-sm btn-primary btn-block btn-render" id="btnRender">Re-render</button>
+        <p class="vinfo" id="volInfo">—</p>
+        <p class="pnote">Angles are rendered once and then replayed, so rotation stays smooth. More angles, resolution or ray
+          density give finer results but take longer to render.</p>
+      </section>
+
+      <section class="card">
+        <div class="card-head"><h3>Prism layout</h3></div>
+        <div class="prow"><label for="rSkala">Face size</label><input type="range" id="rSkala" min="0.12" max="0.5" step="0.005" value="0.30"><span class="v" id="rSkalaVal">30%</span></div>
+        <div class="prow"><label for="rJarak">Distance to centre</label><input type="range" id="rJarak" min="0" max="0.5" step="0.005" value="0.30"><span class="v" id="rJarakVal">30%</span></div>
+        <div class="prow"><label for="rKecepatan">Speed</label><input type="range" id="rKecepatan" min="0" max="30" step="0.5" value="6"><span class="v" id="rKecepatanVal">6.0 rpm</span></div>
+        <div class="prow"><label for="swCermin">Mirror</label><span class="switch"><input type="checkbox" id="swCermin"><span class="tr"></span></span></div>
+        <div class="prow"><label for="swArah">Reverse direction</label><span class="switch"><input type="checkbox" id="swArah"><span class="tr"></span></span></div>
+        <div class="prow"><label for="swPusat">Centre mark</label><span class="switch"><input type="checkbox" id="swPusat" checked><span class="tr"></span></span></div>
+      </section>
+
+      <section class="card">
+        <div class="card-head"><h3>How to use</h3></div>
+        <p class="pnote">Place an acrylic prism or pyramid with its <b>apex on the centre</b> of the screen and dim the room. Each
+          face reflects one view, and the four meet as a single image that appears to float inside the prism.</p>
+        <p class="pnote">A screen laid flat (a tablet, or a monitor tilted back) works best. Adjust <b>Face size</b> and
+          <b>Distance to centre</b> until the four reflections overlap, and turn on <b>Mirror</b> if the image reads backwards.</p>
+        <p class="pnote"><b>Space</b> play/pause &middot; <b>←</b> <b>→</b> step one angle &middot; <b>F</b> full screen &middot;
+          <b>P</b> hide panel &middot; drag on the stage to rotate by hand.</p>
+        <p class="pnote">Interface prototype, <b>not a medical device</b>. The volume comes from a synthetic phantom or from
+          files you open yourself, all processed in this browser.</p>
+      </section>
     </aside>
   </div>
 </div>
+
+<nav class="bottom-nav" aria-label="Main">
+  <a href="home.html"><svg class="li"><use href="assets/ui/ikon-garis.svg#i-home"/></svg><span>Home</span></a>
+  <a href="worklist.html"><svg class="li"><use href="assets/ui/ikon-garis.svg#i-folder"/></svg><span>Studies</span></a>
+  <a href="prisma.html" class="fab on" aria-current="page" aria-label="Hologram"><svg class="li"><use href="assets/ui/ikon-garis.svg#i-cube"/></svg></a>
+  <a href="viewer.html"><svg class="li"><use href="assets/ui/ikon-garis.svg#i-grid"/></svg><span>2D</span></a>
+  <a href="#" data-akun><svg class="li"><use href="assets/ui/ikon-garis.svg#i-user"/></svg><span>Account</span></a>
+</nav>
 
 <div id="toasts"></div>
 

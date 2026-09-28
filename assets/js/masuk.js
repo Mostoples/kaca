@@ -26,23 +26,23 @@
   function sibuk(on, teks) {
     elKirim.disabled = on;
     document.getElementById('btnGoogle').disabled = on;
-    elKirim.textContent = on ? (teks || 'Memproses…') : (mode === 'masuk' ? 'Masuk' : 'Buat akun');
+    elKirim.textContent = on ? (teks || 'Working…') : (mode === 'masuk' ? 'Sign in' : 'Create account');
   }
 
   /* ---------- ganti mode masuk / daftar ---------- */
   function setMode(m) {
     mode = m;
     var daftar = m === 'daftar';
-    document.getElementById('judulMasuk').textContent = daftar ? 'Buat akun baru' : 'Masuk ke ruang baca';
+    document.getElementById('judulMasuk').textContent = daftar ? 'Create an account' : 'Sign in';
     document.getElementById('subJudul').textContent = daftar
-      ? 'Akun dipakai untuk menyimpan status baca dan laporan Anda.'
-      : 'Gunakan akun Anda untuk menyimpan status baca dan laporan lintas perangkat.';
+      ? 'Your account keeps your reading status and reports.'
+      : 'Use your account to keep reading status and reports in sync across devices.';
     document.getElementById('rowNama').classList.toggle('hide', !daftar);
-    document.getElementById('swapTeks').textContent = daftar ? 'Sudah punya akun?' : 'Belum punya akun?';
-    document.getElementById('btnSwap').textContent = daftar ? 'Masuk di sini' : 'Daftar sekarang';
+    document.getElementById('swapTeks').textContent = daftar ? 'Already have an account?' : 'New to MEDIVOX?';
+    document.getElementById('btnSwap').textContent = daftar ? 'Sign in here' : 'Create an account';
     document.getElementById('btnLupa').classList.toggle('hide', daftar);
     document.getElementById('inSandi').setAttribute('autocomplete', daftar ? 'new-password' : 'current-password');
-    elKirim.textContent = daftar ? 'Buat akun' : 'Masuk';
+    elKirim.textContent = daftar ? 'Create account' : 'Sign in';
     bersihkanAlert();
   }
   document.getElementById('btnSwap').addEventListener('click', function () {
@@ -55,7 +55,7 @@
     var f = document.getElementById('inSandi');
     var tampil = f.type === 'password';
     f.type = tampil ? 'text' : 'password';
-    this.setAttribute('aria-label', tampil ? 'Sembunyikan kata sandi' : 'Tampilkan kata sandi');
+    this.setAttribute('aria-label', tampil ? 'Hide password' : 'Show password');
   });
 
   /* ---------- kirim formulir ---------- */
@@ -66,9 +66,9 @@
     var sandi = document.getElementById('inSandi').value;
     var nama = document.getElementById('inNama').value.trim();
 
-    if (!email) return alertPesan('Email belum diisi.');
-    if (sandi.length < 6) return alertPesan('Kata sandi minimal 6 karakter.');
-    if (!window.KFB) return alertPesan('Firebase belum termuat. Periksa koneksi internet Anda.');
+    if (!email) return alertPesan('Please enter your email.');
+    if (sandi.length < 6) return alertPesan('The password needs at least 6 characters.');
+    if (!window.KFB) return alertPesan('Firebase has not loaded. Check your internet connection.');
 
     sibuk(true);
     var p = mode === 'daftar'
@@ -87,8 +87,8 @@
   /* ---------- Google ---------- */
   document.getElementById('btnGoogle').addEventListener('click', function () {
     bersihkanAlert();
-    if (!window.KFB) return alertPesan('Firebase belum termuat. Periksa koneksi internet Anda.');
-    sibuk(true, 'Membuka Google…');
+    if (!window.KFB) return alertPesan('Firebase has not loaded. Check your internet connection.');
+    sibuk(true, 'Opening Google…');
     window.KFB.masukGoogle().then(function () {
       window.KAUTH.setTamu(false);
       location.href = next;
@@ -101,10 +101,10 @@
   /* ---------- lupa sandi ---------- */
   document.getElementById('btnLupa').addEventListener('click', function () {
     var email = document.getElementById('inEmail').value.trim();
-    if (!email) { alertPesan('Isi alamat email dulu, lalu tekan "Lupa kata sandi?".'); return; }
-    if (!window.KFB) return alertPesan('Firebase belum termuat.');
+    if (!email) { alertPesan('Enter your email first, then press "Forgot password?".'); return; }
+    if (!window.KFB) return alertPesan('Firebase has not loaded.');
     window.KFB.resetSandi(email).then(function () {
-      alertPesan('Tautan penyetelan ulang sudah dikirim ke ' + email + '.', true);
+      alertPesan('A reset link has been sent to ' + email + '.', true);
     }).catch(function (err) { alertPesan(window.KFB.pesanGalat(err)); });
   });
 

@@ -79,7 +79,7 @@
   it('OBJ: poligon 4 titik dipecah jadi 2 segitiga', function () {
     var h = MO.dariOBJ(objKubus(0, 0, 0, 10, 'kubus', true));
     samaDengan(h.bagian[0].mesh.jumlahSegitiga(), 12, 'segitiga hasil kipas');
-    benar(h.catatan.join(' ').indexOf('Poligon dipecah') >= 0, 'catatan poligon tidak muncul');
+    benar(h.catatan.join(' ').indexOf('Polygons were split') >= 0, 'catatan poligon tidak muncul');
   });
 
   it('OBJ: indeks negatif dibaca relatif dari akhir', function () {
@@ -147,7 +147,7 @@
       MO.dariOBJ('# kosong\n');
       gagal('seharusnya melempar');
     } catch (e) {
-      benar(/tidak memuat satu pun titik/.test(e.message), 'pesan galat: ' + e.message);
+      benar(/contains no vertices/.test(e.message), 'pesan galat: ' + e.message);
     }
   });
 
@@ -157,7 +157,7 @@
     var m = MO.dariOBJ(objKubus(0, 0, 0, 10, 'kubus', false)).bagian[0].mesh;
     var buf = m.stl('uji');
     var h = MO.dariSTL(buf, { nama: 'kubus' });
-    samaDengan(h.format, 'STL biner', 'format');
+    samaDengan(h.format, 'Binary STL', 'format');
     var m2 = h.bagian[0].mesh;
     samaDengan(m2.jumlahSegitiga(), 12, 'segitiga setelah dibaca ulang');
     /* 12 segitiga × 3 = 36 titik tertulis, harus dilas kembali jadi 8 */
@@ -187,7 +187,7 @@
       'endsolid jantung'
     ].join('\n');
     var h = MO.dariSTL(teks, {});
-    samaDengan(h.format, 'STL teks', 'format');
+    samaDengan(h.format, 'ASCII STL', 'format');
     samaDengan(h.bagian[0].mesh.jumlahSegitiga(), 1, 'jumlah segitiga');
     samaDengan(h.bagian[0].nama, 'jantung', 'nama dari solid');
   });
@@ -200,7 +200,7 @@
     var kata = 'solid ';
     for (var i = 0; i < kata.length; i++) u8[i] = kata.charCodeAt(i);
     var h = MO.dariSTL(u8, {});
-    samaDengan(h.format, 'STL biner', 'format harus tetap biner');
+    samaDengan(h.format, 'Binary STL', 'format harus tetap biner');
     samaDengan(h.bagian[0].mesh.jumlahSegitiga(), 12, 'jumlah segitiga');
   });
 
@@ -208,7 +208,7 @@
     var objTeks = objKubus(0, 0, 0, 10, 'k', false);
     samaDengan(MO.muat('organ.obj', objTeks).format, 'OBJ', 'ekstensi .obj');
     var m = MO.dariOBJ(objTeks).bagian[0].mesh;
-    samaDengan(MO.muat('organ.stl', m.stl()).format, 'STL biner', 'ekstensi .stl');
+    samaDengan(MO.muat('organ.stl', m.stl()).format, 'Binary STL', 'ekstensi .stl');
   });
 
   it('muat(): glb ditolak dengan alasan yang menyebut WASM', function () {
@@ -217,7 +217,7 @@
       gagal('seharusnya melempar');
     } catch (e) {
       benar(/WASM/.test(e.message), 'pesan galat: ' + e.message);
-      benar(/OBJ atau STL/.test(e.message), 'pesan harus menyarankan konversi');
+      benar(/OBJ or STL/.test(e.message), 'pesan harus menyarankan konversi');
     }
   });
 
@@ -293,7 +293,7 @@
     samaDengan(img.samplesPerPixel, 3, 'samplesPerPixel');
     samaDengan(img.photometric, 'RGB', 'photometric');
     samaDengan(img.pixels.length, 96 * 96 * 3, 'panjang piksel');
-    benar(/Atlas anatomi/.test(img.derived), 'penanda derived: ' + img.derived);
+    benar(/anatomy atlas/i.test(img.derived), 'penanda derived: ' + img.derived);
   });
 
   it('Adegan: bagian +x tampil di paruh kanan layar', function () {

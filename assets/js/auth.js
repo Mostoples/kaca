@@ -34,14 +34,14 @@
     var u = fb && fb.user;
     if (u) {
       return {
-        nama: u.displayName || (u.email ? u.email.split('@')[0] : 'Pengguna'),
+        nama: u.displayName || (u.email ? u.email.split('@')[0] : 'User'),
         email: u.email || '',
-        peran: 'Radiolog',
+        peran: 'Radiologist',
         uid: u.uid,
         tamu: false
       };
     }
-    return { nama: 'Mode Tamu', email: '', peran: 'Tanpa akun', uid: null, tamu: true };
+    return { nama: 'Guest', email: '', peran: 'No account', uid: null, tamu: true };
   }
 
   function inisial(nama) {
@@ -89,18 +89,18 @@
     el.setAttribute('tabindex', '0');
     el.setAttribute('aria-haspopup', 'menu');
     el.setAttribute('aria-expanded', 'false');
-    el.setAttribute('aria-label', 'Menu pengguna: ' + info.nama);
+    el.setAttribute('aria-label', 'User menu: ' + info.nama);
 
     var menu = document.createElement('div');
     menu.className = 'user-menu';
     menu.setAttribute('role', 'menu');
     menu.hidden = true;
     menu.innerHTML =
-      '<div class="um-head">' + esc(info.email || 'Tidak masuk dengan akun') + '</div>' +
+      '<div class="um-head">' + esc(info.email || 'Not signed in') + '</div>' +
       (info.tamu
-        ? '<button role="menuitem" data-act="masuk">Masuk dengan akun</button>'
-        : '<button role="menuitem" data-act="keluar">Keluar</button>') +
-      '<button role="menuitem" data-act="bantuan">Pintasan papan ketik</button>';
+        ? '<button role="menuitem" data-act="masuk">Sign in with an account</button>'
+        : '<button role="menuitem" data-act="keluar">Sign out</button>') +
+      '<button role="menuitem" data-act="bantuan">Keyboard shortcuts</button>';
     el.parentNode.insertBefore(menu, el.nextSibling);
 
     function toggle(on) {
@@ -124,7 +124,7 @@
       if (b.dataset.act === 'masuk') { setTamu(false); location.href = 'masuk.html'; }
       if (b.dataset.act === 'bantuan') {
         if (global.MEDIVOX_BANTUAN) global.MEDIVOX_BANTUAN();
-        else K.toast('Pintasan lengkap ada di README.');
+        else K.toast('The full shortcut list is in the README.');
       }
     });
   }
@@ -139,6 +139,31 @@
     return String(s === undefined || s === null ? '' : s)
       .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
   }
+
+  /* ---------- shared shell: sidebar sign-out, Account tab, device list ---------- */
+  function pasangShell() {
+    document.addEventListener('click', function (e) {
+      var k = e.target.closest('[data-keluar]');
+      if (k) { e.preventDefault(); keluar(); return; }
+      var a = e.target.closest('[data-akun]');
+      if (a) {
+        e.preventDefault();
+        var chip = document.getElementById('userChip');
+        if (chip && chip.childNodes.length) { chip.scrollIntoView({ block: 'nearest' }); chip.click(); }
+        else location.href = 'masuk.html';
+      }
+    });
+    var ul = document.getElementById('devList');
+    if (ul) {
+      var suara = !!(global.SpeechRecognition || global.webkitSpeechRecognition);
+      var kamera = !!(global.navigator.mediaDevices && global.navigator.mediaDevices.getUserMedia);
+      ul.innerHTML = [['Voice', suara], ['Camera', kamera], ['Local cache', !!global.indexedDB]]
+        .map(function (b) { return '<li><i class="' + (b[1] ? 'on' : 'off') + '"></i>' + b[0] +
+          (b[1] ? ' ready' : ' unavailable') + '</li>'; }).join('');
+    }
+  }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', pasangShell);
+  else pasangShell();
 
   global.KAUTH = {
     siap: siap, jaga: jaga, pembaca: pembaca, pasangChip: pasangChip,

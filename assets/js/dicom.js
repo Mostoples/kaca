@@ -334,7 +334,7 @@
       var name = (DICT[key] && DICT[key][1]) || '';
       var val;
       if (key === '7FE00010') {
-        val = el.encapsulated ? '<' + el.fragments.length + ' fragmen terenkapsulasi>' : '<' + el.length + ' byte>';
+        val = el.encapsulated ? '<' + el.fragments.length + ' encapsulated fragments>' : '<' + el.length + ' byte>';
       } else if (el.length > 220) {
         val = '<' + el.length + ' byte>';
       } else if (VR_STR[el.vr] || el.vr === 'UN') {
@@ -437,7 +437,7 @@
      ========================================================== */
   function inflateRaw(bytes) {
     if (typeof DecompressionStream === 'undefined') {
-      return Promise.reject(new Error('Peramban ini tidak menyediakan DecompressionStream.'));
+      return Promise.reject(new Error('This browser does not provide DecompressionStream.'));
     }
     function coba(format) {
       var aliran = new Blob([bytes]).stream().pipeThrough(new DecompressionStream(format));
@@ -472,10 +472,10 @@
   function readPixels(ds, frame) {
     frame = frame || 0;
     if (ds.deflated) {
-      throw new Error('Dataset masih terkompresi deflate — pakai DICOM.parseAsync() untuk membukanya.');
+      throw new Error('The dataset is still deflate-compressed; use DICOM.parseAsync() to open it.');
     }
     var rows = ds.int('00280010'), cols = ds.int('00280011');
-    if (!rows || !cols) throw new Error('Dimensi gambar (Rows/Columns) tidak ditemukan.');
+    if (!rows || !cols) throw new Error('Image dimensions (Rows/Columns) were not found.');
 
     var spp = ds.int('00280002') || 1;
     var bits = ds.int('00280100') || 16;
@@ -483,7 +483,7 @@
     var photo = (ds.string('00280004') || 'MONOCHROME2').trim().toUpperCase();
     var frames = parseInt(ds.string('00280008') || '1', 10) || 1;
     var el = ds.raw('7FE00010');
-    if (!el) throw new Error('Pixel Data (7FE0,0010) tidak ada dalam file ini.');
+    if (!el) throw new Error('Pixel Data (7FE0,0010) is missing from this file.');
 
     var img = {
       rows: rows, cols: cols, frames: frames, frame: frame,

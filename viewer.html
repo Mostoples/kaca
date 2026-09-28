@@ -1,278 +1,217 @@
 <!DOCTYPE html>
-<html lang="id">
+<html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>Viewer — Medivox</title>
-<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><defs><linearGradient id='g' x1='0' y1='0' x2='1' y2='1'><stop offset='0' stop-color='%232f6fd0'/><stop offset='1' stop-color='%235ec9f2'/></linearGradient></defs><rect width='32' height='32' rx='9' fill='url(%23g)'/><path d='M8 23V9l8 8 8-8v14' fill='none' stroke='%23ffffff' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'/></svg>">
+<title>2D View · MEDIVOX</title>
+<link rel="icon" href="assets/ui/logo-mark.svg" type="image/svg+xml">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Sora:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap">
 <link rel="stylesheet" href="assets/css/base.css">
 <link rel="stylesheet" href="assets/css/app.css">
 </head>
-<body class="app">
-<a class="skip-link" href="#konten">Lewati ke konten utama</a>
+<body class="app padat">
+<a class="skip-link" href="#konten">Skip to content</a>
+
+<aside class="sidebar" aria-label="Main navigation">
+  <a href="index.html" class="brand"><img class="brand-mark" src="assets/ui/logo-mark.svg" alt=""><span class="brand-word"><b>MEDI</b><i>VOX</i></span></a>
+  <nav class="side-nav">
+    <a href="home.html"><svg class="li"><use href="assets/ui/ikon-garis.svg#i-home"/></svg><span>Home</span></a>
+    <a href="prisma.html"><svg class="li"><use href="assets/ui/ikon-garis.svg#i-cube"/></svg><span>Hologram</span></a>
+    <a href="viewer.html" class="on" aria-current="page"><svg class="li"><use href="assets/ui/ikon-garis.svg#i-grid"/></svg><span>2D View</span></a>
+    <a href="worklist.html"><svg class="li"><use href="assets/ui/ikon-garis.svg#i-folder"/></svg><span>Studies</span></a>
+  </nav>
+  <div class="side-device neu-in">
+    <div class="dev-row"><span class="dot-live"></span><b>Stage ready</b></div>
+    <p>Everything renders in this browser</p>
+    <ul class="dev-list" id="devList"></ul>
+  </div>
+  <button class="side-logout" type="button" data-keluar><svg class="li"><use href="assets/ui/ikon-garis.svg#i-logout"/></svg><span>Sign out</span></button>
+</aside>
 
 <div class="app-shell">
-
-  <!-- ====== TOP BAR ====== -->
   <header class="app-bar">
-    <a class="brand" href="index.html"><span class="mark">M</span><span class="wordmark">Medivox</span></a>
-    <div class="app-tabs">
-      <a href="prisma.html" data-short="Hologram"><img class="ikon ikon-tab" src="assets/ui/ikon/hologram.webp" alt="" aria-hidden="true" decoding="async">Hologram</a>
-      <a href="viewer.html" class="active" data-short="Viewer"><img class="ikon ikon-tab" src="assets/ui/ikon/viewer.webp" alt="" aria-hidden="true" decoding="async">Viewer 2D</a>
-      <a href="worklist.html" data-short="Studi"><img class="ikon ikon-tab" src="assets/ui/ikon/studi.webp" alt="" aria-hidden="true" decoding="async">Studi</a>
+    <img class="brand-m" src="assets/ui/logo-mark.svg" alt="MEDIVOX">
+    <div class="page-title" id="studyHead">
+      <small id="hStudy">No study loaded yet</small>
+      <h1 id="hPatient">2D View</h1>
     </div>
-
-    <div style="margin-left:14px;min-width:0" id="studyHead">
-      <div style="font-size:13.5px;font-weight:650;line-height:1.2" id="hPatient">—</div>
-      <div style="font-size:11.5px;color:var(--muted);line-height:1.2;font-family:var(--mono)" id="hStudy">Belum ada studi dimuat</div>
+    <div class="seg layout-btns" role="group" aria-label="Layout">
+      <button data-layout="1x1" title="Layout 1×1">1×1</button>
+      <button data-layout="1x2" title="Layout 1×2">1×2</button>
+      <button data-layout="2x2" title="Layout 2×2">2×2</button>
+      <button data-layout="1x3" title="Layout 1×3">1×3</button>
     </div>
-
-    <span class="spacer"></span>
-
-    <div class="row layout-btns" style="gap:4px">
-      <button class="btn btn-sm" data-layout="1x1" title="Tata letak 1×1">1×1</button>
-      <button class="btn btn-sm" data-layout="1x2" title="Tata letak 1×2">1×2</button>
-      <button class="btn btn-sm" data-layout="2x2" title="Tata letak 2×2">2×2</button>
-      <button class="btn btn-sm" data-layout="1x3" title="Tata letak 1×3">1×3</button>
-    </div>
-    <button class="btn btn-sm only-mobile" id="btnSeries" aria-expanded="false" aria-controls="seriesPanel" aria-label="Daftar seri" title="Daftar seri"><img class="ikon" src="assets/ui/ikon/lapisan.webp" alt="" aria-hidden="true" decoding="async"></button>
-    <button class="btn btn-sm only-mobile" id="btnPanel" aria-expanded="false" aria-controls="sidePanel" aria-label="Panel info &amp; alat" title="Panel info &amp; alat"><img class="ikon" src="assets/ui/ikon/setelan.webp" alt="" aria-hidden="true" decoding="async"></button>
-    <button class="btn btn-sm" id="btnOpenLocal" title="Buka berkas DICOM"><img class="ikon" src="assets/ui/ikon/unggah.webp" alt="" aria-hidden="true" decoding="async"><span class="btn-teks">Buka File</span></button>
+    <button class="btn btn-sm only-mobile" id="btnSeries" aria-expanded="false" aria-controls="seriesPanel" aria-label="Series list" title="Series list"><svg class="li"><use href="assets/ui/ikon-garis.svg#i-layers"/></svg></button>
+    <button class="btn btn-sm only-mobile" id="btnPanel" aria-expanded="false" aria-controls="sidePanel" aria-label="Info and tools panel" title="Info and tools panel"><svg class="li"><use href="assets/ui/ikon-garis.svg#i-sliders"/></svg></button>
+    <button class="btn btn-sm" id="btnOpenLocal" title="Open DICOM files"><img class="ikon" src="assets/ui/ikon/unggah.webp" alt="" aria-hidden="true" decoding="async"><span class="btn-teks">Open files</span></button>
     <input type="file" id="fileInput" multiple hidden>
-    <button class="btn btn-sm" id="btnFull" title="Layar penuh">⤢</button>
+    <button class="btn btn-sm" id="btnFull" title="Full screen" aria-label="Full screen"><svg class="li"><use href="assets/ui/ikon-garis.svg#i-expand"/></svg></button>
     <div class="user-chip" id="userChip"></div>
   </header>
 
-  <!-- ====== BODY ====== -->
   <div class="vw-body">
-
-    <!-- toolbar -->
-    <nav class="toolrail" id="toolrail">
-      <button class="trbtn on" data-tool="wwwc" data-tip="Window / Level (W)"><span class="kbd">W</span>
-        <img class="ikon" src="assets/ui/ikon/wwwc.webp" alt="" aria-hidden="true" decoding="async"></button>
-      <button class="trbtn" data-tool="pan" data-tip="Geser (P)"><span class="kbd">P</span>
-        <img class="ikon" src="assets/ui/ikon/geser.webp" alt="" aria-hidden="true" decoding="async"></button>
-      <button class="trbtn" data-tool="zoom" data-tip="Perbesar (Z)"><span class="kbd">Z</span>
-        <img class="ikon" src="assets/ui/ikon/zoom.webp" alt="" aria-hidden="true" decoding="async"></button>
-      <button class="trbtn" data-tool="stack" data-tip="Gulir irisan (S)"><span class="kbd">S</span>
-        <img class="ikon" src="assets/ui/ikon/tumpuk.webp" alt="" aria-hidden="true" decoding="async"></button>
-
+    <nav class="toolrail" id="toolrail" aria-label="Tools">
+      <button class="trbtn on" data-tool="wwwc" data-tip="Window / level (W)"><span class="kbd">W</span><img class="ikon" src="assets/ui/ikon/wwwc.webp" alt="" aria-hidden="true" decoding="async"><span class="t">W/L</span></button>
+      <button class="trbtn" data-tool="pan" data-tip="Pan (P)"><span class="kbd">P</span><img class="ikon" src="assets/ui/ikon/geser.webp" alt="" aria-hidden="true" decoding="async"><span class="t">Pan</span></button>
+      <button class="trbtn" data-tool="zoom" data-tip="Zoom (Z)"><span class="kbd">Z</span><img class="ikon" src="assets/ui/ikon/zoom.webp" alt="" aria-hidden="true" decoding="async"><span class="t">Zoom</span></button>
+      <button class="trbtn" data-tool="stack" data-tip="Scroll slices (S)"><span class="kbd">S</span><img class="ikon" src="assets/ui/ikon/tumpuk.webp" alt="" aria-hidden="true" decoding="async"><span class="t">Scroll</span></button>
       <div class="trsep"></div>
-
-      <button class="trbtn" data-tool="length" data-tip="Ukur panjang (L)"><span class="kbd">L</span>
-        <img class="ikon" src="assets/ui/ikon/panjang.webp" alt="" aria-hidden="true" decoding="async"></button>
-      <button class="trbtn" data-tool="angle" data-tip="Ukur sudut (A)"><span class="kbd">A</span>
-        <img class="ikon" src="assets/ui/ikon/sudut.webp" alt="" aria-hidden="true" decoding="async"></button>
-      <button class="trbtn" data-tool="rect" data-tip="ROI persegi (R)"><span class="kbd">R</span>
-        <img class="ikon" src="assets/ui/ikon/persegi.webp" alt="" aria-hidden="true" decoding="async"></button>
-      <button class="trbtn" data-tool="ellipse" data-tip="ROI elips (E)"><span class="kbd">E</span>
-        <img class="ikon" src="assets/ui/ikon/elips.webp" alt="" aria-hidden="true" decoding="async"></button>
-      <button class="trbtn" data-tool="probe" data-tip="Probe nilai piksel (D)"><span class="kbd">D</span>
-        <img class="ikon" src="assets/ui/ikon/probe.webp" alt="" aria-hidden="true" decoding="async"></button>
-      <button class="trbtn" data-tool="note" data-tip="Anotasi teks (T)"><span class="kbd">T</span>
-        <img class="ikon" src="assets/ui/ikon/teks.webp" alt="" aria-hidden="true" decoding="async"></button>
-
+      <button class="trbtn" data-tool="length" data-tip="Measure length (L)"><span class="kbd">L</span><img class="ikon" src="assets/ui/ikon/panjang.webp" alt="" aria-hidden="true" decoding="async"><span class="t">Length</span></button>
+      <button class="trbtn" data-tool="angle" data-tip="Measure angle (A)"><span class="kbd">A</span><img class="ikon" src="assets/ui/ikon/sudut.webp" alt="" aria-hidden="true" decoding="async"><span class="t">Angle</span></button>
+      <button class="trbtn" data-tool="rect" data-tip="Rectangle ROI (R)"><span class="kbd">R</span><img class="ikon" src="assets/ui/ikon/persegi.webp" alt="" aria-hidden="true" decoding="async"><span class="t">Rect ROI</span></button>
+      <button class="trbtn" data-tool="ellipse" data-tip="Ellipse ROI (E)"><span class="kbd">E</span><img class="ikon" src="assets/ui/ikon/elips.webp" alt="" aria-hidden="true" decoding="async"><span class="t">Ellipse</span></button>
+      <button class="trbtn" data-tool="probe" data-tip="Pixel probe (D)"><span class="kbd">D</span><img class="ikon" src="assets/ui/ikon/probe.webp" alt="" aria-hidden="true" decoding="async"><span class="t">Probe</span></button>
+      <button class="trbtn" data-tool="note" data-tip="Text note (T)"><span class="kbd">T</span><img class="ikon" src="assets/ui/ikon/teks.webp" alt="" aria-hidden="true" decoding="async"><span class="t">Note</span></button>
       <div class="trsep"></div>
-
-      <button class="trbtn" id="btnInvert" data-tip="Inversi (I)"><span class="kbd">I</span>
-        <img class="ikon" src="assets/ui/ikon/inversi.webp" alt="" aria-hidden="true" decoding="async"></button>
-      <button class="trbtn" id="btnRotate" data-tip="Putar 90°">
-        <img class="ikon" src="assets/ui/ikon/rotasi.webp" alt="" aria-hidden="true" decoding="async"></button>
-      <button class="trbtn" id="btnFlipH" data-tip="Cermin horizontal">
-        <img class="ikon" src="assets/ui/ikon/cermin.webp" alt="" aria-hidden="true" decoding="async"></button>
-      <button class="trbtn" id="btnFlipV" data-tip="Cermin vertikal (V)"><span class="kbd">V</span>
-        <img class="ikon" src="assets/ui/ikon/cerminv.webp" alt="" aria-hidden="true" decoding="async"></button>
-      <button class="trbtn" id="btnFit" data-tip="Pas ke layar (F)"><span class="kbd">F</span>
-        <img class="ikon" src="assets/ui/ikon/pas.webp" alt="" aria-hidden="true" decoding="async"></button>
-      <button class="trbtn" id="btnReset" data-tip="Reset tampilan (0)"><span class="kbd">0</span>
-        <img class="ikon" src="assets/ui/ikon/reset.webp" alt="" aria-hidden="true" decoding="async"></button>
-
+      <button class="trbtn" id="btnInvert" data-tip="Invert (I)"><span class="kbd">I</span><img class="ikon" src="assets/ui/ikon/inversi.webp" alt="" aria-hidden="true" decoding="async"><span class="t">Invert</span></button>
+      <button class="trbtn" id="btnRotate" data-tip="Rotate 90°"><img class="ikon" src="assets/ui/ikon/rotasi.webp" alt="" aria-hidden="true" decoding="async"><span class="t">Rotate</span></button>
+      <button class="trbtn" id="btnFlipH" data-tip="Flip horizontal"><img class="ikon" src="assets/ui/ikon/cermin.webp" alt="" aria-hidden="true" decoding="async"><span class="t">Flip H</span></button>
+      <button class="trbtn" id="btnFlipV" data-tip="Flip vertical (V)"><span class="kbd">V</span><img class="ikon" src="assets/ui/ikon/cerminv.webp" alt="" aria-hidden="true" decoding="async"><span class="t">Flip V</span></button>
+      <button class="trbtn" id="btnFit" data-tip="Fit to screen (F)"><span class="kbd">F</span><img class="ikon" src="assets/ui/ikon/pas.webp" alt="" aria-hidden="true" decoding="async"><span class="t">Fit</span></button>
+      <button class="trbtn" id="btnReset" data-tip="Reset view (0)"><span class="kbd">0</span><img class="ikon" src="assets/ui/ikon/reset.webp" alt="" aria-hidden="true" decoding="async"><span class="t">Reset</span></button>
       <div class="trsep"></div>
-
-      <button class="trbtn" id="btnClearMeas" data-tip="Hapus semua pengukuran">
-        <img class="ikon" src="assets/ui/ikon/hapus.webp" alt="" aria-hidden="true" decoding="async"></button>
-      <button class="trbtn" id="btnHideOvl" data-tip="Sembunyikan overlay (H)"><span class="kbd">H</span>
-        <img class="ikon" src="assets/ui/ikon/mata.webp" alt="" aria-hidden="true" decoding="async"></button>
-      <button class="trbtn" id="btnSnap" data-tip="Simpan PNG">
-        <img class="ikon" src="assets/ui/ikon/kamera.webp" alt="" aria-hidden="true" decoding="async"></button>
+      <button class="trbtn" id="btnClearMeas" data-tip="Clear all measurements"><img class="ikon" src="assets/ui/ikon/hapus.webp" alt="" aria-hidden="true" decoding="async"><span class="t">Clear</span></button>
+      <button class="trbtn" id="btnHideOvl" data-tip="Hide overlay (H)"><span class="kbd">H</span><img class="ikon" src="assets/ui/ikon/mata.webp" alt="" aria-hidden="true" decoding="async"><span class="t">Overlay</span></button>
+      <button class="trbtn" id="btnSnap" data-tip="Save PNG"><img class="ikon" src="assets/ui/ikon/kamera.webp" alt="" aria-hidden="true" decoding="async"><span class="t">PNG</span></button>
     </nav>
 
-    <!-- panel seri -->
     <div class="scrim" id="scrim" hidden></div>
     <aside class="series-panel" id="seriesPanel">
-      <div class="panel-head">Seri <span id="serCount" style="margin-left:auto;font-family:var(--mono)"></span></div>
+      <div class="panel-head">Series <span id="serCount" class="pill" style="margin-left:auto"></span></div>
       <div class="series-list" id="seriesList"></div>
       <div class="vol-box">
-        <button class="btn btn-sm" id="btnBangun3D" style="width:100%">Bangun 3D &amp; MPR</button>
+        <button class="btn btn-sm btn-block" id="btnBangun3D">Build 3D &amp; MPR</button>
         <p class="vol-info hide" id="volInfo" aria-live="polite"></p>
-
-        <div class="hide" id="surfBox">
+        <div class="hide" id="surfBox" style="display:grid;gap:8px">
           <div class="vol-row">
-            <label for="inAmbang">Ambang</label>
+            <label for="inAmbang">Threshold</label>
             <input class="field" type="number" id="inAmbang" step="10" value="300">
             <span id="ambangSat">HU</span>
           </div>
-          <button class="btn btn-sm" id="btnPermukaan" style="width:100%">Rekonstruksi permukaan</button>
+          <button class="btn btn-sm btn-block" id="btnPermukaan">Reconstruct surface</button>
           <p class="vol-info hide" id="meshInfo" aria-live="polite"></p>
-          <div class="vol-row" id="eksporRow" style="margin-top:6px">
+          <div class="vol-row" id="eksporRow">
             <button class="btn btn-sm" id="btnStl" style="flex:1" disabled>STL</button>
             <button class="btn btn-sm" id="btnObj" style="flex:1" disabled>OBJ</button>
           </div>
         </div>
-
-        <button class="btn btn-sm" id="btnPrisma" style="width:100%;margin-top:6px" disabled>
-          Prisma hologram →
-        </button>
-        <p class="vol-note">
-          Menyusun volume dari tumpukan irisan, lalu menambahkan MPR koronal &amp; sagital,
-          MIP tiga bidang, dan proyeksi 3D sebagai seri baru di daftar atas. Rekonstruksi
-          permukaan mengubah volume menjadi jaring segitiga yang bisa diunduh sebagai
-          STL atau OBJ.
-        </p>
+        <button class="btn btn-sm btn-primary btn-block" id="btnPrisma" disabled>Send to hologram &rarr;</button>
+        <p class="vol-note">Builds a volume from the slice stack, then adds coronal and sagittal MPR, three-plane MIP and 3D
+          projections as new series above. Surface reconstruction turns the volume into a triangle mesh you can download as STL or OBJ.</p>
       </div>
     </aside>
 
-    <!-- panggung -->
     <section class="stage-wrap" id="konten">
       <div class="vp-grid l1x1" id="grid"></div>
       <div class="vw-foot">
         <div class="cine-ctrl">
-          <button class="iconbtn" id="cinePrev" title="Irisan sebelumnya (←)">
+          <button class="iconbtn" id="cinePrev" title="Previous slice (←)" aria-label="Previous slice">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="m14 6-6 6 6 6"/></svg></button>
-          <button class="iconbtn" id="cinePlay" title="Putar / jeda (Spasi)">
+          <button class="iconbtn" id="cinePlay" title="Play / pause (Space)" aria-label="Play or pause">
             <svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg></button>
-          <button class="iconbtn" id="cineNext" title="Irisan berikutnya (→)">
+          <button class="iconbtn" id="cineNext" title="Next slice (→)" aria-label="Next slice">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="m10 6 6 6-6 6"/></svg></button>
-          <input type="range" id="frameSlider" min="0" max="0" value="0">
+          <input type="range" id="frameSlider" min="0" max="0" value="0" aria-label="Slice">
           <span class="kv"><b id="frameLbl">0/0</b></span>
         </div>
         <span class="spacer"></span>
         <span class="kv">WW <b id="fWW">—</b></span>
         <span class="kv">WL <b id="fWL">—</b></span>
         <span class="kv">Zoom <b id="fZoom">—</b></span>
-        <span class="kv">Piksel <b id="fPix">—</b></span>
+        <span class="kv">Pixel <b id="fPix">—</b></span>
         <span class="kv" id="fPos">—</span>
       </div>
     </section>
 
-    <!-- panel kanan -->
     <aside class="side-panel" id="sidePanel">
       <div class="tabbar">
         <button class="on" data-tab="info">Info</button>
         <button data-tab="wl">W/L</button>
-        <button data-tab="meas">Ukur</button>
-        <button data-tab="tags">Tag</button>
-        <button data-tab="rep">Laporan</button>
+        <button data-tab="meas">Measure</button>
+        <button data-tab="tags">Tags</button>
+        <button data-tab="rep">Report</button>
       </div>
 
-      <!-- INFO -->
       <div class="tabpane on" id="tab-info">
-        <h6 class="grp">Pasien</h6>
-        <table style="width:100%;font-size:12.5px;border-collapse:collapse" id="tblPatient"></table>
-        <h6 class="grp">Studi</h6>
-        <table style="width:100%;font-size:12.5px;border-collapse:collapse" id="tblStudy"></table>
-        <h6 class="grp">Seri &amp; Citra</h6>
-        <table style="width:100%;font-size:12.5px;border-collapse:collapse" id="tblImage"></table>
+        <h6 class="grp">Patient</h6>
+        <table style="width:100%;border-collapse:collapse" id="tblPatient"></table>
+        <h6 class="grp">Study</h6>
+        <table style="width:100%;border-collapse:collapse" id="tblStudy"></table>
+        <h6 class="grp">Series &amp; image</h6>
+        <table style="width:100%;border-collapse:collapse" id="tblImage"></table>
       </div>
 
-      <!-- W/L -->
       <div class="tabpane" id="tab-wl">
-        <h6 class="grp">Preset Window</h6>
+        <h6 class="grp">Window presets</h6>
         <div class="preset-grid" id="presets"></div>
-
-        <h6 class="grp">Penyetelan Manual</h6>
-        <div class="ctrl-row">
-          <label>Lebar (WW)</label>
-          <input type="range" id="rWW" min="1" max="4000" value="400">
-          <span class="val" id="vWW">400</span>
-        </div>
-        <div class="ctrl-row">
-          <label>Pusat (WL)</label>
-          <input type="range" id="rWL" min="-1200" max="3000" value="40">
-          <span class="val" id="vWL">40</span>
-        </div>
-        <div class="ctrl-row">
-          <label>Inversi</label>
-          <span class="switch"><input type="checkbox" id="swInvert"><span class="tr"></span></span>
-        </div>
-        <div class="ctrl-row">
-          <label>Interpolasi halus</label>
-          <span class="switch"><input type="checkbox" id="swSmooth" checked><span class="tr"></span></span>
-        </div>
-        <div class="ctrl-row">
-          <label>Sinkron antar viewport</label>
-          <span class="switch"><input type="checkbox" id="swSync"><span class="tr"></span></span>
-        </div>
-
-        <h6 class="grp">Peta Warna</h6>
+        <h6 class="grp">Manual</h6>
+        <div class="ctrl-row"><label for="rWW">Width (WW)</label><input type="range" id="rWW" min="1" max="4000" value="400"><span class="val" id="vWW">400</span></div>
+        <div class="ctrl-row"><label for="rWL">Level (WL)</label><input type="range" id="rWL" min="-1200" max="3000" value="40"><span class="val" id="vWL">40</span></div>
+        <div class="ctrl-row"><label for="swInvert">Invert</label><span class="switch"><input type="checkbox" id="swInvert"><span class="tr"></span></span></div>
+        <div class="ctrl-row"><label for="swSmooth">Smooth interpolation</label><span class="switch"><input type="checkbox" id="swSmooth" checked><span class="tr"></span></span></div>
+        <div class="ctrl-row"><label for="swSync">Sync viewports</label><span class="switch"><input type="checkbox" id="swSync"><span class="tr"></span></span></div>
+        <h6 class="grp">Colour map</h6>
         <div class="preset-grid" id="cmaps"></div>
-
-        <h6 class="grp">Kecepatan Cine</h6>
-        <div class="ctrl-row">
-          <label>FPS</label>
-          <input type="range" id="rFps" min="1" max="30" value="10">
-          <span class="val" id="vFps">10</span>
-        </div>
+        <h6 class="grp">Cine speed</h6>
+        <div class="ctrl-row"><label for="rFps">FPS</label><input type="range" id="rFps" min="1" max="30" value="10"><span class="val" id="vFps">10</span></div>
       </div>
 
-      <!-- UKUR -->
       <div class="tabpane" id="tab-meas">
-        <div class="row" style="margin-bottom:12px">
-          <span style="font-size:12.5px;color:var(--muted)" id="measHint">Pilih alat ukur di toolbar kiri.</span>
-        </div>
+        <p style="font-size:.8rem;color:var(--muted);margin:0 0 12px" id="measHint">Pick a measurement tool from the rail.</p>
         <div id="measList"></div>
-        <button class="btn btn-sm btn-danger" id="btnMeasClear" style="width:100%;margin-top:8px">Hapus semua pengukuran</button>
+        <button class="btn btn-sm btn-danger btn-block" id="btnMeasClear" style="margin-top:8px">Clear all measurements</button>
       </div>
 
-      <!-- TAG -->
       <div class="tabpane" id="tab-tags">
-        <input class="field tagsearch" id="tagQ" placeholder="Cari tag atau nama atribut…">
-        <div style="overflow:auto">
-          <table class="tags" id="tagTable"></table>
-        </div>
+        <input class="field tagsearch" id="tagQ" placeholder="Search tag or attribute name…" aria-label="Search tags">
+        <div style="overflow:auto"><table class="tags" id="tagTable"></table></div>
       </div>
 
-      <!-- LAPORAN -->
       <div class="tabpane" id="tab-rep">
         <div class="report-field">
-          <label class="lbl">Klinis / Indikasi</label>
-          <textarea class="field" id="repClinical" rows="2" placeholder="Alasan pemeriksaan…"></textarea>
+          <label class="lbl" for="repClinical">Clinical indication</label>
+          <textarea class="field" id="repClinical" rows="2" placeholder="Reason for the examination…"></textarea>
         </div>
         <div class="report-field">
-          <label class="lbl">Temuan</label>
-          <textarea class="field" id="repFindings" placeholder="Deskripsi temuan…"></textarea>
-          <div class="chips" id="chipFindings"></div>
+          <label class="lbl" for="repFindings">Findings</label>
+          <textarea class="field" id="repFindings" placeholder="Describe the findings…"></textarea>
+          <div class="chips" id="chipFindings" style="margin-top:10px"></div>
         </div>
         <div class="report-field">
-          <label class="lbl">Kesan</label>
-          <textarea class="field" id="repImpression" rows="3" placeholder="Kesimpulan pembacaan…"></textarea>
+          <label class="lbl" for="repImpression">Impression</label>
+          <textarea class="field" id="repImpression" rows="3" placeholder="Conclusion of the reading…"></textarea>
         </div>
         <div class="report-field">
-          <label class="lbl">Status pembacaan</label>
+          <label class="lbl" for="repStatus">Reading status</label>
           <select class="field" id="repStatus">
-            <option>Draf</option>
-            <option>Menunggu verifikasi</option>
-            <option>Final</option>
+            <option value="Draf">Draft</option>
+            <option value="Menunggu verifikasi">Awaiting verification</option>
+            <option value="Final">Final</option>
           </select>
         </div>
         <div class="row">
-          <button class="btn btn-sm btn-primary" id="btnSaveRep">Simpan Laporan</button>
-          <button class="btn btn-sm" id="btnCopyRep">Salin Teks</button>
+          <button class="btn btn-sm btn-primary" id="btnSaveRep">Save report</button>
+          <button class="btn btn-sm" id="btnCopyRep">Copy text</button>
         </div>
-        <p class="sync-dot" id="repSync" style="margin-top:12px" aria-live="polite"><i></i>Memeriksa sesi…</p>
-        <p style="font-size:11.5px;color:var(--muted);margin-top:8px;line-height:1.5">
-          Prototipe — bukan dokumen medis resmi. Hanya teks laporan yang disimpan; citra tidak pernah diunggah.
-        </p>
+        <p class="sync-dot" id="repSync" style="margin-top:12px" aria-live="polite"><i></i>Checking session…</p>
+        <p style="font-size:.74rem;color:var(--muted);margin-top:8px;line-height:1.5">Prototype, not an official medical document. Only the report text is saved; images are never uploaded.</p>
       </div>
     </aside>
   </div>
 </div>
 
+<nav class="bottom-nav" aria-label="Main">
+  <a href="home.html"><svg class="li"><use href="assets/ui/ikon-garis.svg#i-home"/></svg><span>Home</span></a>
+  <a href="worklist.html"><svg class="li"><use href="assets/ui/ikon-garis.svg#i-folder"/></svg><span>Studies</span></a>
+  <a href="prisma.html" class="fab" aria-label="Hologram"><svg class="li"><use href="assets/ui/ikon-garis.svg#i-cube"/></svg></a>
+  <a href="viewer.html" class="on" aria-current="page"><svg class="li"><use href="assets/ui/ikon-garis.svg#i-grid"/></svg><span>2D</span></a>
+  <a href="#" data-akun><svg class="li"><use href="assets/ui/ikon-garis.svg#i-user"/></svg><span>Account</span></a>
+</nav>
+
 <div class="loader hide" id="loader">
-  <div class="box"><div class="spin"></div><p id="loaderMsg">Menyiapkan citra…</p></div>
+  <div class="box"><div class="spin"></div><p id="loaderMsg">Preparing images…</p></div>
 </div>
 <div id="toasts"></div>
 

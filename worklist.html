@@ -1,125 +1,121 @@
 <!DOCTYPE html>
-<html lang="id">
+<html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>Worklist — Medivox</title>
-<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><defs><linearGradient id='g' x1='0' y1='0' x2='1' y2='1'><stop offset='0' stop-color='%232f6fd0'/><stop offset='1' stop-color='%235ec9f2'/></linearGradient></defs><rect width='32' height='32' rx='9' fill='url(%23g)'/><path d='M8 23V9l8 8 8-8v14' fill='none' stroke='%23ffffff' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'/></svg>">
+<title>Studies · MEDIVOX</title>
+<link rel="icon" href="assets/ui/logo-mark.svg" type="image/svg+xml">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Sora:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap">
 <link rel="stylesheet" href="assets/css/base.css">
 <link rel="stylesheet" href="assets/css/app.css">
 </head>
 <body class="app">
-<a class="skip-link" href="#konten">Lewati ke konten utama</a>
+<a class="skip-link" href="#konten">Skip to content</a>
+
+<aside class="sidebar" aria-label="Main navigation">
+  <a href="index.html" class="brand"><img class="brand-mark" src="assets/ui/logo-mark.svg" alt=""><span class="brand-word"><b>MEDI</b><i>VOX</i></span></a>
+  <nav class="side-nav">
+    <a href="home.html"><svg class="li"><use href="assets/ui/ikon-garis.svg#i-home"/></svg><span>Home</span></a>
+    <a href="prisma.html"><svg class="li"><use href="assets/ui/ikon-garis.svg#i-cube"/></svg><span>Hologram</span></a>
+    <a href="viewer.html"><svg class="li"><use href="assets/ui/ikon-garis.svg#i-grid"/></svg><span>2D View</span></a>
+    <a href="worklist.html" class="on" aria-current="page"><svg class="li"><use href="assets/ui/ikon-garis.svg#i-folder"/></svg><span>Studies</span></a>
+  </nav>
+  <div class="side-device neu-in">
+    <div class="dev-row"><span class="dot-live"></span><b>Stage ready</b></div>
+    <p>Everything renders in this browser</p>
+    <ul class="dev-list" id="devList"></ul>
+  </div>
+  <button class="side-logout" type="button" data-keluar><svg class="li"><use href="assets/ui/ikon-garis.svg#i-logout"/></svg><span>Sign out</span></button>
+</aside>
 
 <div class="app-shell">
-
-  <!-- ====== TOP BAR ====== -->
   <header class="app-bar">
-    <a class="brand" href="index.html"><span class="mark">M</span><span class="wordmark">Medivox</span></a>
-    <div class="app-tabs">
-      <a href="prisma.html" data-short="Hologram"><img class="ikon ikon-tab" src="assets/ui/ikon/hologram.webp" alt="" aria-hidden="true" decoding="async">Hologram</a>
-      <a href="viewer.html" data-short="Viewer"><img class="ikon ikon-tab" src="assets/ui/ikon/viewer.webp" alt="" aria-hidden="true" decoding="async">Viewer 2D</a>
-      <a href="worklist.html" class="active" data-short="Studi"><img class="ikon ikon-tab" src="assets/ui/ikon/studi.webp" alt="" aria-hidden="true" decoding="async">Studi</a>
-    </div>
-    <span class="spacer"></span>
-    <button class="btn btn-sm only-mobile" id="btnFilter" aria-expanded="false" aria-controls="wlSide">
-      <img class="ikon" src="assets/ui/ikon/studi.webp" alt="" aria-hidden="true" decoding="async">
-      Filter
+    <img class="brand-m" src="assets/ui/logo-mark.svg" alt="MEDIVOX">
+    <div class="page-title"><small>Local files &middot; demo PACS</small><h1>Studies</h1></div>
+    <button class="btn btn-sm only-mobile" id="btnFilter" aria-expanded="false" aria-controls="wlSide" aria-label="Filters">
+      <svg class="li"><use href="assets/ui/ikon-garis.svg#i-sliders"/></svg>
     </button>
-    <button class="btn btn-sm" id="btnOpenFiles" title="Buka berkas DICOM"><img class="ikon" src="assets/ui/ikon/unggah.webp" alt="" aria-hidden="true" decoding="async"><span class="btn-teks">Buka File DICOM</span></button>
-    <button class="btn btn-sm hide-narrow" id="btnOpenFolder"><img class="ikon" src="assets/ui/ikon/folder.webp" alt="" aria-hidden="true" decoding="async">Buka Folder</button>
+    <button class="btn btn-sm" id="btnOpenFiles" title="Open DICOM files"><img class="ikon" src="assets/ui/ikon/unggah.webp" alt="" aria-hidden="true" decoding="async"><span class="btn-teks">Open DICOM files</span></button>
+    <button class="btn btn-sm hide-narrow" id="btnOpenFolder"><img class="ikon" src="assets/ui/ikon/folder.webp" alt="" aria-hidden="true" decoding="async">Open folder</button>
     <input type="file" id="fileInput" multiple accept=".dcm,.dicom,application/dicom,*/*" hidden>
     <input type="file" id="dirInput" webkitdirectory directory multiple hidden>
     <div class="user-chip" id="userChip"></div>
   </header>
 
-  <!-- ====== BODY ====== -->
   <div class="wl-body">
-
-    <!-- sidebar filter -->
     <div class="scrim" id="scrim" hidden></div>
     <aside class="wl-side" id="wlSide">
-      <h5>Antrian</h5>
+      <h5>Queue</h5>
       <div class="side-item active" data-filter="all">
-        <span id="i-inbox"></span><span>Semua studi</span><span class="cnt" id="c-all">0</span>
+        <span id="i-inbox"></span><span>All studies</span><span class="cnt" id="c-all">0</span>
       </div>
       <div class="side-item" data-filter="unread">
-        <span id="i-clock"></span><span>Belum dibaca</span><span class="cnt" id="c-unread">0</span>
+        <span id="i-clock"></span><span>Unread</span><span class="cnt" id="c-unread">0</span>
       </div>
       <div class="side-item" data-filter="reading">
-        <span id="i-user"></span><span>Sedang dibaca</span><span class="cnt" id="c-reading">0</span>
+        <span id="i-user"></span><span>In progress</span><span class="cnt" id="c-reading">0</span>
       </div>
       <div class="side-item" data-filter="done">
-        <span id="i-check"></span><span>Selesai</span><span class="cnt" id="c-done">0</span>
+        <span id="i-check"></span><span>Completed</span><span class="cnt" id="c-done">0</span>
       </div>
       <div class="side-item" data-filter="urgent">
-        <span id="i-flag"></span><span>Cito</span><span class="cnt" id="c-urgent">0</span>
+        <span id="i-flag"></span><span>Urgent</span><span class="cnt" id="c-urgent">0</span>
       </div>
       <div class="side-item" data-filter="local">
-        <span id="i-file"></span><span>Berkas lokal</span><span class="cnt" id="c-local">0</span>
+        <span id="i-file"></span><span>Local files</span><span class="cnt" id="c-local">0</span>
       </div>
 
-      <h5>Modalitas</h5>
+      <h5>Modality</h5>
       <div id="modFilters"></div>
 
-      <h5>Sumber data</h5>
-      <div style="padding:0 6px">
-        <p style="font-size:12px;color:var(--muted);line-height:1.5;margin:0 0 10px">
-          PACS disimulasikan. Berkas lokal diurai penuh di browser.
-        </p>
-        <div class="pill pill-ok"><span class="dot"></span> PACS-DEMO tersambung</div>
+      <h5>Data source</h5>
+      <div style="padding:0 8px">
+        <p style="color:var(--muted);line-height:1.5;margin:0 0 10px">The PACS connection is simulated. Local files are fully parsed in the browser.</p>
+        <span class="pill pill-ok"><span class="dot"></span> PACS-DEMO connected</span>
       </div>
 
-      <h5>Cache berkas lokal</h5>
-      <div style="padding:0 6px">
-        <p style="font-size:12px;color:var(--muted);line-height:1.5;margin:0 0 10px" id="cacheInfo"
-           aria-live="polite">Menghitung…</p>
-        <button class="btn btn-sm" id="btnDelStudy" style="width:100%;margin-bottom:6px" disabled>
-          Hapus studi lokal terpilih
-        </button>
-        <button class="btn btn-sm btn-danger" id="btnPurge" style="width:100%">
-          Bersihkan seluruh cache
-        </button>
+      <h5>Local file cache</h5>
+      <div style="padding:0 8px;display:grid;gap:10px">
+        <p style="color:var(--muted);line-height:1.5;margin:0" id="cacheInfo" aria-live="polite">Calculating…</p>
+        <button class="btn btn-sm btn-block" id="btnDelStudy" disabled>Delete selected local study</button>
+        <button class="btn btn-sm btn-block btn-danger" id="btnPurge">Clear the entire cache</button>
       </div>
     </aside>
 
-    <!-- main -->
     <main class="wl-main" id="konten">
       <div class="wl-tools">
         <div class="search-box">
           <img class="ikon" src="assets/ui/ikon/cari.webp" alt="" aria-hidden="true" decoding="async">
-          <input class="field" id="q" placeholder="Cari nama pasien, No. RM, accession, atau deskripsi…">
+          <input class="field" id="q" placeholder="Search patient name, MRN, accession or description…" aria-label="Search studies">
         </div>
-        <select class="field" id="fDate" style="width:auto;min-width:150px">
-          <option value="all">Semua tanggal</option>
-          <option value="today">Hari ini</option>
-          <option value="7">7 hari terakhir</option>
-          <option value="30">30 hari terakhir</option>
+        <select class="field" id="fDate" aria-label="Date filter">
+          <option value="all">All dates</option>
+          <option value="today">Today</option>
+          <option value="7">Last 7 days</option>
+          <option value="30">Last 30 days</option>
         </select>
         <span class="spacer"></span>
-        <button class="btn btn-sm" id="btnRefresh"><img class="ikon" src="assets/ui/ikon/sinkron.webp" alt="" aria-hidden="true" decoding="async">Segarkan</button>
-        <button class="btn btn-sm" id="btnOpen2D" disabled><img class="ikon" src="assets/ui/ikon/viewer.webp" alt="" aria-hidden="true" decoding="async">Viewer 2D</button>
-        <button class="btn btn-sm btn-primary" id="btnOpen" disabled><img class="ikon" src="assets/ui/ikon/hologram.webp" alt="" aria-hidden="true" decoding="async">Tampilkan Hologram</button>
+        <button class="btn btn-sm" id="btnRefresh"><img class="ikon" src="assets/ui/ikon/sinkron.webp" alt="" aria-hidden="true" decoding="async">Refresh</button>
+        <button class="btn btn-sm" id="btnOpen2D" disabled><img class="ikon" src="assets/ui/ikon/viewer.webp" alt="" aria-hidden="true" decoding="async">2D view</button>
+        <button class="btn btn-sm btn-primary" id="btnOpen" disabled><img class="ikon" src="assets/ui/ikon/hologram.webp" alt="" aria-hidden="true" decoding="async">Show hologram</button>
       </div>
 
       <div class="wl-scroll">
         <div class="dropzone" id="drop">
-          Tarik berkas <b>.dcm</b> atau satu folder studi ke sini untuk inspeksi lokal —
-          berkas tidak diunggah ke mana pun.
+          Drop <b>.dcm</b> files or a study folder here for local inspection. Files are never uploaded anywhere.
         </div>
         <table class="wl">
           <thead>
             <tr>
               <th data-sort="urgent" style="width:34px"></th>
-              <th data-sort="patient">Pasien</th>
+              <th data-sort="patient">Patient</th>
               <th data-sort="modality">Mod.</th>
-              <th data-sort="desc">Deskripsi Studi</th>
-              <th data-sort="bodyPart">Regio</th>
-              <th data-sort="date">Tanggal</th>
-              <th data-sort="images">Citra</th>
+              <th data-sort="desc">Study description</th>
+              <th data-sort="bodyPart">Region</th>
+              <th data-sort="date">Date</th>
+              <th data-sort="images">Images</th>
               <th data-sort="status">Status</th>
               <th data-sort="accession">Accession</th>
             </tr>
@@ -128,19 +124,27 @@
         </table>
         <div class="empty hide" id="empty">
           <img class="ikon ikon-raksasa" src="assets/ui/ikon/inbox.webp" alt="" aria-hidden="true" decoding="async">
-          <p>Tidak ada studi yang cocok dengan filter saat ini.</p>
+          <p>No studies match the current filter.</p>
         </div>
       </div>
 
       <div class="wl-foot">
-        <span id="foot">0 studi</span>
-        <span class="sync-dot" id="syncState" aria-live="polite"><i></i>Memeriksa sesi…</span>
+        <span id="foot">0 studies</span>
+        <span class="sync-dot" id="syncState" aria-live="polite"><i></i>Checking session…</span>
         <span class="spacer"></span>
-        <span class="foot-hint">Klik ganda baris untuk menampilkan hologram · <kbd>Enter</kbd> membuka studi terpilih · <kbd>?</kbd> daftar pintasan</span>
+        <span class="foot-hint">Double-click a row to show the hologram &middot; <kbd>Enter</kbd> opens the selected study &middot; <kbd>?</kbd> shortcuts</span>
       </div>
     </main>
   </div>
 </div>
+
+<nav class="bottom-nav" aria-label="Main">
+  <a href="home.html"><svg class="li"><use href="assets/ui/ikon-garis.svg#i-home"/></svg><span>Home</span></a>
+  <a href="worklist.html" class="on" aria-current="page"><svg class="li"><use href="assets/ui/ikon-garis.svg#i-folder"/></svg><span>Studies</span></a>
+  <a href="prisma.html" class="fab" aria-label="Hologram"><svg class="li"><use href="assets/ui/ikon-garis.svg#i-cube"/></svg></a>
+  <a href="viewer.html"><svg class="li"><use href="assets/ui/ikon-garis.svg#i-grid"/></svg><span>2D</span></a>
+  <a href="#" data-akun><svg class="li"><use href="assets/ui/ikon-garis.svg#i-user"/></svg><span>Account</span></a>
+</nav>
 
 <div id="toasts"></div>
 

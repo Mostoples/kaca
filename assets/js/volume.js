@@ -29,7 +29,7 @@
   var MAKS_VOXEL = 40e6;
 
   var BIDANG = ['axial', 'coronal', 'sagittal'];
-  var NAMA_BIDANG = { axial: 'Aksial', coronal: 'Koronal', sagittal: 'Sagital' };
+  var NAMA_BIDANG = { axial: 'Axial', coronal: 'Coronal', sagittal: 'Sagittal' };
 
   function klem(v, a, b) { return v < a ? a : v > b ? b : v; }
 
@@ -40,10 +40,10 @@
     opsi = opsi || {};
     var lapor = opsi.lapor || function () {};
 
-    if (!series) return Promise.reject(new Error('Seri tidak ada.'));
+    if (!series) return Promise.reject(new Error('The series does not exist.'));
     if (series.count < 4) {
       return Promise.reject(new Error(
-        'Seri ini hanya punya ' + series.count + ' citra — volume butuh setidaknya 4 irisan.'));
+        'This series has only ' + series.count + ' images; a volume needs at least 4 slices.'));
     }
 
     var irisan = [];
@@ -93,8 +93,8 @@
 
   function susun(irisan, series) {
     if (irisan.length < 4) {
-      throw new Error('Hanya ' + irisan.length + ' irisan yang bisa dibaca — tidak cukup untuk volume. ' +
-        'Seri terkompresi (JPEG 2000 / RLE) dan seri berwarna belum bisa dijadikan volume.');
+      throw new Error('Only ' + irisan.length + ' slices could be read, which is not enough for a volume. ' +
+        'Compressed (JPEG 2000 / RLE) and colour series cannot be turned into a volume yet.');
     }
 
     /* buang irisan yang matriksnya berbeda dari mayoritas */
@@ -102,7 +102,7 @@
     irisan = irisan.filter(function (s) {
       return s.img.rows === acuan.rows && s.img.cols === acuan.cols;
     });
-    if (irisan.length < 4) throw new Error('Matriks citra tidak seragam di seri ini.');
+    if (irisan.length < 4) throw new Error('The image matrix is not uniform in this series.');
 
     /* urutkan: posisi geometris bila ada, kalau tidak nomor instance */
     var adaPosisi = irisan.every(function (s) { return posisiIrisan(s.img) !== null; });
@@ -172,7 +172,7 @@
       min: min, max: maks,
       windowCenter: acuan.windowCenter, windowWidth: acuan.windowWidth,
       modality: acuan.modality, rescaleType: acuan.rescaleType,
-      desc: (series.desc || 'Seri') , seriesNumber: series.number || 1,
+      desc: (series.desc || 'Series') , seriesNumber: series.number || 1,
       turun: langkah
     });
   }
@@ -210,7 +210,7 @@
     return this.nx + '×' + this.ny + '×' + this.nz + ' voxel · ' +
       mm.map(function (v) { return Math.round(v); }).join(' × ') + ' mm · ' +
       this.spacing.map(function (v) { return v.toFixed(2); }).join(' / ') + ' mm' +
-      (this.turun > 1 ? ' · dikecilkan ' + this.turun + '×' : '');
+      (this.turun > 1 ? ' · downsampled ' + this.turun + '×' : '');
   };
 
   /* jumlah potongan yang tersedia pada satu bidang */
@@ -322,7 +322,7 @@
     var tebalVoxel = bidang === 'coronal' ? this.spacing[1]
                    : bidang === 'sagittal' ? this.spacing[0] : this.spacing[2];
     return this.jadikanImg(b, keluar,
-      (mode === 'tengah' ? 'MPR ' : mode === 'maks' ? 'MIP ' : mode === 'min' ? 'MinIP ' : 'Rerata ') +
+      (mode === 'tengah' ? 'MPR ' : mode === 'maks' ? 'MIP ' : mode === 'min' ? 'MinIP ' : 'Average ') +
       NAMA_BIDANG[bidang].toLowerCase(), jml * tebalVoxel);
   };
 
@@ -494,7 +494,7 @@
       };
     }
     return this.jadikanImg({ rows: ukuran, cols: ukuran, sRow: pxmm, sCol: pxmm }, keluar,
-      mode === 'maks' ? 'MIP 3D' : 'Proyeksi rerata', 0);
+      mode === 'maks' ? 'MIP 3D' : 'Average projection', 0);
   };
 
   /* ==========================================================
@@ -555,9 +555,9 @@
     var self = this;
     var jml = o.jumlah || 36;
     var mode = o.mode || 'maks';
-    var nama = mode === 'komposit' ? 'Volume 3D' : mode === 'rerata' ? 'Proyeksi rerata 3D' : 'MIP 3D';
+    var nama = mode === 'komposit' ? 'Volume 3D' : mode === 'rerata' ? '3D average projection' : 'MIP 3D';
     return bungkus({
-      desc: nama + ' (' + jml + ' sudut)', number: 920,
+      desc: nama + ' (' + jml + ' angles)', number: 920,
       modality: this.modality, count: jml,
       key: 'VR#' + mode + '#' + jml + '#' + (o.ukuran || 256),
       buat: function (i) {
@@ -579,7 +579,7 @@
     return [
       { tag: '(0008,0008)', key: '00080008', vr: 'CS', name: 'ImageType', value: 'DERIVED\\SECONDARY\\' + label.toUpperCase() },
       { tag: '(0008,2111)', key: '00082111', vr: 'ST', name: 'DerivationDescription',
-        value: label + ' dihitung di peramban dari ' + this.nz + ' irisan seri "' + this.desc + '"' },
+        value: label + ' computed in the browser from ' + this.nz + ' slices of series "' + this.desc + '"' },
       { tag: '(0018,0050)', key: '00180050', vr: 'DS', name: 'SliceThickness', value: String(this.spacing[2]) },
       { tag: '(0028,0010)', key: '00280010', vr: 'US', name: 'Rows', value: String(this.ny) },
       { tag: '(0028,0011)', key: '00280011', vr: 'US', name: 'Columns', value: String(this.nx) },

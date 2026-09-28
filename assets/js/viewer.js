@@ -23,30 +23,30 @@
   /* Preset CT memakai nilai HU absolut; modalitas lain memakai fraksi dari
      rentang nilai piksel citra, karena nilainya tidak berskala HU. */
   var PRESETS_CT = [
-    { n: 'Otomatis',    wc: null, ww: null },
-    { n: 'Paru',        wc: -600, ww: 1600 },
+    { n: 'Auto',    wc: null, ww: null },
+    { n: 'Lung',        wc: -600, ww: 1600 },
     { n: 'Mediastinum', wc: 50,   ww: 400 },
     { n: 'Abdomen',     wc: 60,   ww: 400 },
-    { n: 'Hati',        wc: 90,   ww: 150 },
-    { n: 'Tulang',      wc: 400,  ww: 1800 },
-    { n: 'Otak',        wc: 40,   ww: 80 },
+    { n: 'Liver',        wc: 90,   ww: 150 },
+    { n: 'Bone',      wc: 400,  ww: 1800 },
+    { n: 'Brain',        wc: 40,   ww: 80 },
     { n: 'Angio',       wc: 300,  ww: 600 }
   ];
   var PRESETS_REL = [
-    { n: 'Otomatis',       rel: null },
-    { n: 'Lembut',         rel: 1.30, note: 'kontras rendah' },
-    { n: 'Standar',        rel: 1.00, note: 'rentang penuh' },
-    { n: 'Kontras sedang', rel: 0.65 },
-    { n: 'Kontras tinggi', rel: 0.40 },
-    { n: 'Terang',         rel: 0.85, shift: -0.18 },
-    { n: 'Gelap',          rel: 0.85, shift: 0.18 }
+    { n: 'Auto',       rel: null },
+    { n: 'Soft',         rel: 1.30, note: 'low contrast' },
+    { n: 'Standard',        rel: 1.00, note: 'full range' },
+    { n: 'Medium contrast', rel: 0.65 },
+    { n: 'High contrast', rel: 0.40 },
+    { n: 'Bright',         rel: 0.85, shift: -0.18 },
+    { n: 'Dark',          rel: 0.85, shift: 0.18 }
   ];
 
   function presetsFor(modality) {
     return (modality || '').toUpperCase() === 'CT' ? PRESETS_CT : PRESETS_REL;
   }
   var CMAPS = [
-    { n: 'Abu-abu', v: null }, { n: 'Hot', v: 'hot' },
+    { n: 'Grey', v: null }, { n: 'Hot', v: 'hot' },
     { n: 'Bone', v: 'bone' }, { n: 'Jet', v: 'jet' }, { n: 'PET', v: 'pet' }
   ];
   var MEAS_COLORS = ['#5ec9f2', '#ffc56a', '#8cc6f5', '#ff8aa1', '#b9adf5', '#5fe0a8'];
@@ -127,16 +127,16 @@
     this.meas = [];
     this.img = null;
     this.probe = null;
-    this.preset = 'Otomatis';
+    this.preset = 'Auto';
 
     var el = document.createElement('div');
     el.className = 'viewport';
     el.tabIndex = 0;
     el.setAttribute('role', 'img');
-    el.setAttribute('aria-label', 'Viewport citra ' + (index + 1));
+    el.setAttribute('aria-label', 'Image viewport ' + (index + 1));
     el.innerHTML =
       '<canvas class="img"></canvas><canvas class="ann"></canvas>' +
-      '<div class="vp-empty">Viewport kosong — klik seri di panel kiri</div>' +
+      '<div class="vp-empty">Empty viewport: click a series in the left panel</div>' +
       '<div class="vp-ovl tl"></div><div class="vp-ovl tr"></div>' +
       '<div class="vp-ovl bl"></div><div class="vp-ovl br"></div>' +
       '<div class="orient o-t"></div><div class="orient o-b"></div>' +
@@ -308,7 +308,7 @@
       return img;
     }).catch(function (err) {
       self.el.querySelector('.vp-empty').style.display = '';
-      self.el.querySelector('.vp-empty').textContent = 'Gagal memuat: ' + err.message;
+      self.el.querySelector('.vp-empty').textContent = 'Could not load: ' + err.message;
       self.img = null;
     });
   };
@@ -327,7 +327,7 @@
       ctx.fillStyle = '#93a9be';
       ctx.font = (13 * this.dpr) + 'px system-ui';
       ctx.textAlign = 'center';
-      ctx.fillText('Transfer syntax belum didukung:', this.cw / 2, this.ch / 2 - 12 * this.dpr);
+      ctx.fillText('Transfer syntax not supported yet:', this.cw / 2, this.ch / 2 - 12 * this.dpr);
       ctx.fillText(img.unsupported, this.cw / 2, this.ch / 2 + 10 * this.dpr);
       this.drawAnn(); this.overlay(); return;
     }
@@ -341,7 +341,7 @@
           var blob = new Blob([img.blobBytes], { type: img.mime });
           var im = new Image();
           im.onload = function () { img._el = im; img.cols = im.naturalWidth; img.rows = im.naturalHeight; self.draw(); };
-          im.onerror = function () { img.unsupported = 'JPEG gagal didekode'; self.draw(); };
+          im.onerror = function () { img.unsupported = 'JPEG could not be decoded'; self.draw(); };
           im.src = URL.createObjectURL(blob);
         }
         this.drawAnn(); this.overlay(); return;
@@ -485,7 +485,7 @@
       esc(st.institution || '');
     q[1].innerHTML = esc(st.modality || s.modality || '') + ' · ' + esc(st.model || '') + '<br>' +
       '<span class="hl">' + esc(s.desc) + '</span><br>' +
-      'Seri ' + s.number + ' · ' + K.fmtDate(st.date) + ' ' + K.fmtTime(st.time);
+      'Series ' + s.number + ' · ' + K.fmtDate(st.date) + ' ' + K.fmtTime(st.time);
     q[2].innerHTML = 'W: ' + Math.round(this.ww) + '  L: ' + Math.round(this.wc) + '<br>' +
       'Zoom: ' + Math.round(this.zoom * 100) + '%' + (this.invert ? ' · INV' : '') +
       (this.colormap ? ' · ' + this.colormap.toUpperCase() : '');
@@ -560,7 +560,7 @@
       if (!pa || pa.vp !== vp) {
         var m2 = newMeas(vp, 'angle', [[ip[0], ip[1]], [ip[0], ip[1]], [ip[0], ip[1]]]);
         App.pendingAngle = { vp: vp, m: m2, step: 1 };
-        K.toast('Klik titik sudut, lalu ujung kedua.');
+        K.toast('Click the vertex, then the second end.');
       } else if (pa.step === 1) {
         pa.m.pts[1] = [ip[0], ip[1]]; pa.step = 2;
       } else {
@@ -576,7 +576,7 @@
     } else if (tool === 'probe') {
       drag.meas = newMeas(vp, 'probe', [[ip[0], ip[1]]]);
     } else if (tool === 'note') {
-      var txt = prompt('Teks anotasi:', '');
+      var txt = prompt('Annotation text:', '');
       if (txt) { var m = newMeas(vp, 'note', [[ip[0], ip[1]]]); m.text = txt; updateMeas(vp, m); simpanMeas(); }
       drag = null; redrawMeas(vp.meas); refreshMeasList(); return;
     }
@@ -795,16 +795,16 @@
     var vp = App.viewports[App.active];
     var host = document.getElementById('measList');
     if (!vp || !vp.meas.length) {
-      host.innerHTML = '<p style="color:var(--muted);font-size:12.5px">Belum ada pengukuran pada viewport aktif.</p>';
+      host.innerHTML = '<p style="color:var(--muted);font-size:12.5px">No measurements in the active viewport yet.</p>';
       return;
     }
     host.innerHTML = vp.meas.map(function (m, i) {
-      var nama = { length: 'Panjang', angle: 'Sudut', rect: 'ROI persegi', ellipse: 'ROI elips', probe: 'Probe', note: 'Anotasi' }[m.type];
+      var nama = { length: 'Length', angle: 'Angle', rect: 'Rectangle ROI', ellipse: 'Ellipse ROI', probe: 'Probe', note: 'Note' }[m.type];
       var val = m.type === 'note' ? m.text : String(m.label || '').replace(/\n/g, ' · ');
       return '<div class="meas-item" data-mi="' + i + '">' +
         '<span class="sw" style="background:' + m.color + '"></span>' +
-        '<span class="txt"><b>' + nama + '</b><span>' + esc(val) + '  · irisan ' + (m.slice + 1) + '</span></span>' +
-        '<button class="x" title="Hapus">×</button></div>';
+        '<span class="txt"><b>' + nama + '</b><span>' + esc(val) + '  · slice ' + (m.slice + 1) + '</span></span>' +
+        '<button class="x" title="Delete">×</button></div>';
     }).join('');
     K.qsa('#measList .meas-item .x').forEach(function (b) {
       b.addEventListener('click', function () {
@@ -927,26 +927,26 @@
     if (!st) return;
     var p = st.patient || {};
     document.getElementById('tblPatient').innerHTML =
-      tRow('Nama', p.name) + tRow('No. RM', p.id) + tRow('Jenis kelamin', p.sex === 'M' ? 'Laki-laki' : p.sex === 'F' ? 'Perempuan' : p.sex) +
-      tRow('Tanggal lahir', K.fmtDate(p.birth)) + tRow('Usia', p.age);
+      tRow('Name', p.name) + tRow('MRN', p.id) + tRow('Sex', p.sex === 'M' ? 'Male' : p.sex === 'F' ? 'Female' : p.sex) +
+      tRow('Date of birth', K.fmtDate(p.birth)) + tRow('Age', p.age);
     document.getElementById('tblStudy').innerHTML =
-      tRow('Deskripsi', st.desc) + tRow('Modalitas', st.modality) + tRow('Regio', st.bodyPart) +
-      tRow('Tanggal', K.fmtDate(st.date) + ' ' + K.fmtTime(st.time)) +
-      tRow('Accession', st.accession) + tRow('Institusi', st.institution) +
-      tRow('Alat', st.model) + tRow('Perujuk', st.referring);
+      tRow('Description', st.desc) + tRow('Modality', st.modality) + tRow('Region', st.bodyPart) +
+      tRow('Date', K.fmtDate(st.date) + ' ' + K.fmtTime(st.time)) +
+      tRow('Accession', st.accession) + tRow('Institution', st.institution) +
+      tRow('Device', st.model) + tRow('Referring', st.referring);
     var s = vp && vp.series, img = vp && vp.img;
     document.getElementById('tblImage').innerHTML = s ? (
-      tRow('Seri', s.number + ' — ' + s.desc) +
-      tRow('Jumlah citra', s.count) +
-      tRow('Citra aktif', (vp.index + 1)) +
-      (img ? tRow('Matriks', img.cols + ' × ' + img.rows) +
+      tRow('Series', s.number + ' — ' + s.desc) +
+      tRow('Images', s.count) +
+      tRow('Current image', (vp.index + 1)) +
+      (img ? tRow('Matrix', img.cols + ' × ' + img.rows) +
         tRow('Bit', img.bitsAllocated + ' bit' + (img.signed ? ' (signed)' : '')) +
         tRow('Photometric', img.photometric) +
         tRow('Pixel spacing', img.pixelSpacing && img.pixelSpacing[0]
           ? img.pixelSpacing[0].toFixed(3) + ' × ' + (img.pixelSpacing[1] || img.pixelSpacing[0]).toFixed(3) + ' mm' : '—') +
-        tRow('Tebal irisan', img.sliceThickness ? img.sliceThickness + ' mm' : '—') +
+        tRow('Slice thickness', img.sliceThickness ? img.sliceThickness + ' mm' : '—') +
         tRow('Rescale', 'slope ' + img.slope + ', intercept ' + img.intercept) : '')
-    ) : tRow('Seri', '—');
+    ) : tRow('Series', '—');
   }
 
   var tagCache = null;
@@ -965,7 +965,7 @@
     document.getElementById('tagTable').innerHTML = rows.map(function (t) {
       return '<tr><td class="tg">' + esc(t.tag) + '</td><td class="nm">' + esc(t.name || t.vr) +
         '</td><td class="vl">' + esc(t.value) + '</td></tr>';
-    }).join('') || '<tr><td colspan="3" style="color:var(--muted);padding:10px 4px">Tidak ada tag yang cocok.</td></tr>';
+    }).join('') || '<tr><td colspan="3" style="color:var(--muted);padding:10px 4px">No matching tags.</td></tr>';
   }
   document.getElementById('tagQ').addEventListener('input', renderTags);
 
@@ -1027,14 +1027,14 @@
         '<canvas class="thumb" width="120" height="120"></canvas>' +
         '<div class="meta"><b>' + esc(s.desc) + '</b>' +
         '<span>' + (s.derived ? 'turunan' : '#' + s.number) + ' · ' + s.count +
-        (s.derived && /3D|Volume/.test(s.desc) ? ' sudut' : ' citra') + '</span></div></div>';
+        (s.derived && /3D|Volume/.test(s.desc) ? ' angles' : ' images') + '</span></div></div>';
     }).join('');
 
     st.series.forEach(function (s, i) {
       var node = host.querySelector('[data-si="' + i + '"]');
       node.addEventListener('click', function () {
         var vp = App.viewports[App.active];
-        loader(true, 'Memuat seri…');
+        loader(true, 'Loading series…');
         vp.load(s, Math.floor(s.count / 2)).then(function () {
           loader(false);
           markSeries();
@@ -1111,7 +1111,7 @@
 
   function fmtAge(a) {
     var m = /^(\d+)([YMD])$/.exec(a || '');
-    return m ? parseInt(m[1], 10) + (m[2] === 'Y' ? ' Th' : m[2] === 'M' ? ' Bln' : ' Hr') : (a || '');
+    return m ? parseInt(m[1], 10) + (m[2] === 'Y' ? ' y' : m[2] === 'M' ? ' mo' : ' d') : (a || '');
   }
 
   /* bangun studi dari kumpulan record berkas lokal */
@@ -1137,7 +1137,7 @@
       });
       var imgCache = {};
       return {
-        desc: items[0].seriesDesc || ('Seri ' + (items[0].seriesNumber || 1)),
+        desc: items[0].seriesDesc || ('Series ' + (items[0].seriesNumber || 1)),
         number: items[0].seriesNumber || 1,
         modality: items[0].modality,
         count: slots.length,
@@ -1146,7 +1146,7 @@
           if (imgCache[i]) return Promise.resolve(imgCache[i]);
           return new Promise(function (res, rej) {
             var sl = slots[i];
-            if (!sl.rec._ds) return rej(new Error('berkas tidak terbaca'));
+            if (!sl.rec._ds) return rej(new Error('unreadable file'));
             try {
               var img = window.DICOM.readPixels(sl.rec._ds, sl.frame);
               imgCache[i] = img;
@@ -1172,7 +1172,7 @@
   }
 
   function mountStudy(study) {
-    if (!study || !study.series.length) { K.toast('Studi kosong atau tidak terbaca.', 'err'); return; }
+    if (!study || !study.series.length) { K.toast('The study is empty or unreadable.', 'err'); return; }
     App.study = study;
     /* kunci stabil per seri: dipakai untuk menautkan pengukuran yang
        disimpan. Seri turunan (MPR/MIP/3D) sudah membawa kuncinya sendiri. */
@@ -1199,13 +1199,13 @@
     });
     document.getElementById('hPatient').textContent = study.patient.name || '—';
     document.getElementById('hStudy').textContent =
-      study.modality + ' · ' + study.desc + ' · ' + K.fmtDate(study.date) + ' · ' + study.series.length + ' seri';
-    document.title = (study.patient.name || 'Studi') + ' — Medivox Viewer';
+      study.modality + ' · ' + study.desc + ' · ' + K.fmtDate(study.date) + ' · ' + study.series.length + ' series';
+    document.title = (study.patient.name || 'Study') + ' · MEDIVOX 2D View';
     renderSeries();
     loadReport();
 
     var vp = App.viewports[0];
-    loader(true, 'Menyiapkan citra…');
+    loader(true, 'Preparing images…');
     vp.load(study.series[0], Math.floor(study.series[0].count / 2)).then(function () {
       loader(false);
       setActive(0);
@@ -1237,20 +1237,20 @@
   }
 
   function bangunVolume() {
-    if (!window.VOLUME) { K.toast('Modul volume tidak termuat.', 'err'); return; }
+    if (!window.VOLUME) { K.toast('The volume module did not load.', 'err'); return; }
     var seri = seriAsliAktif();
-    if (!seri) { K.toast('Belum ada seri yang bisa dijadikan volume.', 'warn'); return; }
+    if (!seri) { K.toast('No series can be turned into a volume yet.', 'warn'); return; }
 
     var btn = document.getElementById('btnBangun3D');
     btn.disabled = true;
-    loader(true, 'Membaca irisan…');
+    loader(true, 'Reading slices…');
 
     window.VOLUME.bangun(seri, {
       lapor: function (n, total) {
-        loader(true, 'Membaca irisan ' + n + '/' + total + '…');
+        loader(true, 'Reading slice ' + n + '/' + total + '…');
       }
     }).then(function (vol) {
-      loader(true, 'Menyiapkan MPR, MIP, dan proyeksi…');
+      loader(true, 'Preparing MPR, MIP and projections…');
       App.vol = vol;
 
       /* ganti seri turunan lama supaya tidak menumpuk */
@@ -1287,12 +1287,12 @@
 
       loader(false);
       btn.disabled = false;
-      btn.textContent = 'Bangun ulang 3D';
-      K.toast('Volume ' + vol.nz + ' irisan siap — 7 seri turunan ditambahkan ke panel seri.');
+      btn.textContent = 'Rebuild 3D';
+      K.toast('Volume ' + vol.nz + ' slices ready: 7 derived series added to the series panel.');
     }).catch(function (err) {
       loader(false);
       btn.disabled = false;
-      K.toast('Gagal menyusun volume: ' + (err && err.message ? err.message : err), 'err');
+      K.toast('Could not build the volume: ' + (err && err.message ? err.message : err), 'err');
     });
   }
 
@@ -1305,20 +1305,20 @@
      lagi-lagi lewat pembungkus seri, jadi tidak ada jalur render baru.
      ========================================================== */
   function bangunPermukaan() {
-    if (!App.vol) { K.toast('Bangun volume 3D terlebih dahulu.', 'warn'); return; }
-    if (!window.MESH) { K.toast('Modul permukaan tidak termuat.', 'err'); return; }
+    if (!App.vol) { K.toast('Build the 3D volume first.', 'warn'); return; }
+    if (!window.MESH) { K.toast('The surface module did not load.', 'err'); return; }
 
     var ambang = parseFloat(document.getElementById('inAmbang').value);
-    if (!isFinite(ambang)) { K.toast('Nilai ambang tidak sah.', 'warn'); return; }
+    if (!isFinite(ambang)) { K.toast('Invalid threshold.', 'warn'); return; }
     if (ambang <= App.vol.min || ambang >= App.vol.max) {
-      K.toast('Ambang harus di antara ' + Math.round(App.vol.min) +
-        ' dan ' + Math.round(App.vol.max) + '.', 'warn');
+      K.toast('The threshold must be between ' + Math.round(App.vol.min) +
+        ' and ' + Math.round(App.vol.max) + '.', 'warn');
       return;
     }
 
     var btn = document.getElementById('btnPermukaan');
     btn.disabled = true;
-    loader(true, 'Menelusuri isosurface…');
+    loader(true, 'Tracing the isosurface…');
 
     /* diberi satu putaran agar loader tampil sebelum perhitungan berat */
     setTimeout(function () {
@@ -1329,7 +1329,7 @@
         if (mesh.kosong()) {
           loader(false);
           btn.disabled = false;
-          K.toast('Tidak ada permukaan pada ambang ' + Math.round(ambang) +
+          K.toast('No surface at threshold ' + Math.round(ambang) +
             '. Coba nilai lain.', 'warn');
           return;
         }
@@ -1352,12 +1352,12 @@
         loader(false);
         btn.disabled = false;
         K.toast(mesh.jumlahSegitiga().toLocaleString('id-ID') +
-          ' segitiga — seri "Permukaan 3D" ditambahkan.' +
-          (mesh.terpotong ? ' Dipotong karena mencapai batas segitiga.' : ''));
+          ' triangles: series "3D surface" added.' +
+          (mesh.terpotong ? ' Truncated at the triangle limit.' : ''));
       } catch (err) {
         loader(false);
         btn.disabled = false;
-        K.toast('Gagal merekonstruksi permukaan: ' +
+        K.toast('Could not reconstruct the surface: ' +
           (err && err.message ? err.message : err), 'err');
       }
     }, 30);
@@ -1378,12 +1378,12 @@
   document.getElementById('btnStl').addEventListener('click', function () {
     if (!App.mesh) return;
     unduh(App.mesh.stl(App.study ? App.study.desc : ''), 'model/stl', 'stl');
-    K.toast('STL diunduh — satuannya milimeter.');
+    K.toast('STL downloaded (units: millimetres).');
   });
   document.getElementById('btnObj').addEventListener('click', function () {
     if (!App.mesh) return;
     unduh(App.mesh.obj(App.study ? App.study.desc : ''), 'text/plain', 'obj');
-    K.toast('OBJ diunduh — satuannya milimeter.');
+    K.toast('OBJ downloaded (units: millimetres).');
   });
 
   document.getElementById('btnPrisma').addEventListener('click', function () {
@@ -1409,13 +1409,13 @@
       b.setAttribute('aria-pressed', 'true');
       App.tool = b.dataset.tool;
       cancelPendingAngle();
-      document.getElementById('measHint').textContent = 'Alat aktif: ' + b.dataset.tip.split(' (')[0] + '.';
+      document.getElementById('measHint').textContent = 'Active tool: ' + b.dataset.tip.split(' (')[0] + '.';
     });
   });
 
   function withActive(fn) {
     var vp = App.viewports[App.active];
-    if (!vp || !vp.img) { K.toast('Belum ada citra pada viewport aktif.', 'warn'); return; }
+    if (!vp || !vp.img) { K.toast('No image in the active viewport yet.', 'warn'); return; }
     fn(vp);
   }
 
@@ -1439,14 +1439,14 @@
     var vp = App.viewports[App.active];
     if (!vp) return;
     App.pendingAngle = null;
-    if (!vp.meas.length) { K.toast('Tidak ada pengukuran pada viewport aktif.', 'warn'); return; }
+    if (!vp.meas.length) { K.toast('No measurements in the active viewport.', 'warn'); return; }
     /* dikosongkan di tempat, bukan diganti array baru, agar tautan
        ke daftar milik seri (dan viewport lain) tetap utuh */
     vp.meas.length = 0;
     simpanMeas();
     redrawMeas(vp.meas);
     refreshMeasList();
-    K.toast('Pengukuran pada seri ini dihapus.');
+    K.toast('Measurements on this series cleared.');
   }
 
   /* batalkan sudut yang belum selesai dibuat */
@@ -1479,7 +1479,7 @@
         a.click();
         setTimeout(function () { URL.revokeObjectURL(a.href); }, 3000);
       });
-      K.toast('Gambar disimpan sebagai PNG.');
+      K.toast('Image saved as PNG.');
     });
   });
   document.getElementById('btnFull').addEventListener('click', function () {
@@ -1569,8 +1569,8 @@
     var list = presetsFor(modality);
     presetHost.innerHTML = list.map(function (p) {
       var sub = p.wc !== undefined && p.wc !== null ? 'C ' + p.wc + ' / W ' + p.ww
-        : p.rel ? (p.note || Math.round(p.rel * 100) + '% rentang')
-        : 'dari header';
+        : p.rel ? (p.note || Math.round(p.rel * 100) + '% of range')
+        : 'from header';
       return '<button class="preset" data-p="' + p.n + '"><b>' + p.n + '</b><span>' + sub + '</span></button>';
     }).join('');
     K.qsa('#presets .preset').forEach(function (b) {
@@ -1647,7 +1647,7 @@
   document.getElementById('fileInput').addEventListener('change', function (e) {
     var files = Array.prototype.slice.call(e.target.files || []);
     if (!files.length) return;
-    loader(true, 'Membaca ' + files.length + ' berkas…');
+    loader(true, 'Reading ' + files.length + ' files…');
     var recs = [], done = 0;
     files.forEach(function (f) {
       var fr = new FileReader();
@@ -1669,7 +1669,7 @@
               patientId: ds.string('00100020') || '—',
               sex: ds.string('00100040') || '', age: ds.string('00101010') || '',
               modality: (ds.string('00080060') || '??').trim(),
-              studyDesc: ds.string('00081030') || 'Studi lokal',
+              studyDesc: ds.string('00081030') || 'Local study',
               bodyPart: ds.string('00180015') || '—',
               date: ds.string('00080020') || '', time: ds.string('00080030') || '',
               accession: ds.string('00080050') || '—',
@@ -1684,19 +1684,19 @@
     });
     function finish() {
       loader(false);
-      if (!recs.length) { K.toast('Tidak ada berkas DICOM valid yang bisa dibaca.', 'err'); return; }
+      if (!recs.length) { K.toast('No valid DICOM files could be read.', 'err'); return; }
       App.viewports.forEach(function (vp) { vp.img = null; });
       mountStudy(buildLocalStudy(recs));
-      K.toast(recs.length + ' citra dimuat dari berkas lokal.');
+      K.toast(recs.length + ' images loaded from local files.');
     }
   });
 
   /* ==========================================================
      Laporan
      ========================================================== */
-  var CHIPS = ['Tidak tampak kelainan', 'Corakan bronkovaskular normal', 'Sinus costophrenicus lancip',
-    'Cor tidak membesar (CTR < 50%)', 'Tidak tampak infiltrat', 'Sistem ventrikel normal',
-    'Tidak tampak lesi fokal', 'Tulang intak'];
+  var CHIPS = ['No abnormality seen', 'Normal bronchovascular markings', 'Sharp costophrenic angles',
+    'Heart not enlarged (CTR < 50%)', 'No infiltrate seen', 'Normal ventricular system',
+    'No focal lesion seen', 'Bones intact'];
   var chipHost = document.getElementById('chipFindings');
   chipHost.innerHTML = CHIPS.map(function (c) { return '<span class="chip">' + c + '</span>'; }).join('');
   K.qsa('#chipFindings .chip').forEach(function (c) {
@@ -1734,7 +1734,7 @@
     var fb = App.sesi && App.sesi.fb;
     if (fb && fb.user) {
       fb.simpanStatus(key, baru).catch(function (err) {
-        K.toast('Status antrian tersimpan lokal, gagal sinkron: ' + fb.pesanGalat(err), 'warn');
+        K.toast('Queue status saved locally, sync failed: ' + fb.pesanGalat(err), 'warn');
       });
     }
     return baru;
@@ -1766,13 +1766,13 @@
     if (!el) return;
     if (ok === null) {
       el.className = 'sync-dot off';
-      el.innerHTML = '<i></i>Mode tamu — laporan hanya di peramban ini';
+      el.innerHTML = '<i></i>Guest mode: reports stay in this browser';
     } else if (ok) {
       el.className = 'sync-dot on';
-      el.innerHTML = '<i></i>Tersinkron' + (data && data.by ? ' · terakhir oleh ' + esc(data.by) : '');
+      el.innerHTML = '<i></i>Tersinkron' + (data && data.by ? ' · last saved by ' + esc(data.by) : '');
     } else {
       el.className = 'sync-dot off';
-      el.innerHTML = '<i></i>Gagal sinkron: ' + esc(pesan || '');
+      el.innerHTML = '<i></i>Sync failed: ' + esc(pesan || '');
     }
   }
 
@@ -1793,47 +1793,47 @@
     var fb = App.sesi && App.sesi.fb;
     if (fb && fb.user) {
       var btn = this;
-      btn.disabled = true; btn.textContent = 'Menyimpan…';
+      btn.disabled = true; btn.textContent = 'Saving…';
       fb.simpanLaporan(studyId(), data).then(function () {
-        K.toast('Laporan tersimpan dan tersinkron ke akun Anda.' +
-          (statusBaca ? ' Studi ditandai "' + statusBaca + '".' : ''));
+        K.toast('Report saved and synced to your account.' +
+          (statusBaca ? ' Study marked "' + ({ 'Selesai': 'Completed', 'Sedang dibaca': 'In progress' }[statusBaca] || statusBaca) + '".' : ''));
         tandaiLaporan(true, data);
       }).catch(function (err) {
-        K.toast('Tersimpan lokal, gagal sinkron: ' + fb.pesanGalat(err), 'warn');
+        K.toast('Saved locally, sync failed: ' + fb.pesanGalat(err), 'warn');
         tandaiLaporan(false, null, fb.pesanGalat(err));
       }).then(function () {
-        btn.disabled = false; btn.textContent = 'Simpan Laporan';
+        btn.disabled = false; btn.textContent = 'Save report';
       });
     } else {
-      K.toast('Laporan tersimpan di peramban ini.' +
-        (statusBaca ? ' Studi ditandai "' + statusBaca + '".' : ''));
+      K.toast('Report saved in this browser.' +
+        (statusBaca ? ' Study marked "' + ({ 'Selesai': 'Completed', 'Sedang dibaca': 'In progress' }[statusBaca] || statusBaca) + '".' : ''));
     }
   });
 
   function namaPembaca() {
     return (App.sesi && App.sesi.pembaca && !App.sesi.pembaca.tamu)
-      ? App.sesi.pembaca.nama : 'Mode tamu';
+      ? App.sesi.pembaca.nama : 'Guest mode';
   }
   document.getElementById('btnCopyRep').addEventListener('click', function () {
     var st = App.study || {};
     var txt = [
-      'LAPORAN RADIOLOGI (PROTOTIPE — BUKAN DOKUMEN MEDIS)',
+      'RADIOLOGY REPORT (PROTOTYPE, NOT A MEDICAL DOCUMENT)',
       '===================================================',
-      'Pasien   : ' + (st.patient ? st.patient.name : '—') + '  (' + (st.patient ? st.patient.id : '—') + ')',
-      'Studi    : ' + (st.desc || '—') + ' [' + (st.modality || '') + ']',
-      'Tanggal  : ' + K.fmtDate(st.date) + ' ' + K.fmtTime(st.time),
+      'Patient  : ' + (st.patient ? st.patient.name : '—') + '  (' + (st.patient ? st.patient.id : '—') + ')',
+      'Study    : ' + (st.desc || '—') + ' [' + (st.modality || '') + ']',
+      'Date     : ' + K.fmtDate(st.date) + ' ' + K.fmtTime(st.time),
       'Accession: ' + (st.accession || '—'),
       '',
-      'KLINIS:', document.getElementById('repClinical').value || '—',
-      '', 'TEMUAN:', document.getElementById('repFindings').value || '—',
-      '', 'KESAN:', document.getElementById('repImpression').value || '—',
-      '', 'Status: ' + document.getElementById('repStatus').value,
-      'Pembaca: ' + namaPembaca()
+      'CLINICAL:', document.getElementById('repClinical').value || '—',
+      '', 'FINDINGS:', document.getElementById('repFindings').value || '—',
+      '', 'IMPRESSION:', document.getElementById('repImpression').value || '—',
+      '', 'Status: ' + (function (v) { return { 'Draf': 'Draft', 'Menunggu verifikasi': 'Awaiting verification' }[v] || v; })(document.getElementById('repStatus').value),
+      'Reader: ' + namaPembaca()
     ].join('\n');
     if (navigator.clipboard) {
-      navigator.clipboard.writeText(txt).then(function () { K.toast('Teks laporan disalin.'); },
-        function () { K.toast('Gagal menyalin.', 'err'); });
-    } else K.toast('Clipboard tidak tersedia di peramban ini.', 'warn');
+      navigator.clipboard.writeText(txt).then(function () { K.toast('Report text copied.'); },
+        function () { K.toast('Could not copy.', 'err'); });
+    } else K.toast('Clipboard is not available in this browser.', 'warn');
   });
 
   /* ==========================================================
@@ -1872,22 +1872,22 @@
      ========================================================== */
   App.layout = K.store.get('vw.layout', '1x1');
   applyLayout();
-  document.getElementById('measHint').textContent = 'Alat aktif: Window / Level.';
+  document.getElementById('measHint').textContent = 'Active tool: Window / Level.';
 
   var params = new URLSearchParams(location.search);
   var demoId = params.get('demo'), localUid = params.get('local');
 
-  loader(true, 'Memeriksa sesi…');
+  loader(true, 'Checking session…');
   window.KAUTH.jaga().then(function (ses) {
     App.sesi = ses;
     window.KAUTH.pasangChip(document.getElementById('userChip'), ses.pembaca);
 
     if (localUid && window.KDB) {
-      loader(true, 'Memuat berkas lokal…');
+      loader(true, 'Loading local files…');
       return window.KDB.byStudy(localUid).then(function (recs) {
         loader(false);
         if (!recs.length) {
-          K.toast('Berkas lokal tidak ditemukan, memuat studi demo.', 'warn');
+          K.toast('Local files not found; loading a demo study.', 'warn');
           mountStudy(buildDemoStudy(null));
           return;
         }

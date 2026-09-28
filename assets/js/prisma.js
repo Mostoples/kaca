@@ -89,12 +89,12 @@
     return (window.DEMO ? window.DEMO.studies : []).map(function (st) {
       return {
         kunci: 'demo:' + st.id,
-        label: K.fmtName(st.patient.name) + ' — ' + st.modality + ' ' + st.desc,
+        label: K.fmtName(st.patient.name) + ' — ' + (st.desc.indexOf(st.modality) === 0 ? '' : st.modality + ' ') + st.desc,
         sumber: 'demo',
         studi: st,
         seri: st.series.map(function (s, i) {
           return {
-            label: s.desc + ' · ' + s.n + ' irisan',
+            label: s.desc + ' · ' + s.n + ' slices',
             jumlah: s.n,
             buat: function () {
               var cache = null;
@@ -140,11 +140,11 @@
         items.sort(function (a, b) { return (a.instance || 0) - (b.instance || 0); });
         var s0 = items[0];
         return {
-          label: (s0.seriesDesc || 'Seri ' + (s0.seriesNumber || 1)) + ' · ' + items.length + ' irisan',
+          label: (s0.seriesDesc || 'Series ' + (s0.seriesNumber || 1)) + ' · ' + items.length + ' slices',
           jumlah: items.length,
           buat: function () {
             return {
-              desc: s0.seriesDesc || 'Seri lokal', number: s0.seriesNumber || 1,
+              desc: s0.seriesDesc || 'Local series', number: s0.seriesNumber || 1,
               modality: s0.modality, count: items.length,
               getImage: function (i) {
                 var r = items[Math.max(0, Math.min(items.length - 1, i))];
@@ -163,7 +163,7 @@
     return {
       kunci: kunci, sumber: sumber,
       label: (first.patient || '—') + ' — ' + (first.modality || '??') + ' ' +
-             (first.studyDesc || 'Studi lokal'),
+             (first.studyDesc || 'Local study'),
       seri: daftarSeri
     };
   }
@@ -180,7 +180,7 @@
     var st = cariKatalog(selStudi.value);
     selSeri.innerHTML = st ? st.seri.map(function (s, i) {
       return '<option value="' + i + '"' + (s.jumlah < 4 ? ' disabled' : '') + '>' +
-        esc(s.label) + (s.jumlah < 4 ? ' — terlalu tipis' : '') + '</option>';
+        esc(s.label) + (s.jumlah < 4 ? ' (too thin)' : '') + '</option>';
     }).join('') : '';
     if (st) {
       /* pilih seri yang diminta, atau tumpukan paling tebal */
@@ -207,14 +207,14 @@
      ========================================================== */
   function muatTerpilih() {
     var st = cariKatalog(el('pilihStudi').value);
-    if (!st) { pesan('Tidak ada studi yang bisa dibuka'); return Promise.resolve(); }
+    if (!st) { pesan('No study can be opened'); return Promise.resolve(); }
     var idx = parseInt(el('pilihSeri').value, 10) || 0;
     var entri = st.seri[idx];
-    if (!entri) { pesan('Seri tidak ada'); return Promise.resolve(); }
+    if (!entri) { pesan('The series does not exist'); return Promise.resolve(); }
 
     if (entri.jumlah < 4) {
-      pesan('Seri ini hanya ' + entri.jumlah + ' irisan',
-        'Hologram butuh setidaknya 4 irisan. Pilih seri lain.');
+      pesan('This series has only ' + entri.jumlah + ' slices',
+        'A hologram needs at least 4 slices. Choose another series.');
       return Promise.resolve();
     }
 
@@ -226,16 +226,16 @@
     el('hJudul').textContent = st.label;
     el('hSub').textContent = entri.label;
     el('studiInfo').textContent = st.sumber === 'demo'
-      ? 'Phantom sintetis — bukan data pasien.'
-      : 'Berkas lokal Anda sendiri, diurai di peramban ini.';
-    document.title = st.label + ' — Prisma Medivox';
+      ? 'Synthetic phantom, not patient data.'
+      : 'Your own local files, parsed in this browser.';
+    document.title = st.label + ' · MEDIVOX Hologram';
 
-    pesan('Menyusun volume…', 'membaca irisan');
+    pesan('Building the volume…', 'reading slices');
     el('bar').style.width = '0%';
 
     return window.VOLUME.bangun(App.seri, {
       lapor: function (n, total) {
-        el('statusSub').textContent = n + ' / ' + total + ' irisan';
+        el('statusSub').textContent = n + ' / ' + total + ' slices';
         el('bar').style.width = (n / total * 100) + '%';
       }
     }).then(function (vol) {
@@ -245,7 +245,7 @@
       return prarender();
     }).catch(function (err) {
       var m = (err && err.message) ? err.message : String(err);
-      pesan('Tidak bisa menyiapkan hologram', m);
+      pesan('Could not prepare the hologram', m);
       el('bar').style.width = '0%';
       console.warn('Prisma:', err);
     });
@@ -318,7 +318,7 @@
     var files = Array.prototype.slice.call(fileList || []);
     if (!files.length) return;
 
-    pesan('Membaca ' + files.length + ' berkas…', '0 / ' + files.length);
+    pesan('Reading ' + files.length + ' files…', '0 / ' + files.length);
     el('bar').style.width = '0%';
 
     var recs = [], selesai = 0, gagal = 0;
@@ -330,14 +330,14 @@
           try {
             if (ds.has('00280010')) {
               recs.push({
-                studyUID: ds.string('0020000D') || 'LOKAL',
+                studyUID: ds.string('0020000D') || 'LOCAL',
                 seriesUID: ds.string('0020000E') || 'S1',
                 instance: parseInt(ds.string('00200013') || '0', 10) || 0,
                 seriesNumber: parseInt(ds.string('00200011') || '0', 10) || 0,
                 seriesDesc: ds.string('0008103E') || '',
                 patient: K.fmtName(ds.string('00100010')),
                 modality: (ds.string('00080060') || '??').trim(),
-                studyDesc: ds.string('00081030') || 'Studi lokal',
+                studyDesc: ds.string('00081030') || 'Local study',
                 buf: ds.buffer, _ds: ds
               });
             } else gagal++;
@@ -356,8 +356,8 @@
       if (selesai < files.length) return;
 
       if (!recs.length) {
-        pesan('Tidak ada berkas DICOM yang bisa dibaca',
-          gagal + ' berkas dilewati. Pastikan yang dipilih berkas .dcm.');
+        pesan('No readable DICOM files',
+          gagal + ' files skipped. Make sure you picked .dcm files.');
         return;
       }
 
@@ -404,11 +404,11 @@
     if (atlas) {
       App.atlasId = new Array(n);
       if (!App.atlas || !App.atlas.bagian.length) {
-        pesan('Belum ada model atlas', 'Tekan "Buka model OBJ/STL…" di panel.');
+        pesan('No atlas model yet', 'Press "Open OBJ/STL model…" in the panel.');
         return Promise.resolve();
       }
     } else if (!App.vol) {
-      pesan('Belum ada volume', 'Pilih studi lalu seri di panel.');
+      pesan('No volume yet', 'Choose a study and a series in the panel.');
       return Promise.resolve();
     }
 
@@ -416,9 +416,9 @@
        hanya dibangun ulang kalau ambangnya berubah — ekstraksi jauh
        lebih mahal daripada merender satu sudut. */
     if (permukaan) {
-      if (!window.MESH) { pesan('Modul permukaan tidak termuat'); return Promise.resolve(); }
+      if (!window.MESH) { pesan('The surface module did not load'); return Promise.resolve(); }
       if (!App.mesh || App.meshAmbang !== o.ambang) {
-        pesan('Menelusuri isosurface…', 'ambang ' + Math.round(o.ambang));
+        pesan('Tracing the isosurface…', 'threshold ' + Math.round(o.ambang));
         el('bar').style.width = '0%';
         App.mesh = App.vol ? window.MESH.dari(App.vol, { ambang: o.ambang }) : null;
         App.meshAmbang = o.ambang;
@@ -426,17 +426,17 @@
         if (mi) {
           mi.textContent = App.mesh && !App.mesh.kosong()
             ? App.mesh.info()
-            : 'Tidak ada permukaan pada ambang ' + Math.round(o.ambang) + '.';
+            : 'No surface at threshold ' + Math.round(o.ambang) + '.';
         }
       }
       if (!App.mesh || App.mesh.kosong()) {
-        pesan('Tidak ada permukaan pada ambang itu',
-          'Geser ambang lalu tekan "Render ulang".');
+        pesan('No surface at that threshold',
+          'Move the threshold, then press "Re-render".');
         return Promise.resolve();
       }
     }
 
-    pesan('Merender ' + n + ' sudut…', '0 / ' + n);
+    pesan('Rendering ' + n + ' angles…', '0 / ' + n);
 
     return new Promise(function (selesai) {
       function langkah() {
@@ -471,7 +471,7 @@
         siapkanKanvas();
         tutupPesan();
         el('renderInfo').textContent =
-          n + ' sudut · ' + o.ukuran + '² px · ' +
+          n + ' angles · ' + o.ukuran + '² px · ' +
           Math.round(performance.now() - mulai) + ' ms';
         selesai();
       }
@@ -509,9 +509,9 @@
   function muatModel(fileList) {
     var files = Array.prototype.slice.call(fileList || []);
     if (!files.length) return;
-    if (!window.MODEL) { pesan('Modul model tidak termuat'); return; }
+    if (!window.MODEL) { pesan('The model module did not load'); return; }
 
-    pesan('Membaca model…', '0 / ' + files.length);
+    pesan('Reading the model…', '0 / ' + files.length);
     el('bar').style.width = '0%';
 
     var bagian = [];
@@ -546,7 +546,7 @@
         el('bar').style.width = (selesai / files.length * 100) + '%';
         return berikutnya();
       }, function (e) {
-        galat.push(f.name + ': gagal dibaca (' + (e && e.message) + ')');
+        galat.push(f.name + ': could not be read (' + (e && e.message) + ')');
         selesai++;
         return berikutnya();
       });
@@ -554,7 +554,7 @@
 
     function rampung() {
       if (!bagian.length) {
-        pesan('Tidak ada model yang bisa dibaca', galat.join(' · ') || 'Format tidak dikenali.');
+        pesan('No readable model', galat.join(' · ') || 'Format not recognised.');
         el('bar').style.width = '0%';
         return;
       }
@@ -565,12 +565,12 @@
 
       el('atlasKendali').classList.remove('hide');
       el('atlasInfo').textContent = App.atlas.info() +
-        (galat.length ? ' · ' + galat.length + ' berkas gagal' : '');
+        (galat.length ? ' · ' + galat.length + ' files failed' : '');
       el('atlasInfo').title = catatan.concat(galat).join('\n');
       isiDaftarOrgan();
 
-      el('hJudul').textContent = 'Atlas anatomi';
-      el('hSub').textContent = App.atlas.bagian.length + ' bagian dari berkas Anda';
+      el('hJudul').textContent = 'Anatomy atlas';
+      el('hSub').textContent = App.atlas.bagian.length + ' parts from your file';
 
       /* pindah ke mode atlas kalau belum, lalu render */
       var tombol = document.querySelector('#modeGrid button[data-mode="atlas"]');
@@ -599,7 +599,7 @@
         '<span class="onama">' + esc(b.nama) + '</span>' +
         '<span class="otri">' + Math.round(b.mesh.jumlahSegitiga() / 1000) + 'k</span>' +
         '<span class="organ-mata" data-mata="' + i + '" role="img"' +
-        ' aria-label="' + (b.tampil ? 'Sembunyikan' : 'Tampilkan') + '">' +
+        ' aria-label="' + (b.tampil ? 'Hide' : 'Show') + '">' +
         (b.tampil ? '◉' : '○') + '</span>' +
         '</button></li>';
     }).join('');
@@ -622,7 +622,7 @@
     var b = App.atlas.pilih >= 0 ? App.atlas.bagian[App.atlas.pilih] : null;
     el('hSub').textContent = b
       ? b.nama + ' · ' + b.mesh.info()
-      : App.atlas.bagian.length + ' bagian dari berkas Anda';
+      : App.atlas.bagian.length + ' parts from your file';
     if (!tanpaRender) prarender();
   }
 
@@ -929,7 +929,7 @@
       if (App.opsi.mode === 'komposit') tandaiPerluRender(); else segarkanTampilan();
     });
     pasangSlider('rElev', 'elevasi', function (v) { return v + '°'; }, tandaiPerluRender);
-    pasangSlider('rSudut', 'jumlah', function (v) { return v + ' sudut'; }, tandaiPerluRender);
+    pasangSlider('rSudut', 'jumlah', function (v) { return v + ' angles'; }, tandaiPerluRender);
     pasangSlider('rUkuran', 'ukuran', function (v) { return v + ' px'; }, tandaiPerluRender);
     pasangSlider('rMutu', 'mutu', function (v) { return v.toFixed(2) + '×'; }, tandaiPerluRender);
     pasangSlider('rKepadatan', 'kepadatan', function (v) { return v.toFixed(2); }, tandaiPerluRender);
@@ -954,7 +954,7 @@
 
     el('btnPutar').addEventListener('click', function () {
       App.jalan = !App.jalan;
-      this.textContent = App.jalan ? 'Jeda' : 'Putar';
+      this.textContent = App.jalan ? 'Pause' : 'Play';
       this.setAttribute('aria-pressed', App.jalan ? 'true' : 'false');
     });
     el('btnRender').addEventListener('click', function () {
@@ -981,7 +981,7 @@
       if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') {
         e.preventDefault();
         App.jalan = false;
-        el('btnPutar').textContent = 'Putar';
+        el('btnPutar').textContent = 'Play';
         var n = App.kanvas.length || 1;
         App.fase = (App.fase + (e.key === 'ArrowRight' ? 1 : -1) + n) % n;
         gambar();
@@ -998,7 +998,7 @@
     kanvasUtama.addEventListener('pointerdown', function (e) {
       seret = { x: e.clientX, fase: App.fase };
       App.jalan = false;
-      el('btnPutar').textContent = 'Putar';
+      el('btnPutar').textContent = 'Play';
       try { kanvasUtama.setPointerCapture(e.pointerId); } catch (err) {}
     });
     kanvasUtama.addEventListener('pointermove', function (e) {
@@ -1055,7 +1055,7 @@
   }
 
   function mulaiGestur() {
-    if (!window.KENDALI) { statusKendali('Modul kendali tidak termuat.', 'kendali-galat'); return; }
+    if (!window.KENDALI) { statusKendali('The control module did not load.', 'kendali-galat'); return; }
 
     halusFase = new window.KENDALI.Halus(App.opsi.halus);
     halusSkala = new window.KENDALI.Halus(App.opsi.halus);
@@ -1063,9 +1063,9 @@
     gerak = new window.KENDALI.Gerak({
       fps: 15,
       lacak: { hanyaGerak: !!App.opsi.gerakSaja },
-      onStatus: function (s) { statusKendali('Gestur: ' + s, 'kendali-nyala'); },
+      onStatus: function (s) { statusKendali('Gesture: ' + s, 'kendali-nyala'); },
       onGalat: function (err) {
-        statusKendali('Gestur gagal: ' + (err && err.message ? err.message : err), 'kendali-galat');
+        statusKendali('Gesture failed: ' + (err && err.message ? err.message : err), 'kendali-galat');
         el('swGestur').checked = false;
         el('gesturKotak').classList.add('hide');
       },
@@ -1080,7 +1080,7 @@
 
         /* putaran dikendalikan tangan, jadi putaran otomatis dijeda */
         App.jalan = false;
-        el('btnPutar').textContent = 'Putar';
+        el('btnPutar').textContent = 'Play';
 
         var n = App.kanvas.length;
         var fase = halusFase.masuk(m.fase);
@@ -1097,7 +1097,7 @@
     });
 
     if (!gerak.dukung()) {
-      statusKendali('Peramban ini tidak menyediakan akses kamera.', 'kendali-galat');
+      statusKendali('This browser does not provide camera access.', 'kendali-galat');
       el('swGestur').checked = false;
       return;
     }
@@ -1110,13 +1110,13 @@
     halusFase = halusSkala = null;
     el('gesturKotak').classList.add('hide');
     gambarPratinjau(null, null);
-    statusKendali(suara && suara.jalan ? 'Suara aktif, gestur mati.' : 'Keduanya mati.');
+    statusKendali(suara && suara.jalan ? 'Voice on, gesture off.' : 'Voice and gesture are both off.');
   }
 
   /* satu perintah suara → satu tindakan, memakai kontrol yang sudah ada */
   function jalankanPerintah(p) {
     var kotak = el('kendaliDengar');
-    if (kotak) kotak.textContent = 'Perintah: ' + p.cocok;
+    if (kotak) kotak.textContent = 'Command: ' + p.cocok;
 
     switch (p.perintah) {
       case 'putar':
@@ -1142,7 +1142,7 @@
       case 'geser': {
         var n = App.kanvas.length || 1;
         App.jalan = false;
-        el('btnPutar').textContent = 'Putar';
+        el('btnPutar').textContent = 'Play';
         App.fase = (App.fase + p.nilai + n) % n;
         gambar();
         break;
@@ -1155,10 +1155,10 @@
 
       /* ---------- atlas anatomi ---------- */
       case 'organ': {
-        if (!App.atlas) { statusKendali('Belum ada model atlas.', 'kendali-galat'); break; }
+        if (!App.atlas) { statusKendali('No atlas model yet.', 'kendali-galat'); break; }
         var io = App.atlas.indeksNama(p.nilai);
         if (io < 0) {
-          statusKendali('Tidak ada bagian bernama "' + p.nilai + '".', 'kendali-galat');
+          statusKendali('No part named "' + p.nilai + '".', 'kendali-galat');
           break;
         }
         /* menyebut organ yang sedang tersorot tidak boleh membatalkannya —
@@ -1211,10 +1211,10 @@
   function mulaiSuara() {
     if (!window.KENDALI) return;
     suara = new window.KENDALI.Suara({
-      bahasa: 'id-ID',
-      onStatus: function (s) { statusKendali('Suara: ' + s, 'kendali-nyala'); },
+      bahasa: (el('pilihBahasa') && el('pilihBahasa').value) || 'en-US',
+      onStatus: function (s) { statusKendali('Voice: ' + s, 'kendali-nyala'); },
       onGalat: function (err) {
-        statusKendali('Suara gagal: ' + (err && err.message ? err.message : err), 'kendali-galat');
+        statusKendali('Voice failed: ' + (err && err.message ? err.message : err), 'kendali-galat');
         el('swSuara').checked = false;
         el('suaraPeringatan').style.display = 'none';
       },
@@ -1222,11 +1222,11 @@
         var n = el('kendaliDengar');
         if (n && !akhir) n.textContent = '“' + teks.trim() + '”';
       },
-      onPerintah: jalankanPerintah
+      onPerintah: function (p, teks) { catatPerintah(teks || p.cocok, 'voice'); jalankanPerintah(p); }
     });
 
     if (!suara.dukung()) {
-      statusKendali('Peramban ini tidak menyediakan pengenalan suara.', 'kendali-galat');
+      statusKendali('This browser does not provide speech recognition.', 'kendali-galat');
       el('swSuara').checked = false;
       return;
     }
@@ -1239,7 +1239,7 @@
     el('suaraPeringatan').style.display = 'none';
     var n = el('kendaliDengar');
     if (n) n.textContent = '';
-    statusKendali(gerak && gerak.jalan ? 'Gestur aktif, suara mati.' : 'Keduanya mati.');
+    statusKendali(gerak && gerak.jalan ? 'Gesture on, voice off.' : 'Voice and gesture are both off.');
   }
 
   function pasangKendali() {
@@ -1269,23 +1269,122 @@
   }
 
   /* ==========================================================
+     Voice card, command chips, stage dock and toast
+     ----------------------------------------------------------
+     Chips, the dock and speech all end in the same handlers as
+     the panel controls, so there is only one code path per action.
+     ========================================================== */
+  var toastTimer = null;
+  function catatPerintah(teks, asal) {
+    var t = el('voiceToast');
+    if (t) {
+      t.querySelector('span').textContent = '“' + String(teks).trim() + '”';
+      t.classList.add('show');
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(function () { t.classList.remove('show'); }, 1800);
+    }
+    var log = el('cmdLog');
+    if (!log) return;
+    var kosong = log.querySelector('li.muted');
+    if (kosong) kosong.remove();
+    var li = document.createElement('li');
+    var jam = new Date();
+    li.innerHTML = '<b></b><span></span>';
+    li.firstChild.textContent = String(teks).trim();
+    li.lastChild.textContent = (asal === 'voice' ? 'voice · ' : 'tap · ') +
+      ('0' + jam.getHours()).slice(-2) + ':' + ('0' + jam.getMinutes()).slice(-2) + ':' + ('0' + jam.getSeconds()).slice(-2);
+    log.insertBefore(li, log.firstChild);
+    while (log.children.length > 6) log.removeChild(log.lastChild);
+  }
+
+  function langkahSudut(d) {
+    var n = App.kanvas.length || 1;
+    App.jalan = false;
+    el('btnPutar').textContent = 'Play';
+    App.fase = (App.fase + d + n) % n;
+    gambar();
+  }
+
+  function pasangAntarmuka() {
+    /* command chips: parsed exactly like speech */
+    var chips = el('cmdChips');
+    if (chips) chips.addEventListener('click', function (e) {
+      var b = e.target.closest('.cmd');
+      if (!b || !window.KENDALI) return;
+      var p = window.KENDALI.bacaPerintah(b.textContent);
+      if (!p) return;
+      catatPerintah(b.textContent, 'tap');
+      jalankanPerintah(p);
+    });
+
+    /* mic button mirrors the voice switch */
+    var mic = el('micBtn'), wave = el('wave');
+    if (mic) mic.addEventListener('click', function () {
+      var sw = el('swSuara');
+      sw.checked = !sw.checked;
+      sw.dispatchEvent(new Event('change'));
+    });
+    setInterval(function () {
+      var on = !!(suara && suara.jalan && el('swSuara').checked);
+      if (mic) mic.classList.toggle('on', on);
+      if (wave) wave.classList.toggle('on', on);
+    }, 400);
+
+    var bahasa = el('pilihBahasa');
+    if (bahasa) bahasa.addEventListener('change', function () {
+      if (suara && suara.jalan) { hentiSuara(); mulaiSuara(); }
+    });
+
+    /* stage dock */
+    K.qsa('[data-dock]').forEach(function (b) {
+      b.addEventListener('click', function () {
+        var a = b.dataset.dock;
+        if (a === 'kiri') langkahSudut(-1);
+        else if (a === 'kanan') langkahSudut(1);
+        else if (a === 'besar') geserSlider('rSkala', 0.03);
+        else if (a === 'kecil') geserSlider('rSkala', -0.03);
+        else if (a === 'putar') el('btnPutar').click();
+      });
+    });
+    var ikonPutar = el('dockPutar') && el('dockPutar').querySelector('use');
+    if (ikonPutar && window.MutationObserver) {
+      new MutationObserver(function () {
+        ikonPutar.setAttribute('href', 'assets/ui/ikon-garis.svg#' + (App.jalan ? 'i-pause' : 'i-play'));
+      }).observe(el('btnPutar'), { childList: true, characterData: true, subtree: true });
+    }
+
+    /* mode tag on the stage */
+    var tag = el('modeTag');
+    if (tag) el('modeGrid').addEventListener('click', function (e) {
+      var b = e.target.closest('button');
+      if (b) tag.textContent = b.querySelector('b').textContent;
+    });
+
+    if (location.hash === '#suara') {
+      var kartu = mic && mic.closest('.card');
+      if (kartu) setTimeout(function () { kartu.scrollIntoView({ behavior: 'smooth', block: 'start' }); }, 300);
+    }
+  }
+
+  /* ==========================================================
      Boot
      ========================================================== */
   ukurKanvas();
   pasangKontrol();
   pasangKendali();
+  pasangAntarmuka();
   App.rafId = requestAnimationFrame(loop);
 
-  pesan('Memeriksa sesi…');
+  pesan('Checking session…');
   window.KAUTH.jaga().then(function (ses) {
     window.KAUTH.pasangChip(el('userChip'), ses.pembaca);
-    pesan('Menyusun daftar studi…');
+    pesan('Loading the study list…');
     return katalogLokal();
   }).then(function (lokal) {
     /* berkas lokal lebih dulu — itu yang biasanya baru dibuka pengguna */
     katalog = lokal.concat(katalogDemo());
     if (!katalog.length) {
-      pesan('Tidak ada studi yang tersedia', 'Buka berkas DICOM lewat panel di samping.');
+      pesan('No studies available', 'Open DICOM files from the side panel.');
       el('statusAksi').classList.remove('hide');
       return;
     }
@@ -1300,7 +1399,7 @@
     return muatTerpilih();
   }).catch(function (err) {
     var m = (err && err.message) ? err.message : String(err);
-    pesan('Tidak bisa menyiapkan hologram', m);
+    pesan('Could not prepare the hologram', m);
     el('bar').style.width = '0%';
     el('statusAksi').classList.remove('hide');
     console.warn('Prisma:', err);

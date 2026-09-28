@@ -270,17 +270,17 @@
   Mesh.prototype.kosong = function () { return this.tri.length === 0; };
 
   Mesh.prototype.info = function () {
-    var dasar = this.jumlahSegitiga().toLocaleString('id-ID') + ' segitiga · ' +
-      this.jumlahTitik().toLocaleString('id-ID') + ' titik';
+    var dasar = this.jumlahSegitiga().toLocaleString('id-ID') + ' triangles · ' +
+      this.jumlahTitik().toLocaleString('id-ID') + ' vertices';
     /* mesh yang DIMUAT dari berkas luar tidak punya ambang isosurface —
        menampilkan "ambang 0" hanya akan menyesatkan */
     if (this.dimuat) {
       return dasar + (this.sumberBerkas ? ' · ' + this.sumberBerkas : '') +
-        (this.terpotong ? ' · DIPOTONG (batas segitiga)' : '');
+        (this.terpotong ? ' · TRUNCATED (triangle limit)' : '');
     }
-    return dasar + ' · ambang ' + Math.round(this.ambang) +
-      (this.langkah > 1 ? ' · langkah ' + this.langkah : '') +
-      (this.terpotong ? ' · DIPOTONG (batas segitiga)' : '');
+    return dasar + ' · threshold ' + Math.round(this.ambang) +
+      (this.langkah > 1 ? ' · step ' + this.langkah : '') +
+      (this.terpotong ? ' · TRUNCATED (triangle limit)' : '');
   };
 
   /* Kotak pembatas — dipakai untuk menentukan bidang pandang */
@@ -441,7 +441,7 @@
       pixelSpacing: [mmPerPx, mmPerPx], sliceThickness: 0,
       pixels: piksel, min: 0, max: 255,
       encapsulated: false, mime: null, blobBytes: null,
-      derived: 'Rekonstruksi permukaan 3D'
+      derived: '3D surface reconstruction'
     };
   }
 
@@ -455,7 +455,7 @@
     var dv = new DataView(buf);
     var u8 = new Uint8Array(buf);
 
-    var kepala = 'Medivox — rekonstruksi permukaan DICOM (phantom/prototipe). ' + (judul || '');
+    var kepala = 'Medivox - DICOM surface reconstruction (phantom/prototype). ' + (judul || '');
     for (var i = 0; i < 80; i++) u8[i] = i < kepala.length ? kepala.charCodeAt(i) & 0x7F : 0x20;
     dv.setUint32(80, jml, true);
 
@@ -488,11 +488,11 @@
   /* OBJ teks, lengkap dengan normal per titik */
   Mesh.prototype.obj = function (judul) {
     var baris = [
-      '# Medivox — rekonstruksi permukaan dari volume DICOM',
+      '# Medivox - surface reconstruction from a DICOM volume',
       '# ' + (judul || this.desc),
-      '# ambang ' + Math.round(this.ambang) + ', ' + this.jumlahSegitiga() + ' segitiga',
-      '# satuan: milimeter',
-      '# PROTOTIPE — bukan untuk penggunaan klinis'
+      '# threshold ' + Math.round(this.ambang) + ', ' + this.jumlahSegitiga() + ' triangles',
+      '# units: millimetres',
+      '# PROTOTYPE - not for clinical use'
     ];
     var vert = this.vert, norm = this.norm, tri = this.tri, i;
     for (i = 0; i < vert.length; i += 3) {
@@ -517,7 +517,7 @@
     var jml = o.jumlah || 24;
     var cache = {};
     return {
-      desc: 'Permukaan 3D (' + jml + ' sudut)',
+      desc: '3D surface (' + jml + ' angles)',
       number: 930, modality: this.modality, count: jml,
       key: 'SURF#' + Math.round(this.ambang) + '#' + jml + '#' + (o.ukuran || 256),
       derived: true,
@@ -541,8 +541,8 @@
           { tag: '(0008,0008)', key: '00080008', vr: 'CS', name: 'ImageType',
             value: 'DERIVED\\SECONDARY\\SURFACE RENDERING' },
           { tag: '(0008,2111)', key: '00082111', vr: 'ST', name: 'DerivationDescription',
-            value: 'Isosurface marching tetrahedra pada ambang ' + Math.round(self.ambang) +
-                   ', ' + self.jumlahSegitiga() + ' segitiga, dihitung di peramban' },
+            value: 'Marching-tetrahedra isosurface at threshold ' + Math.round(self.ambang) +
+                   ', ' + self.jumlahSegitiga() + ' triangles, computed in the browser' },
           { tag: '(0028,0002)', key: '00280002', vr: 'US', name: 'SamplesPerPixel', value: '3' },
           { tag: '(0028,0004)', key: '00280004', vr: 'CS', name: 'PhotometricInterpretation', value: 'RGB' }
         ];

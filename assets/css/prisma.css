@@ -1,199 +1,134 @@
 /* ==========================================================
-   MEDIVOX — halaman proyeksi prisma hologram
+   MEDIVOX — hologram stage (after medivox.html, page 6)
    ========================================================== */
-.prisma-shell{
-  height:100vh;height:100dvh;display:flex;flex-direction:column;overflow:hidden;
-  background:var(--bg);
-}
-
-/* ---------- bilah atas ---------- */
-.prisma-bar{
-  flex:none;display:flex;align-items:center;gap:12px;padding:0 12px 0 14px;height:62px;
-  margin:10px 10px 0;border-radius:22px;position:relative;z-index:20;
-  background:var(--kaca-kuat);border:1px solid var(--kaca-tepi);
-  box-shadow:var(--sorot),var(--shadow-out);
-  backdrop-filter:blur(20px) saturate(1.6);-webkit-backdrop-filter:blur(20px) saturate(1.6);
-}
-.prisma-bar::after{content:"";position:absolute;left:24px;right:24px;bottom:-1px;height:1px;pointer-events:none;
-  background:linear-gradient(90deg,transparent,var(--accent-bright),transparent);opacity:.55}
-.prisma-bar .tit{min-width:0}
-.prisma-bar .tit b{display:block;font-size:13.5px;font-weight:650;line-height:1.2;
-  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.prisma-bar .tit span{display:block;font-size:11.5px;color:var(--muted);line-height:1.2;
-  font-family:var(--mono);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-
-.prisma-body{flex:1;display:flex;min-height:0}
-
-/* ---------- panggung ---------- */
-.panggung{
-  flex:1;min-width:0;display:grid;place-items:center;background:#000;position:relative;padding:10px;
-  margin:10px;border-radius:22px;overflow:hidden;
-  box-shadow:0 24px 50px -24px rgba(7,12,20,.6),0 0 0 1px rgba(94,201,242,.2);
-}
-.panggung::after{content:"";position:absolute;inset:0;pointer-events:none;z-index:5;
-  background:
-    linear-gradient(var(--accent-bright),var(--accent-bright)) 12px 12px/18px 1.5px,
-    linear-gradient(var(--accent-bright),var(--accent-bright)) 12px 12px/1.5px 18px,
-    linear-gradient(var(--accent-bright),var(--accent-bright)) calc(100% - 12px) 12px/18px 1.5px,
-    linear-gradient(var(--accent-bright),var(--accent-bright)) calc(100% - 12px) 12px/1.5px 18px,
-    linear-gradient(var(--accent-bright),var(--accent-bright)) 12px calc(100% - 12px)/18px 1.5px,
-    linear-gradient(var(--accent-bright),var(--accent-bright)) 12px calc(100% - 12px)/1.5px 18px,
-    linear-gradient(var(--accent-bright),var(--accent-bright)) calc(100% - 12px) calc(100% - 12px)/18px 1.5px,
-    linear-gradient(var(--accent-bright),var(--accent-bright)) calc(100% - 12px) calc(100% - 12px)/1.5px 18px;
-  background-repeat:no-repeat;opacity:.45}
-.panggung:fullscreen{margin:0;border-radius:0}
-.panggung:fullscreen::after{display:none}
-.panggung canvas{
-  display:block;touch-action:none;cursor:grab;
-  background:#000;border-radius:2px;
-}
-.panggung canvas:active{cursor:grabbing}
-.panggung:fullscreen{padding:0}
-.panggung:fullscreen canvas{border-radius:0}
-
-.panggung-info{
-  position:absolute;left:14px;bottom:12px;font-family:var(--mono);font-size:11px;
-  color:#5b6b80;pointer-events:none;
-}
-.panggung:fullscreen .panggung-info{display:none}
-
-/* ---------- panel kontrol ---------- */
-.prisma-panel{
-  flex:none;width:326px;overflow:auto;padding:18px;position:relative;
-  margin:10px 10px 10px 0;border-radius:22px;
-  background:var(--kaca-kuat);isolation:isolate;
-  border:1px solid var(--kaca-tepi);box-shadow:var(--sorot),var(--shadow-out-sm);
-}
-.prisma-panel::before{content:"";position:absolute;inset:0;z-index:-1;pointer-events:none;
-  background:var(--pola-gelombang) 0 0/420px;opacity:.14;
-  -webkit-mask-image:linear-gradient(180deg,#000,transparent 40%);mask-image:linear-gradient(180deg,#000,transparent 40%)}
+.prisma-body{flex:1;display:grid;grid-template-columns:minmax(0,1fr) 360px;gap:22px;min-height:0}
+body.tanpa-panel .prisma-body{grid-template-columns:1fr}
 body.tanpa-panel .prisma-panel{display:none}
 
-.prisma-panel h6{
-  margin:22px 0 10px;font-size:10px;letter-spacing:.2em;text-transform:uppercase;
-  color:var(--muted);font-weight:700;font-family:var(--mono);
-  display:flex;align-items:center;gap:9px;
-}
-.prisma-panel h6::before{content:"";flex:none;width:6px;height:6px;border-radius:50%;
-  background:var(--accent-bright);box-shadow:0 0 8px var(--accent-bright)}
-.prisma-panel h6::after{content:"";flex:1;height:1px;background:linear-gradient(90deg,var(--line),transparent)}
-.prisma-panel h6:first-child{margin-top:0}
+/* ---------- stage ---------- */
+.panggung{position:relative;min-width:0;min-height:0;display:grid;place-items:center;border-radius:34px;overflow:hidden;padding:12px;
+  background:radial-gradient(120% 80% at 50% 110%,#123A8F 0%,#0A1A45 45%,#060F2B 100%);
+  box-shadow:var(--neu),inset 0 0 0 1px rgba(120,170,255,.18)}
+.panggung canvas{display:block;touch-action:none;cursor:grab;background:#000;border-radius:18px;box-shadow:0 0 0 1px rgba(120,170,255,.12),0 30px 60px -20px rgba(0,0,0,.6)}
+.panggung canvas:active{cursor:grabbing}
+.panggung:fullscreen{padding:0;border-radius:0}
+.panggung:fullscreen canvas{border-radius:0}
+.panggung:fullscreen .stage-ui,.panggung:fullscreen .stage-dock,.panggung:fullscreen .panggung-info{display:none}
 
-.pgrid{display:grid;grid-template-columns:repeat(2,1fr);gap:6px}
-.pgrid.tiga{grid-template-columns:repeat(3,1fr)}
-.pgrid button{
-  background:linear-gradient(145deg,#fff,#f1f6fc);border:1px solid var(--line-soft);border-radius:12px;
-  padding:8px 9px;cursor:pointer;color:var(--text-2);font-size:11.5px;line-height:1.3;
-  display:flex;flex-direction:column;gap:2px;align-items:flex-start;
-}
-.pgrid button b{font-size:12px;color:var(--text);font-weight:600}
-.pgrid button span{font-size:10px;color:var(--muted)}
-.pgrid button{box-shadow:var(--sorot),var(--shadow-out-sm);transition:border-color .15s,box-shadow .15s,transform .15s}
-.pgrid button:hover{border-color:rgba(94,201,242,.5);box-shadow:var(--shadow-out);transform:translateY(-1px)}
-.pgrid button.on{border-color:rgba(94,201,242,.7);background:#fff;
-  box-shadow:var(--sorot),var(--shadow-out-sm),0 0 0 3px rgba(94,201,242,.16)}
-.pgrid button.on b{color:var(--accent)}
-.pgrid button:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+.stage-ui{position:absolute;display:flex;gap:10px;z-index:3;color:#D9E6FF}
+.stage-ui.top{top:18px;left:18px;right:18px;justify-content:space-between;flex-wrap:wrap}
+.glass-tag{display:inline-flex;align-items:center;gap:8px;padding:7px 14px;border-radius:99px;background:rgba(255,255,255,.08);border:1px solid rgba(160,200,255,.22);
+  backdrop-filter:blur(10px);font-size:.76rem;font-weight:600;color:#D9E6FF;font-family:var(--font)}
+.panggung-info{position:absolute;left:22px;bottom:96px;font-size:.72rem;color:#8FA6CF;pointer-events:none;z-index:3}
 
-.prow{display:flex;align-items:center;gap:9px;margin-bottom:7px}
-.prow label{flex:none;width:98px;font-size:11.5px;color:var(--text-2)}
+.stage-dock{position:absolute;left:50%;bottom:20px;transform:translateX(-50%);display:flex;gap:10px;padding:8px;border-radius:22px;
+  background:rgba(255,255,255,.08);border:1px solid rgba(160,200,255,.2);backdrop-filter:blur(14px);z-index:3}
+.dock-btn{width:48px;height:48px;border-radius:15px;border:0;display:grid;place-items:center;color:#DCE8FF;background:rgba(255,255,255,.06);transition:.2s;font-size:1.3rem}
+.dock-btn:hover{background:rgba(255,255,255,.16)}
+.dock-btn .li{width:20px;height:20px}
+.dock-btn.dock-main{background:var(--grad);color:#fff;box-shadow:0 8px 20px rgba(63,139,255,.5)}
+
+.voice-toast{position:absolute;top:70px;left:50%;transform:translate(-50%,-10px);opacity:0;display:flex;align-items:center;gap:10px;padding:10px 18px;border-radius:99px;
+  background:rgba(255,255,255,.96);color:var(--ink);font-weight:600;font-size:.9rem;box-shadow:0 10px 30px rgba(0,0,0,.25);transition:.3s;z-index:4;pointer-events:none;white-space:nowrap}
+.voice-toast .li{color:var(--blue);width:18px;height:18px}
+.voice-toast.show{opacity:1;transform:translate(-50%,0)}
+
+/* ---------- panel ---------- */
+.prisma-panel{min-height:0;overflow:auto;display:grid;gap:22px;align-content:start;padding:4px 10px 24px 4px;margin-right:-10px}
+.prisma-panel .card{padding:20px}
+.prisma-panel h6{margin:18px 0 10px;font-size:.7rem;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);font-weight:700;font-family:var(--font)}
+.prow{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.prow label{flex:none;width:112px;font-size:.8rem;color:var(--ink-2);font-weight:600}
 .prow input[type=range]{flex:1;min-width:0}
-.prow .v{flex:none;width:62px;text-align:right;font-family:var(--mono);font-size:11px;color:var(--muted)}
+.prow .v{flex:none;width:66px;text-align:right;font-family:var(--mono);font-size:.72rem;color:var(--ink);font-weight:600}
 .prow .switch{margin-left:auto}
+.prow select.field{flex:1;min-width:0;min-height:40px;padding:8px 36px 8px 12px;font-size:.84rem}
+.pnote{margin:10px 0 0;font-size:.78rem;line-height:1.6;color:var(--muted)}
+.pnote b{color:var(--ink-2);font-weight:700}
+.pnote.peringatan{padding:10px 12px;border-radius:14px;box-shadow:var(--neu-in);color:var(--ink-2)}
+.vinfo{margin:10px 0 0;font-family:var(--mono);font-size:.7rem;line-height:1.6;color:var(--ink-2);word-break:break-word}
 
-.prisma-panel .btn-render{width:100%;margin-top:4px}
-.btn.perlu{
-  border-color:var(--warn);color:var(--warn);
-  animation:denyut 1.6s ease-in-out infinite;
-}
-@keyframes denyut{50%{background:rgba(199,122,6,.1)}}
+.pgrid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
+.pgrid.tiga{grid-template-columns:repeat(3,1fr)}
+.pgrid button{display:flex;flex-direction:column;align-items:flex-start;gap:2px;padding:9px 10px;border:0;border-radius:14px;background:var(--bg);box-shadow:var(--neu-sm);
+  color:var(--ink-2);font-size:.74rem;line-height:1.25;text-align:left;transition:.15s}
+.pgrid button b{font-size:.8rem;color:var(--ink);font-weight:700}
+.pgrid button span{font-size:.66rem;color:var(--muted)}
+.pgrid button:hover b{color:var(--blue)}
+.pgrid button.on{background:var(--grad);box-shadow:0 8px 18px rgba(47,98,245,.3)}
+.pgrid button.on b,.pgrid button.on span{color:#fff}
+.btn.perlu{color:var(--warn);animation:denyut 1.6s ease-in-out infinite}
+@keyframes denyut{50%{box-shadow:var(--neu-sm),0 0 0 3px rgba(232,163,58,.35)}}
 
-.vinfo{
-  margin:9px 0 0;font-family:var(--mono);font-size:10.5px;line-height:1.6;
-  color:var(--text-2);word-break:break-word;
-}
-.pnote{margin:9px 0 0;font-size:11px;line-height:1.6;color:var(--muted)}
-.pnote b{color:var(--text-2);font-weight:600}
-.pnote + .pnote{margin-top:7px}
+/* voice */
+.voice-box{display:flex;align-items:center;gap:16px;margin-bottom:16px}
+.mic-btn{width:62px;height:62px;border-radius:50%;border:0;display:grid;place-items:center;color:var(--blue);background:var(--bg);box-shadow:var(--neu);flex:none;transition:.2s}
+.mic-btn .li{width:24px;height:24px}
+.mic-btn.on{background:var(--grad);color:#fff;box-shadow:0 0 0 8px rgba(63,139,255,.15),0 0 0 16px rgba(63,139,255,.08),var(--glow)}
+.wave{flex:1;height:48px;display:flex;align-items:center;justify-content:space-between;gap:4px;padding:0 14px;border-radius:16px;box-shadow:var(--neu-in)}
+.wave i{width:5px;height:8px;border-radius:5px;background:var(--grad);transition:height .12s}
+.wave.on i{animation:gelombang 1s ease-in-out infinite}
+.wave.on i:nth-child(2n){animation-delay:-.3s}.wave.on i:nth-child(3n){animation-delay:-.55s}.wave.on i:nth-child(4n){animation-delay:-.75s}
+@keyframes gelombang{0%,100%{height:8px}50%{height:32px}}
+.cmd-chips{display:flex;flex-wrap:wrap;gap:8px;margin:14px 0 4px}
+.cmd{padding:7px 12px;border:0;border-radius:13px;font-size:.78rem;font-weight:600;color:var(--blue);background:var(--bg);box-shadow:var(--neu-sm);transition:.2s}
+.cmd:hover{transform:translateY(-2px)}
+.cmd:active{box-shadow:var(--neu-in)}
+.log{list-style:none;display:grid;gap:8px;max-height:150px;overflow:auto;font-size:.8rem;margin:12px 0 0;padding:0}
+.log li{display:flex;justify-content:space-between;gap:10px;padding:8px 12px;border-radius:12px;box-shadow:var(--neu-in)}
+.log li.muted{box-shadow:none;padding:4px 0}
+.log li span{color:var(--muted);font-size:.72rem;white-space:nowrap}
+.log li b{font-weight:600}
 
-/* ---------- daftar organ atlas ---------- */
-.organ-list{list-style:none;margin:0;padding:0;max-height:240px;overflow:auto}
-.organ-list li{margin:0}
-.organ-list button{
-  width:100%;display:flex;align-items:center;gap:8px;
-  background:none;border:1px solid transparent;border-radius:7px;
-  padding:5px 6px;cursor:pointer;color:var(--text-2);
-  font-size:11.5px;text-align:left;font-family:inherit;
-}
-.organ-list button:hover{background:var(--bg-1);border-color:var(--line)}
-.organ-list button:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
-.organ-list button[aria-pressed=true]{border-color:var(--accent);background:rgba(47,111,208,.08)}
-.organ-list button[aria-pressed=true] .onama{color:var(--text)}
-.organ-list .oswatch{
-  flex:none;width:11px;height:11px;border-radius:3px;
-  border:1px solid rgba(18,44,80,.2);
-}
+/* gesture */
+.gesture-box{display:flex;gap:14px;align-items:center;margin-bottom:12px}
+.kendali-kotak{flex:none;width:128px;border-radius:18px;padding:6px;box-shadow:var(--neu-in)}
+.kendali-kotak canvas{width:100%;height:auto;display:block;border-radius:12px;background:#0A1430;transform:scaleX(-1)}
+.gest-list{list-style:none;display:grid;gap:10px;flex:1;min-width:0;margin:0;padding:0}
+.gest-list li{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:14px;box-shadow:var(--neu-sm)}
+.gest-list .ikon{--ikon:32px}
+.gest-list b{display:block;font-size:.82rem}
+.gest-list small{color:var(--muted);font-size:.72rem}
+.kendali-nyala{color:var(--ok)!important}
+.kendali-galat{color:var(--danger)!important}
+
+/* atlas */
+.organ-list{list-style:none;margin:0;padding:0;max-height:240px;overflow:auto;display:grid;gap:4px}
+.organ-list button{width:100%;display:flex;align-items:center;gap:8px;background:none;border:0;border-radius:10px;padding:6px 8px;color:var(--ink-2);font-size:.78rem;text-align:left}
+.organ-list button:hover{box-shadow:var(--neu-sm)}
+.organ-list button[aria-pressed=true]{box-shadow:var(--neu-in);color:var(--blue)}
+.organ-list .oswatch{flex:none;width:11px;height:11px;border-radius:3px}
 .organ-list .onama{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.organ-list .otri{flex:none;font-family:var(--mono);font-size:10px;color:var(--muted)}
-/* organ yang disembunyikan tetap terlihat di daftar, hanya diredupkan */
+.organ-list .otri{flex:none;font-family:var(--mono);font-size:.64rem;color:var(--muted)}
 .organ-list button.mati{opacity:.42}
 .organ-list button.mati .onama{text-decoration:line-through}
-.organ-mata{
-  flex:none;background:none;border:0;padding:0 2px;cursor:pointer;
-  color:var(--muted);font-size:12px;line-height:1;width:auto;
-}
+.organ-mata{flex:none;background:none;border:0;padding:0 2px;color:var(--muted);font-size:12px;line-height:1;width:auto}
 
-/* ---------- kendali tanpa sentuh ---------- */
-.kendali-kotak{
-  margin:10px 0 8px;padding:10px;border:1px solid var(--kaca-tepi);border-radius:16px;
-  background:linear-gradient(145deg,#fff,#eef4fb);box-shadow:var(--sorot),var(--shadow-out-sm);
-}
-.kendali-kotak canvas{
-  width:100%;height:auto;display:block;border-radius:7px;background:#000;
-  margin-bottom:10px;transform:scaleX(-1);      /* cermin, seperti kaca rias */
-}
-.kendali-kotak .prow:last-child{margin-bottom:0}
-.kendali-nyala{color:var(--ok) !important}
-.kendali-galat{color:var(--danger) !important}
+/* progress */
+.pstatus{position:absolute;inset:0;display:grid;place-items:center;background:rgba(3,8,26,.8);backdrop-filter:blur(4px);z-index:20;color:#E4EEFB;border-radius:inherit}
+.pstatus .kotak{text-align:center;width:min(360px,80%)}
+.pstatus p{margin:0 0 6px;font-size:.95rem;font-weight:600}
+.pstatus small{display:block;font-family:var(--mono);font-size:.74rem;color:#9FB3CC;min-height:1.4em}
+.pbar{height:6px;border-radius:6px;background:rgba(255,255,255,.14);overflow:hidden;margin-top:14px}
+.pbar i{display:block;height:100%;width:0;background:var(--grad);transition:width .18s linear}
 
-/* ---------- status / kemajuan ---------- */
-.pstatus{
-  position:absolute;inset:0;display:grid;place-items:center;
-  background:rgba(0,0,0,.82);backdrop-filter:blur(3px);z-index:20;
-  color:#e8f1fb;               /* berada di atas panggung gelap */
+/* ---------- responsive ---------- */
+@media (max-width:1240px){
+  .prisma-body{grid-template-columns:minmax(0,1fr) 320px}
+  .prow label{width:96px}
 }
-.pstatus .kotak{text-align:center;width:min(340px,80vw)}
-.pstatus p{margin:0 0 6px;font-size:14px}
-.pstatus small{display:block;font-family:var(--mono);font-size:11.5px;color:#9fb3cc;min-height:1.4em}
-.pbar{
-  height:4px;border-radius:20px;background:rgba(255,255,255,.16);overflow:hidden;margin-top:14px;
-}
-.pbar i{display:block;height:100%;width:0;background:var(--grad);box-shadow:0 0 10px var(--accent-bright);transition:width .18s linear}
-
 @media (max-width:1000px){
-  .prisma-body{flex-direction:column}
-  .prisma-panel{
-    width:auto;margin:0 10px 10px;
-    max-height:44vh;flex:none;
-  }
-  /* panggung tetap bagian terbesar: di ponsel layarnya yang
-     diletakkan di bawah prisma, jadi luasnya menentukan ukuran
-     hologram yang terlihat */
-  .panggung{flex:1;min-height:52vh}
-  .prow label{width:88px}
+  .prisma-body{grid-template-columns:1fr;grid-template-rows:minmax(56vh,1fr) auto;overflow:auto}
+  body.app .prisma-shell{overflow:auto}
+  .prisma-panel{overflow:visible;margin:0;padding:0;grid-template-columns:repeat(auto-fit,minmax(290px,1fr))}
 }
-@media (max-width:620px){
-  .prisma-bar{height:56px;padding:0 8px;gap:6px;margin:8px 8px 0;border-radius:18px}
-  .panggung{margin:8px;border-radius:18px}
-  .prisma-panel{margin:0 8px 8px;border-radius:18px}
-  .prisma-bar .tit,#btnPanel{display:none}
-  .prisma-panel{padding:14px 12px;max-height:42vh}
-  .panggung{min-height:54vh;padding:6px}
-  .panggung-info{font-size:10px;left:10px;bottom:8px}
-  .prow label{width:76px;font-size:12.5px}
-}
-
-/* ponsel: bilah tab bawah (app.css) butuh header tanpa backdrop-filter */
-@media (max-width:720px){
-  .prisma-bar{backdrop-filter:none;-webkit-backdrop-filter:none;background:rgba(255,255,255,.96)}
+@media (max-width:900px){
+  .prisma-shell{height:auto;min-height:100dvh}
+  body.app{overflow:auto}
+  .prisma-body{grid-template-rows:auto auto}
+  .panggung{height:62vh;min-height:380px;border-radius:26px}
+  .panggung-info{display:none}
+  .stage-dock{bottom:14px;gap:6px;padding:6px}
+  .dock-btn{width:42px;height:42px}
+  .glass-tag{font-size:.7rem;padding:5px 11px}
 }

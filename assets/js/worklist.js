@@ -34,7 +34,7 @@
     K.store.set('wl.status', statusOverride);
     if (sesi && sesi.fb && sesi.fb.user) {
       sesi.fb.simpanStatus(key, status).catch(function (err) {
-        K.toast('Status tersimpan lokal, gagal menyinkronkan: ' + sesi.fb.pesanGalat(err), 'warn');
+        K.toast('Status saved locally, sync failed: ' + sesi.fb.pesanGalat(err), 'warn');
       });
     }
   }
@@ -88,7 +88,7 @@
         sex: rec.sex || '',
         age: rec.age || '',
         modality: rec.modality || '??',
-        desc: rec.studyDesc || 'Studi lokal',
+        desc: rec.studyDesc || 'Local study',
         bodyPart: rec.bodyPart || '—',
         date: rec.date || '',
         time: rec.time || '',
@@ -144,9 +144,11 @@
   }
 
   function statusPill(s) {
-    var cls = s === 'Selesai' ? 'pill-ok' : s === 'Sedang dibaca' ? 'pill-info'
+    var cls = s === 'Selesai' ? 'pill-ok' : s === 'Sedang dibaca' ? 'pill-accent'
             : s === 'Belum dibaca' ? 'pill-warn' : '';
-    return '<span class="pill ' + cls + '"><span class="dot"></span>' + s + '</span>';
+    /* status is stored with its original (Indonesian) key; only the label is translated */
+    var label = { 'Selesai': 'Completed', 'Sedang dibaca': 'In progress', 'Belum dibaca': 'Unread' }[s] || s;
+    return '<span class="pill ' + cls + '"><span class="dot"></span>' + label + '</span>';
   }
 
   function render() {
@@ -171,14 +173,14 @@
       return '<tr data-key="' + r.key + '" tabindex="0"' +
           (state.selected === r.key ? ' class="sel"' : '') + '>' +
         '<td class="c-urgent">' + (r.urgent
-          ? '<span class="mod-tag pill-urgent" title="Cito">CITO</span>' : '') + '</td>' +
+          ? '<span class="mod-tag pill-urgent" title="Urgent">STAT</span>' : '') + '</td>' +
         '<td class="pn">' + esc(r.patient) +
           '<span class="sub">' + esc(r.patientId) + (r.sex ? ' · ' + r.sex : '') + (r.age ? ' · ' + fmtAge(r.age) : '') + '</span></td>' +
-        '<td data-l="Modalitas"><span class="mod-tag mod-' + esc(r.modality) + '">' + esc(r.modality) + '</span></td>' +
-        '<td data-l="Studi">' + esc(r.desc) + '<span class="sub">' + r.series + ' seri · ' + r.images + ' citra</span></td>' +
-        '<td data-l="Regio">' + esc(r.bodyPart || '—') + '</td>' +
-        '<td data-l="Tanggal">' + K.fmtDate(r.date) + '<span class="sub">' + K.fmtTime(r.time) + '</span></td>' +
-        '<td data-l="Citra">' + r.images + '</td>' +
+        '<td data-l="Modality"><span class="mod-tag mod-' + esc(r.modality) + '">' + esc(r.modality) + '</span></td>' +
+        '<td data-l="Study">' + esc(r.desc) + '<span class="sub">' + r.series + ' series · ' + r.images + ' images</span></td>' +
+        '<td data-l="Region">' + esc(r.bodyPart || '—') + '</td>' +
+        '<td data-l="Date">' + K.fmtDate(r.date) + '<span class="sub">' + K.fmtTime(r.time) + '</span></td>' +
+        '<td data-l="Images">' + r.images + '</td>' +
         '<td data-l="Status">' + statusPill(r.status) + '</td>' +
         '<td data-l="Accession" style="font-family:var(--mono);font-size:12px">' + esc(r.accession) + '</td>' +
       '</tr>';
@@ -186,7 +188,7 @@
 
     emptyBox.classList.toggle('hide', rows.length > 0);
     document.getElementById('foot').textContent =
-      rows.length + ' studi ditampilkan · ' + rows.reduce(function (a, r) { return a + r.images; }, 0) + ' citra';
+      rows.length + ' studies shown · ' + rows.reduce(function (a, r) { return a + r.images; }, 0) + ' images';
 
     updateCounts();
     document.getElementById('btnOpen').disabled = !state.selected;
@@ -202,7 +204,7 @@
     if (!a) return '';
     var m = /^(\d+)([YMD])$/.exec(a);
     if (!m) return a;
-    return parseInt(m[1], 10) + (m[2] === 'Y' ? ' Th' : m[2] === 'M' ? ' Bln' : ' Hr');
+    return parseInt(m[1], 10) + (m[2] === 'Y' ? ' y' : m[2] === 'M' ? ' mo' : ' d');
   }
   function esc(s) {
     return String(s === undefined || s === null ? '' : s)
@@ -241,8 +243,8 @@
     });
   }
   function modName(m) {
-    return ({ CT: 'CT Scan', MR: 'MRI', CR: 'Radiografi', DX: 'Radiografi Digital',
-      US: 'Ultrasonografi', MG: 'Mamografi', XA: 'Angiografi', NM: 'Kedokteran Nuklir' })[m] || m;
+    return ({ CT: 'CT Scan', MR: 'MRI', CR: 'Radiography', DX: 'Digital radiography',
+      US: 'Ultrasound', MG: 'Mammography', XA: 'Angiography', NM: 'Nuclear medicine' })[m] || m;
   }
 
   /* ==========================================================
@@ -368,7 +370,7 @@
   document.getElementById('btnRefresh').addEventListener('click', function () {
     refreshLocalFromDB().then(function () {
       buildModFilters(); render(); segarkanInfoCache();
-      K.toast('Worklist disegarkan.');
+      K.toast('Studies refreshed.');
     });
   });
 
@@ -377,7 +379,7 @@
      jalur kedua untuk pengukuran dan pembacaan konvensional. */
   function openSelected(tujuan) {
     var r = state.rows.filter(function (x) { return x.key === state.selected; })[0];
-    if (!r) { K.toast('Pilih satu studi terlebih dahulu.', 'warn'); return; }
+    if (!r) { K.toast('Select a study first.', 'warn'); return; }
     /* membuka studi yang belum dibaca langsung menandainya sedang dibaca */
     if (r.status === 'Belum dibaca') setStatus(r.key, 'Sedang dibaca');
 
@@ -456,28 +458,28 @@
     if (!entries.length) { ingest(e.dataTransfer.files); return; }
 
     var adaFolder = entries.some(function (en) { return en.isDirectory; });
-    if (adaFolder) K.toast('Menelusuri folder…');
+    if (adaFolder) K.toast('Scanning the folder…');
 
     Promise.all(entries.map(function (en) { return bacaEntry(en, 0); }))
       .then(function (hasil) {
         var files = gabung(hasil);
-        if (!files.length) { K.toast('Tidak ada berkas di dalam yang dijatuhkan.', 'warn'); return; }
+        if (!files.length) { K.toast('The dropped item contains no files.', 'warn'); return; }
         ingest(files);
       })
-      .catch(function () { K.toast('Gagal membaca folder yang dijatuhkan.', 'err'); });
+      .catch(function () { K.toast('Could not read the dropped folder.', 'err'); });
   });
 
   function ingest(fileList) {
     var files = Array.prototype.slice.call(fileList || []);
     if (!files.length) return;
     var ok = 0, fail = 0, total = files.length;
-    K.toast('Membaca ' + total + ' berkas…');
+    K.toast('Reading ' + total + ' files…');
 
     var i = 0;
     function next() {
       if (i >= files.length) {
         buildModFilters(); render(); segarkanInfoCache();
-        K.toast(ok + ' citra dimuat' + (fail ? ', ' + fail + ' berkas dilewati (bukan DICOM valid)' : '') + '.',
+        K.toast(ok + ' images loaded' + (fail ? ', ' + fail + ' files skipped (not valid DICOM)' : '') + '.',
           fail && !ok ? 'err' : '');
         return;
       }
@@ -493,7 +495,7 @@
            dengan begitu viewer cukup memakai parse() yang sinkron. */
         window.DICOM.parseAsync(fr.result).then(function (ds) {
           try {
-            if (!ds.has('00280010')) throw new Error('bukan citra');
+            if (!ds.has('00280010')) throw new Error('not an image');
             var rec = {
               studyUID: ds.string('0020000D') || ('NOUID-' + (f.webkitRelativePath || f.name).split('/')[0]),
               seriesUID: ds.string('0020000E') || 'S1',
@@ -507,7 +509,7 @@
               sex: ds.string('00100040') || '',
               age: ds.string('00101010') || '',
               modality: (ds.string('00080060') || '??').trim(),
-              studyDesc: ds.string('00081030') || ds.string('0008103E') || 'Studi lokal',
+              studyDesc: ds.string('00081030') || ds.string('0008103E') || 'Local study',
               bodyPart: ds.string('00180015') || '—',
               date: ds.string('00080020') || '',
               time: ds.string('00080030') || '',
@@ -540,12 +542,12 @@
 
   function segarkanInfoCache() {
     if (!infoCache) return;
-    if (!window.KDB || !window.KDB.usage) { infoCache.textContent = 'Cache tidak tersedia.'; return; }
+    if (!window.KDB || !window.KDB.usage) { infoCache.textContent = 'Cache unavailable.'; return; }
     window.KDB.usage().then(function (u) {
       infoCache.textContent = u.instances
-        ? u.instances + ' citra dari ' + u.studies + ' studi · ' + K.fmtBytes(u.bytes)
-        : 'Belum ada berkas lokal tersimpan.';
-    }).catch(function () { infoCache.textContent = 'Cache tidak terbaca.'; });
+        ? u.instances + ' images from ' + u.studies + ' studies · ' + K.fmtBytes(u.bytes)
+        : 'No local files stored yet.';
+    }).catch(function () { infoCache.textContent = 'The cache could not be read.'; });
   }
 
   /* buang jejak status, laporan, dan pengukuran milik studi lokal */
@@ -558,35 +560,35 @@
 
   document.getElementById('btnDelStudy').addEventListener('click', function () {
     var r = state.rows.filter(function (x) { return x.key === state.selected; })[0];
-    if (!r || r.source !== 'local') { K.toast('Pilih satu studi lokal terlebih dahulu.', 'warn'); return; }
-    if (!confirm('Hapus ' + r.images + ' citra studi "' + r.desc + '" dari cache peramban?\n' +
-                 'Berkas aslinya di komputer Anda tidak tersentuh.')) return;
+    if (!r || r.source !== 'local') { K.toast('Select a local study first.', 'warn'); return; }
+    if (!confirm('Delete ' + r.images + ' images of study "' + r.desc + '" from the browser cache?\n' +
+                 'The original files on your computer are not touched.')) return;
 
     window.KDB.deleteStudy(r.studyUID).then(function (n) {
       bersihkanJejakLokal(r.studyUID);
       delete localStudies[r.studyUID];
       if (state.selected === r.key) state.selected = null;
       buildModFilters(); render(); segarkanInfoCache();
-      K.toast(n + ' citra dihapus dari cache.');
+      K.toast(n + ' images removed from the cache.');
     }).catch(function (err) {
-      K.toast('Gagal menghapus: ' + (err && err.message ? err.message : 'kesalahan IndexedDB'), 'err');
+      K.toast('Could not delete: ' + (err && err.message ? err.message : 'IndexedDB error'), 'err');
     });
   });
 
   document.getElementById('btnPurge').addEventListener('click', function () {
     var jml = Object.keys(localStudies).length;
-    if (!jml) { K.toast('Tidak ada berkas lokal di cache.', 'warn'); return; }
-    if (!confirm('Bersihkan seluruh cache berkas lokal (' + jml + ' studi)?\n' +
-                 'Berkas asli di komputer Anda tidak tersentuh, tetapi studi ini harus dibuka ulang.')) return;
+    if (!jml) { K.toast('There are no local files in the cache.', 'warn'); return; }
+    if (!confirm('Clear the entire local file cache (' + jml + ' studies)?\n' +
+                 'The original files on your computer are not touched, but these studies will need to be opened again.')) return;
 
     window.KDB.clear().then(function () {
       Object.keys(localStudies).forEach(bersihkanJejakLokal);
       localStudies = {};
       state.selected = null;
       buildModFilters(); render(); segarkanInfoCache();
-      K.toast('Cache berkas lokal dibersihkan.');
+      K.toast('Local file cache cleared.');
     }).catch(function (err) {
-      K.toast('Gagal membersihkan cache: ' + (err && err.message ? err.message : 'kesalahan IndexedDB'), 'err');
+      K.toast('Could not clear the cache: ' + (err && err.message ? err.message : 'IndexedDB error'), 'err');
     });
   });
 
@@ -616,7 +618,7 @@
     });
   }).catch(function (err) {
     console.warn('Init worklist:', err);
-    tandaiSinkron(false, 'sesi tidak terbaca');
+    tandaiSinkron(false, 'session unreadable');
   });
 
   /* identitas menyusul bila sesi akun baru diketahui belakangan */
@@ -630,10 +632,10 @@
     if (!host) return;
     if (ok === null) {
       host.className = 'sync-dot off';
-      host.innerHTML = '<i></i>Mode tamu — tersimpan di peramban ini';
+      host.innerHTML = '<i></i>Guest mode: saved in this browser';
       return;
     }
     host.className = 'sync-dot ' + (ok ? 'on' : 'off');
-    host.innerHTML = '<i></i>' + (ok ? 'Tersinkron dengan akun Anda' : 'Sinkronisasi gagal: ' + esc(pesan || ''));
+    host.innerHTML = '<i></i>' + (ok ? 'Synced with your account' : 'Sync failed: ' + esc(pesan || ''));
   }
 })();

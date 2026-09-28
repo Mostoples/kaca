@@ -89,7 +89,7 @@
   /* ---------- format ---------- */
   function fmtDate(d) {
     if (!d || d.length < 8) return d || '—';
-    var bulan = ['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agu','Sep','Okt','Nov','Des'];
+    var bulan = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
     return parseInt(d.slice(6, 8), 10) + ' ' + bulan[parseInt(d.slice(4, 6), 10) - 1] + ' ' + d.slice(0, 4);
   }
   function fmtTime(t) {

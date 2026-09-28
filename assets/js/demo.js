@@ -291,11 +291,11 @@
   var STUDIES = [
     {
       id: 'ST-2409-0143', accession: 'ACC0000143', urgent: true, status: 'Belum dibaca',
-      patient: { name: 'Wijaya^Andi', id: 'RM-0092841', sex: 'M', birth: '19740312', age: '051Y' },
-      modality: 'CT', desc: 'CT Toraks Kontras', bodyPart: 'CHEST',
-      date: '20260901', time: '084215', institution: 'RS Harapan Medika',
+      patient: { name: 'Wijaya^Andi', id: 'MRN-0092841', sex: 'M', birth: '19740312', age: '051Y' },
+      modality: 'CT', desc: 'CT Thorax with Contrast', bodyPart: 'CHEST',
+      date: '20260901', time: '084215', institution: 'Harapan Medika Hospital',
       station: 'CT-SOMATOM-01', manufacturer: 'Siemens Healthineers', model: 'SOMATOM go.Top',
-      referring: 'dr. Sari Puspita, Sp.P',
+      referring: 'Dr. Sari Puspita, Pulmonologist',
       series: [
         { desc: 'Axial Mediastinum 3mm', n: 24, gen: 'ctThorax', num: 2 },
         { desc: 'Axial Lung Window 3mm', n: 24, gen: 'ctThorax', num: 3, wc: -600, ww: 1600 },
@@ -304,11 +304,11 @@
     },
     {
       id: 'ST-2409-0144', accession: 'ACC0000144', urgent: false, status: 'Sedang dibaca',
-      patient: { name: 'Halim^Maria', id: 'RM-0113507', sex: 'F', birth: '19880725', age: '037Y' },
-      modality: 'MR', desc: 'MRI Kepala Non-Kontras', bodyPart: 'HEAD',
-      date: '20260901', time: '101340', institution: 'RS Harapan Medika',
+      patient: { name: 'Halim^Maria', id: 'MRN-0113507', sex: 'F', birth: '19880725', age: '037Y' },
+      modality: 'MR', desc: 'MRI Head without Contrast', bodyPart: 'HEAD',
+      date: '20260901', time: '101340', institution: 'Harapan Medika Hospital',
       station: 'MR-VIDA-02', manufacturer: 'Siemens Healthineers', model: 'MAGNETOM Vida 3T',
-      referring: 'dr. Bagus Nugroho, Sp.S',
+      referring: 'Dr. Bagus Nugroho, Neurologist',
       series: [
         { desc: 'AX T1 MPRAGE', n: 22, gen: 'mrBrain', num: 3 },
         { desc: 'AX T2 FLAIR', n: 22, gen: 'mrBrain', num: 4, invertish: true }
@@ -316,38 +316,38 @@
     },
     {
       id: 'ST-2409-0145', accession: 'ACC0000145', urgent: false, status: 'Selesai',
-      patient: { name: 'Santoso^Budi', id: 'RM-0087320', sex: 'M', birth: '19601119', age: '065Y' },
-      modality: 'CR', desc: 'Foto Toraks PA', bodyPart: 'CHEST',
-      date: '20260831', time: '073055', institution: 'Klinik Sehat Bersama',
+      patient: { name: 'Santoso^Budi', id: 'MRN-0087320', sex: 'M', birth: '19601119', age: '065Y' },
+      modality: 'CR', desc: 'Chest X-ray PA', bodyPart: 'CHEST',
+      date: '20260831', time: '073055', institution: 'Sehat Bersama Clinic',
       station: 'DR-01', manufacturer: 'Fujifilm', model: 'FDR Smart X',
-      referring: 'dr. Lina Kartika',
+      referring: 'Dr. Lina Kartika',
       series: [{ desc: 'PA Erect', n: 1, gen: 'crChest', num: 1 }]
     },
     {
       id: 'ST-2409-0146', accession: 'ACC0000146', urgent: true, status: 'Belum dibaca',
-      patient: { name: 'Prasetyo^Dewi', id: 'RM-0129944', sex: 'F', birth: '19950203', age: '030Y' },
-      modality: 'CT', desc: 'CT Kepala Tanpa Kontras', bodyPart: 'HEAD',
-      date: '20260902', time: '025510', institution: 'RS Harapan Medika',
+      patient: { name: 'Prasetyo^Dewi', id: 'MRN-0129944', sex: 'F', birth: '19950203', age: '030Y' },
+      modality: 'CT', desc: 'CT Head without Contrast', bodyPart: 'HEAD',
+      date: '20260902', time: '025510', institution: 'Harapan Medika Hospital',
       station: 'CT-SOMATOM-01', manufacturer: 'Siemens Healthineers', model: 'SOMATOM go.Top',
-      referring: 'dr. IGD Shift Malam',
+      referring: 'ER night shift',
       series: [{ desc: 'AX Brain 5mm', n: 20, gen: 'ctHead', num: 2 }]
     },
     {
       id: 'ST-2409-0147', accession: 'ACC0000147', urgent: false, status: 'Belum dibaca',
-      patient: { name: 'Rahmawati^Siti', id: 'RM-0134002', sex: 'F', birth: '19910617', age: '034Y' },
-      modality: 'US', desc: 'USG Abdomen Atas', bodyPart: 'ABDOMEN',
-      date: '20260902', time: '134502', institution: 'Klinik Sehat Bersama',
+      patient: { name: 'Rahmawati^Siti', id: 'MRN-0134002', sex: 'F', birth: '19910617', age: '034Y' },
+      modality: 'US', desc: 'Upper Abdomen Ultrasound', bodyPart: 'ABDOMEN',
+      date: '20260902', time: '134502', institution: 'Sehat Bersama Clinic',
       station: 'US-EPIQ-01', manufacturer: 'Philips', model: 'EPIQ Elite',
-      referring: 'dr. Tono Wibisono, Sp.PD',
-      series: [{ desc: 'Cine Hepar', n: 20, gen: 'usSector', num: 1, cine: true }]
+      referring: 'Dr. Tono Wibisono, Internist',
+      series: [{ desc: 'Liver cine', n: 20, gen: 'usSector', num: 1, cine: true }]
     },
     {
       id: 'ST-2409-0148', accession: 'ACC0000148', urgent: false, status: 'Selesai',
-      patient: { name: 'Kusuma^Rian', id: 'RM-0101288', sex: 'M', birth: '20010930', age: '024Y' },
-      modality: 'MR', desc: 'MRI Kepala Follow-up', bodyPart: 'HEAD',
-      date: '20260829', time: '155020', institution: 'RS Harapan Medika',
+      patient: { name: 'Kusuma^Rian', id: 'MRN-0101288', sex: 'M', birth: '20010930', age: '024Y' },
+      modality: 'MR', desc: 'MRI Head Follow-up', bodyPart: 'HEAD',
+      date: '20260829', time: '155020', institution: 'Harapan Medika Hospital',
       station: 'MR-VIDA-02', manufacturer: 'Siemens Healthineers', model: 'MAGNETOM Vida 3T',
-      referring: 'dr. Bagus Nugroho, Sp.S',
+      referring: 'Dr. Bagus Nugroho, Neurologist',
       series: [{ desc: 'AX T1 MPRAGE', n: 18, gen: 'mrBrain', num: 2 }]
     }
   ];

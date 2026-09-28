@@ -134,7 +134,7 @@
     return V.bangun(seriUji({ nx: 4, ny: 4, nz: 3, nilai: kode })).then(function () {
       gagal('seharusnya ditolak');
     }, function (err) {
-      benar(/4 irisan|setidaknya/i.test(err.message), 'pesan menyebut kebutuhan minimal: ' + err.message);
+      benar(/4 slices|at least/i.test(err.message), 'pesan menyebut kebutuhan minimal: ' + err.message);
     });
   });
 

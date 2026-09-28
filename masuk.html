@@ -1,111 +1,84 @@
 <!DOCTYPE html>
-<html lang="id">
+<html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>Masuk — Medivox</title>
-<meta name="description" content="Masuk ke platform inspeksi citra DICOM Medivox.">
-<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><defs><linearGradient id='g' x1='0' y1='0' x2='1' y2='1'><stop offset='0' stop-color='%232f6fd0'/><stop offset='1' stop-color='%235ec9f2'/></linearGradient></defs><rect width='32' height='32' rx='9' fill='url(%23g)'/><path d='M8 23V9l8 8 8-8v14' fill='none' stroke='%23ffffff' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'/></svg>">
+<title>Sign in · MEDIVOX</title>
+<link rel="icon" href="assets/ui/logo-mark.svg" type="image/svg+xml">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Sora:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap">
 <link rel="stylesheet" href="assets/css/base.css">
-<link rel="stylesheet" href="assets/css/site.css">
 <link rel="stylesheet" href="assets/css/auth.css">
 </head>
 <body class="auth-body">
 
-<main class="auth-wrap">
-  <!-- kolom kiri: formulir -->
-  <img class="ornamen o-auth-cincin lambat" src="assets/ui/ornamen/cincin.webp" alt="" aria-hidden="true" width="514" height="513">
-  <img class="ornamen o-auth-kapsul balik" src="assets/ui/ornamen/kapsul.webp" alt="" aria-hidden="true" width="515" height="411">
-  <section class="auth-card kaca hud" aria-labelledby="judulMasuk">
-    <a class="brand" href="index.html" style="margin-bottom:26px">
-      <span class="mark" aria-hidden="true">M</span>
-      <span class="wordmark">Medivox<small>See. Speak. Understand.</small></span>
-    </a>
-
-    <h1 id="judulMasuk">Masuk ke ruang baca</h1>
-    <p class="sub" id="subJudul">Gunakan akun Anda untuk menyimpan status baca dan laporan
-      lintas perangkat.</p>
-
-    <div class="alert hide" id="alert" role="alert" aria-live="assertive"></div>
-
-    <button class="btn btn-google" id="btnGoogle" type="button">
-      <svg viewBox="0 0 24 24" width="17" height="17" aria-hidden="true">
-        <path fill="#4285F4" d="M23 12.27c0-.85-.08-1.67-.22-2.45H12v4.63h6.17a5.28 5.28 0 0 1-2.29 3.46v2.88h3.7C21.74 18.8 23 15.8 23 12.27z"/>
-        <path fill="#34A853" d="M12 23.5c3.1 0 5.7-1.03 7.6-2.79l-3.7-2.88c-1.03.69-2.35 1.1-3.9 1.1-3 0-5.54-2.02-6.45-4.74H1.72v2.97A11.49 11.49 0 0 0 12 23.5z"/>
-        <path fill="#FBBC05" d="M5.55 14.19a6.9 6.9 0 0 1 0-4.38V6.84H1.72a11.5 11.5 0 0 0 0 10.32l3.83-2.97z"/>
-        <path fill="#EA4335" d="M12 5.02c1.69 0 3.2.58 4.4 1.72l3.28-3.28C17.7 1.6 15.1.5 12 .5 7.52.5 3.64 3.08 1.72 6.84l3.83 2.97C6.46 7.09 9 5.02 12 5.02z"/>
-      </svg>
-      Lanjutkan dengan Google
-    </button>
-
-    <div class="divider"><span>atau</span></div>
-
-    <form id="formAuth" novalidate>
-      <div class="field-row hide" id="rowNama">
-        <label class="lbl" for="inNama">Nama lengkap</label>
-        <input class="field" id="inNama" type="text" autocomplete="name" placeholder="dr. Nama Anda">
+<main class="page-auth">
+  <div class="auth-wrap">
+    <aside class="auth-visual" aria-hidden="true">
+      <a href="index.html" class="brand" tabindex="-1"><img class="brand-mark" src="assets/ui/logo-mark.svg" alt=""><span class="brand-word"><b>MEDI</b><i>VOX</i></span></a>
+      <div class="auth-orb">
+        <div class="orb-ring r1"></div><div class="orb-ring r2"></div>
+        <div class="orb-scan"><canvas id="authCanvas" width="440" height="330"></canvas></div>
+        <span class="orb-chip c1 neu"><img class="i3d" src="assets/ui/ikon/mik.webp" alt=""></span>
+        <span class="orb-chip c2 neu"><img class="i3d" src="assets/ui/ikon/hologram.webp" alt=""></span>
+        <span class="orb-chip c3 neu"><img class="i3d" src="assets/ui/ikon/tangan.webp" alt=""></span>
       </div>
-      <div class="field-row">
-        <label class="lbl" for="inEmail">Email</label>
-        <input class="field" id="inEmail" type="email" autocomplete="email"
-               placeholder="nama@rumahsakit.id" required>
-      </div>
-      <div class="field-row">
-        <label class="lbl" for="inSandi">Kata sandi</label>
-        <div class="pw">
-          <input class="field" id="inSandi" type="password" autocomplete="current-password"
-                 placeholder="Minimal 6 karakter" required minlength="6">
-          <button type="button" class="pw-toggle" id="btnLihatSandi" aria-label="Tampilkan kata sandi"><img class="ikon" src="assets/ui/ikon/mata.webp" alt="" aria-hidden="true" decoding="async">
-          </button>
+      <h2>Pixels never leave your device.</h2>
+      <p>MEDIVOX only stores reading status and report text. DICOM files are read with the File API and parsed in browser memory. Nothing is uploaded.</p>
+      <div class="dots"><span class="on"></span><span></span><span></span></div>
+    </aside>
+
+    <section class="auth-card neu" aria-labelledby="judulMasuk">
+      <a href="index.html" class="back-link"><svg class="li"><use href="assets/ui/ikon-garis.svg#i-back"/></svg> Home</a>
+      <h1 id="judulMasuk">Sign in</h1>
+      <p class="muted" id="subJudul">Use your account to keep reading status and reports in sync across devices.</p>
+
+      <div class="alert hide" id="alert" role="alert" aria-live="assertive"></div>
+
+      <form id="formAuth" novalidate>
+        <div class="field-row hide" id="rowNama">
+          <label class="lbl" for="inNama">Full name</label>
+          <div class="input"><svg class="li"><use href="assets/ui/ikon-garis.svg#i-user"/></svg><input id="inNama" type="text" autocomplete="name" placeholder="Dr. Your Name"></div>
         </div>
-      </div>
+        <div class="field-row">
+          <label class="lbl" for="inEmail">Email</label>
+          <div class="input"><svg class="li"><use href="assets/ui/ikon-garis.svg#i-user"/></svg><input id="inEmail" type="email" autocomplete="email" placeholder="name@hospital.org" required></div>
+        </div>
+        <div class="field-row">
+          <label class="lbl" for="inSandi">Password</label>
+          <div class="input pw"><svg class="li"><use href="assets/ui/ikon-garis.svg#i-shield"/></svg>
+            <input id="inSandi" type="password" autocomplete="current-password" placeholder="At least 6 characters" required minlength="6">
+            <button type="button" class="pw-toggle" id="btnLihatSandi" aria-label="Show password"><svg class="li"><use href="assets/ui/ikon-garis.svg#i-eye"/></svg></button>
+          </div>
+        </div>
+        <div class="row-between">
+          <span></span>
+          <button type="button" class="linkbtn" id="btnLupa">Forgot password?</button>
+        </div>
+        <button class="btn btn-primary btn-block btn-lg" id="btnKirim" type="submit">Sign in</button>
+      </form>
 
-      <div class="row" style="justify-content:space-between;margin:-2px 0 16px">
-        <button type="button" class="linkbtn" id="btnLupa">Lupa kata sandi?</button>
-      </div>
+      <div class="divider"><span>or</span></div>
 
-      <button class="btn btn-primary btn-block" id="btnKirim" type="submit">Masuk</button>
-    </form>
+      <button class="btn btn-block" id="btnGoogle" type="button">
+        <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
+          <path fill="#4285F4" d="M23 12.27c0-.85-.08-1.67-.22-2.45H12v4.63h6.17a5.28 5.28 0 0 1-2.29 3.46v2.88h3.7C21.74 18.8 23 15.8 23 12.27z"/>
+          <path fill="#34A853" d="M12 23.5c3.1 0 5.7-1.03 7.6-2.79l-3.7-2.88c-1.03.69-2.35 1.1-3.9 1.1-3 0-5.54-2.02-6.45-4.74H1.72v2.97A11.49 11.49 0 0 0 12 23.5z"/>
+          <path fill="#FBBC05" d="M5.55 14.19a6.9 6.9 0 0 1 0-4.38V6.84H1.72a11.5 11.5 0 0 0 0 10.32l3.83-2.97z"/>
+          <path fill="#EA4335" d="M12 5.02c1.69 0 3.2.58 4.4 1.72l3.28-3.28C17.7 1.6 15.1.5 12 .5 7.52.5 3.64 3.08 1.72 6.84l3.83 2.97C6.46 7.09 9 5.02 12 5.02z"/>
+        </svg>
+        Continue with Google
+      </button>
+      <button class="btn btn-block btn-ghost" id="btnTamu" type="button" style="margin-top:12px">Continue as guest</button>
+      <p class="tiny">Guest mode keeps reading status and reports in this browser only. DICOM files are parsed locally in both modes.</p>
 
-    <p class="swap">
-      <span id="swapTeks">Belum punya akun?</span>
-      <button type="button" class="linkbtn" id="btnSwap">Daftar sekarang</button>
-    </p>
-
-    <div class="divider"><span>atau</span></div>
-
-    <button class="btn btn-block" id="btnTamu" type="button">Lanjut sebagai tamu</button>
-    <p class="tiny">Mode tamu menyimpan status baca dan laporan hanya di peramban ini.
-      Berkas DICOM tetap diurai secara lokal pada kedua mode.</p>
-  </section>
-
-  <!-- kolom kanan: konteks -->
-  <aside class="auth-aside" aria-hidden="true">
-    <img class="ornamen o-auth-bola" src="assets/ui/ornamen/bola.webp" alt="" width="450" height="451">
-    <img class="ornamen o-auth-heliks lambat" src="assets/ui/ornamen/heliks.webp" alt="" width="302" height="630">
-    <div class="aside-inner">
-      <span class="pill pill-accent"><span class="dot"></span> Zero-footprint</span>
-      <h2>Piksel tidak pernah meninggalkan perangkat Anda.</h2>
-      <p>Medivox hanya menyimpan status baca dan isi laporan. Berkas DICOM dibaca lewat File API
-        dan diurai di memori peramban — tidak ada unggahan.</p>
-      <div class="aside-produk">
-        <img src="assets/3d/putih-tigaper.webp" alt="" width="903" height="787" decoding="async">
-      </div>
-      <div class="aside-mock hud">
-        <canvas id="authCanvas" width="440" height="330"></canvas>
-        <div class="ovl tl">PHANTOM SINTETIS<br>CT TORAKS</div>
-        <div class="ovl br">W: 1500 L: -500</div>
-      </div>
-      <ul class="check-list">
-        <li>Laporan tersinkron antar perangkat</li>
-        <li>Status baca per studi tersimpan aman</li>
-        <li>Hanya Anda yang bisa membaca data Anda</li>
-      </ul>
-    </div>
-  </aside>
+      <p class="switch">
+        <span id="swapTeks">New to MEDIVOX?</span>
+        <button type="button" class="linkbtn" id="btnSwap">Create an account</button>
+      </p>
+    </section>
+  </div>
 </main>
 
 <div id="toasts"></div>

@@ -13,22 +13,22 @@
 
   /* ---------- isi ---------- */
   var UMUM = {
-    judul: 'Umum',
+    judul: 'General',
     baris: [
-      ['?', 'Buka / tutup dialog pintasan ini'],
-      ['Esc', 'Tutup dialog, laci, atau batalkan aksi'],
-      ['Tab', 'Pindah fokus antar kontrol']
+      ['?', 'Open / close this shortcut dialog'],
+      ['Esc', 'Close a dialog or drawer, or cancel an action'],
+      ['Tab', 'Move focus between controls']
     ]
   };
 
   var WORKLIST = [
     {
-      judul: 'Antrian baca',
+      judul: 'Reading queue',
       baris: [
-        ['↑  ↓', 'Pilih studi sebelumnya / berikutnya'],
-        ['Enter', 'Buka studi terpilih di viewer'],
-        ['Klik ganda', 'Buka studi langsung'],
-        ['Klik judul kolom', 'Urutkan naik / turun']
+        ['↑  ↓', 'Select previous / next study'],
+        ['Enter', 'Open the selected study'],
+        ['Double-click', 'Open the study directly'],
+        ['Click a column header', 'Sort ascending / descending']
       ]
     },
     UMUM
@@ -36,70 +36,70 @@
 
   var VIEWER = [
     {
-      judul: 'Alat',
+      judul: 'Tools',
       baris: [
         ['W', 'Window / Level'],
-        ['P', 'Geser (pan)'],
-        ['Z', 'Perbesar'],
-        ['S', 'Gulir irisan'],
-        ['L', 'Ukur panjang'],
-        ['A', 'Ukur sudut'],
-        ['R', 'ROI persegi'],
-        ['E', 'ROI elips'],
-        ['D', 'Probe nilai piksel'],
-        ['T', 'Anotasi teks']
+        ['P', 'Pan'],
+        ['Z', 'Zoom'],
+        ['S', 'Scroll slices'],
+        ['L', 'Measure length'],
+        ['A', 'Measure angle'],
+        ['R', 'Rectangle ROI'],
+        ['E', 'Ellipse ROI'],
+        ['D', 'Pixel value probe'],
+        ['T', 'Text annotation']
       ]
     },
     {
-      judul: 'Tampilan',
+      judul: 'View',
       baris: [
-        ['I', 'Inversi'],
-        ['V', 'Cermin vertikal'],
-        ['F', 'Pas ke layar'],
-        ['0', 'Reset tampilan'],
-        ['H', 'Sembunyikan overlay'],
-        ['1', 'Tata letak 1×1'],
-        ['2', 'Tata letak 1×2'],
-        ['3', 'Tata letak 1×3'],
-        ['4', 'Tata letak 2×2']
+        ['I', 'Invert'],
+        ['V', 'Flip vertical'],
+        ['F', 'Fit to screen'],
+        ['0', 'Reset view'],
+        ['H', 'Hide overlay'],
+        ['1', 'Layout 1×1'],
+        ['2', 'Layout 1×2'],
+        ['3', 'Layout 1×3'],
+        ['4', 'Layout 2×2']
       ]
     },
     {
-      judul: 'Navigasi irisan',
+      judul: 'Slice navigation',
       baris: [
-        ['←  →', 'Irisan sebelumnya / berikutnya'],
-        ['↑  ↓', 'Irisan sebelumnya / berikutnya'],
-        ['Spasi', 'Putar / jeda cine']
+        ['←  →', 'Previous / next slice'],
+        ['↑  ↓', 'Previous / next slice'],
+        ['Space', 'Play / pause cine']
       ]
     },
     {
-      judul: 'Tetikus',
+      judul: 'Mouse',
       baris: [
-        ['Seret kiri', 'Jalankan alat yang aktif'],
-        ['Seret tengah', 'Geser citra'],
-        ['Seret kanan', 'Perbesar / perkecil'],
-        ['Roda', 'Gulir irisan'],
-        ['Ctrl + roda', 'Perbesar / perkecil'],
-        ['Shift + seret', 'Geser citra'],
-        ['Klik ganda', 'Ganti tata letak 1×1 ↔ 2×2']
+        ['Left drag', 'Use the active tool'],
+        ['Middle drag', 'Pan the image'],
+        ['Right drag', 'Zoom in / out'],
+        ['Wheel', 'Scroll slices'],
+        ['Ctrl + wheel', 'Zoom in / out'],
+        ['Shift + drag', 'Pan the image'],
+        ['Double-click', 'Switch layout 1×1 ↔ 2×2']
       ]
     },
     {
-      judul: 'Layar sentuh',
+      judul: 'Touch screen',
       baris: [
-        ['Satu jari', 'Jalankan alat yang aktif'],
-        ['Dua jari', 'Cubit untuk memperbesar dan menggeser']
+        ['One finger', 'Use the active tool'],
+        ['Two fingers', 'Pinch to zoom and pan']
       ]
     },
     {
       judul: '3D, MPR & MIP',
       baris: [
-        ['Panel seri', 'Tombol "Bangun 3D & MPR" di bawah daftar seri'],
-        ['Hasilnya', 'Muncul sebagai seri baru: MPR, MIP, dan proyeksi 3D'],
-        ['Seri 3D', 'Gulir irisan memutar volume; Spasi memutarnya otomatis'],
-        ['Permukaan', '"Rekonstruksi permukaan" membuat isosurface pada satu ambang'],
-        ['Unduh', 'Tombol STL dan OBJ menyimpan jaringnya dalam milimeter'],
-        ['Prisma', 'Tombol "Prisma hologram" membuka tampilan piramida']
+        ['Series panel', 'The "Build 3D & MPR" button below the series list'],
+        ['Result', 'Appears as new series: MPR, MIP and 3D projections'],
+        ['3D series', 'Scrolling rotates the volume; Space rotates it automatically'],
+        ['Surface', '"Reconstruct surface" builds an isosurface at one threshold'],
+        ['Download', 'STL and OBJ buttons save the mesh in millimetres'],
+        ['Prism', '"Send to hologram" opens the prism stage']
       ]
     },
     UMUM
@@ -107,32 +107,32 @@
 
   var PRISMA = [
     {
-      judul: 'Panggung hologram',
+      judul: 'Hologram stage',
       baris: [
-        ['Spasi', 'Putar / jeda'],
-        ['←  →', 'Geser satu sudut'],
-        ['Seret', 'Putar volume dengan tetikus atau jari'],
-        ['F', 'Layar penuh'],
-        ['P', 'Sembunyikan panel kontrol']
+        ['Space', 'Play / pause'],
+        ['←  →', 'Step one angle'],
+        ['Drag', 'Rotate the volume with mouse or finger'],
+        ['F', 'Full screen'],
+        ['P', 'Hide the control panel']
       ]
     },
     {
-      judul: 'Mode proyeksi',
+      judul: 'Projection mode',
       baris: [
-        ['MIP', 'Nilai tertinggi sepanjang sinar — bagus untuk tulang & pembuluh'],
-        ['Volume', 'Ray-cast beropasitas; kepadatan & gamma bisa disetel'],
-        ['Rerata', 'Mirip radiograf digital'],
-        ['Permukaan', 'Isosurface bernaung; ambangnya bisa digeser']
+        ['MIP', 'Highest value along each ray: good for bone and vessels'],
+        ['Volume', 'Opacity ray casting with adjustable density and gamma'],
+        ['Average', 'Looks like a digital radiograph'],
+        ['Surface', 'Shaded isosurface with an adjustable threshold']
       ]
     },
     {
-      judul: 'Menyiapkan prisma',
+      judul: 'Setting up the prism',
       baris: [
-        ['Puncak prisma', 'Diletakkan tepat di penanda tengah layar'],
-        ['Ukuran sisi', 'Disamakan dengan lebar bidang prisma'],
-        ['Jarak ke pusat', 'Digeser sampai keempat pantulan bertumpuk'],
-        ['Cermin', 'Dinyalakan bila citra terbaca terbalik'],
-        ['Balik arah', 'Menukar arah putar antar sisi']
+        ['Prism apex', 'Sits exactly on the centre mark'],
+        ['Face size', 'Match the width of a prism face'],
+        ['Distance to centre', 'Adjust until the four reflections overlap'],
+        ['Mirror', 'Turn on if the image reads backwards'],
+        ['Reverse direction', 'Swaps the rotation direction']
       ]
     },
     UMUM
@@ -153,7 +153,7 @@
       g.baris.map(function (b) {
         var tombol = b[0].split(/\s{2,}/).map(function (t) {
           return '<kbd>' + esc(t) + '</kbd>';
-        }).join('<span class="atau">atau</span>');
+        }).join('<span class="atau">or</span>');
         return '<div><dt>' + tombol + '</dt><dd>' + esc(b[1]) + '</dd></div>';
       }).join('') +
       '</dl></section>';
@@ -184,9 +184,9 @@
         '<div class="body sc-body">' + grup.map(grupHTML).join('') + '</div>' +
         '<footer>' +
           '<span style="font-size:11.5px;color:var(--muted);margin-right:auto">' +
-            (mode === 'viewer' ? 'Pintasan alat tidak aktif saat kursor berada di kolom teks.'
-             : mode === 'prisma' ? 'Matikan lampu ruangan untuk pantulan yang paling jelas.'
-             : 'Halaman worklist — buka viewer untuk pintasan alat.') +
+            (mode === 'viewer' ? 'Tool shortcuts are disabled while typing in a text field.'
+             : mode === 'prisma' ? 'Dim the room lights for the clearest reflections.'
+             : 'Studies page: open the viewer for tool shortcuts.') +
           '</span>' +
           '<button class="btn btn-sm btn-primary" data-tutup>Mengerti</button>' +
         '</footer>' +

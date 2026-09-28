@@ -1,549 +1,318 @@
 <!DOCTYPE html>
-<html lang="id">
+<html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>Medivox — Viewer Hologram Prisma untuk Citra DICOM</title>
-<meta name="description" content="Medivox mengubah tumpukan irisan CT dan MRI menjadi hologram tiga dimensi yang mengambang di dalam prisma kaca. Berjalan penuh di peramban, tanpa instalasi, tanpa mengunggah berkas.">
-<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><defs><linearGradient id='g' x1='0' y1='0' x2='1' y2='1'><stop offset='0' stop-color='%232f6fd0'/><stop offset='1' stop-color='%235ec9f2'/></linearGradient></defs><rect width='32' height='32' rx='9' fill='url(%23g)'/><path d='M8 23V9l8 8 8-8v14' fill='none' stroke='%23ffffff' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'/></svg>">
+<title>MEDIVOX · Pseudo-holographic DICOM Workstation</title>
+<meta name="description" content="MEDIVOX turns CT and MRI series into a floating 3D image inside a glass prism. It runs entirely in the browser, with voice and gesture control and no file uploads.">
+<link rel="icon" href="assets/ui/logo-mark.svg" type="image/svg+xml">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Sora:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap">
 <link rel="stylesheet" href="assets/css/base.css">
 <link rel="stylesheet" href="assets/css/site.css">
 </head>
 <body>
-<a class="skip-link" href="#fitur">Lewati ke konten utama</a>
+<a class="skip-link" href="#product">Skip to content</a>
 
-<!-- ============ NAV ============ -->
-<header class="site-nav">
-  <div class="wrap">
-    <a class="brand" href="index.html">
-      <span class="mark">M</span>
-      <span class="wordmark">Medivox<small>See. Speak. Understand.</small></span>
+<div class="page-profile">
+  <!-- ============ HEADER ============ -->
+  <header class="site-header">
+    <a href="index.html" class="brand" aria-label="MEDIVOX home">
+      <img class="brand-mark" src="assets/ui/logo-mark.svg" alt="">
+      <span class="brand-word"><b>MEDI</b><i>VOX</i></span>
     </a>
-    <nav id="nav">
-      <a href="#hologram">Hologram</a>
-      <a href="#perangkat">Perangkat</a>
-      <a href="#alur">Alur Kerja</a>
-      <a href="#fitur">Fitur</a>
-      <a href="#keamanan">Keamanan</a>
-      <a href="#harga">Harga</a>
+    <nav class="site-nav" id="nav">
+      <a href="#why">Why</a>
+      <a href="#how">How it works</a>
+      <a href="#touchless">Voice &amp; gesture</a>
+      <a href="#fitur">Features</a>
+      <a href="#specs">Specs</a>
       <a href="#faq">FAQ</a>
+      <a href="masuk.html" class="nav-mobile-only">Sign in</a>
     </nav>
-    <span class="spacer"></span>
-    <a class="btn btn-ghost btn-sm nav-hide" href="masuk.html">Masuk</a>
-    <a class="btn btn-primary btn-sm" href="prisma.html">Buka Hologram</a>
-    <button class="nav-toggle" id="navToggle" aria-label="Menu">
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
-    </button>
-  </div>
-</header>
+    <div class="site-actions">
+      <a href="masuk.html" class="btn btn-ghost">Sign in</a>
+      <a href="prisma.html" class="btn btn-primary">Open hologram</a>
+      <button class="icon-btn nav-toggle" id="navToggle" aria-label="Open menu">
+        <svg class="li"><use href="assets/ui/ikon-garis.svg#i-menu"/></svg>
+      </button>
+    </div>
+  </header>
 
-<!-- ============ HERO ============ -->
-<section class="hero">
-  <img class="ornamen o-cincin lambat" src="assets/ui/ornamen/cincin.webp" width="514" height="513" alt="" aria-hidden="true" decoding="async">
-  <img class="ornamen o-bola" src="assets/ui/ornamen/bola.webp" width="450" height="451" alt="" aria-hidden="true" decoding="async">
-  <img class="ornamen o-kapsul balik" src="assets/ui/ornamen/kapsul.webp" width="515" height="411" alt="" aria-hidden="true" decoding="async">
-  <img class="ornamen o-palang lambat balik" src="assets/ui/ornamen/palang.webp" width="327" height="264" alt="" aria-hidden="true" decoding="async">
-  <img class="ornamen o-heliks" src="assets/ui/ornamen/heliks.webp" width="302" height="630" alt="" aria-hidden="true" decoding="async">
-  <div class="wrap">
-    <div class="hero-teks">
-      <span class="eyebrow">Hologram prisma &middot; berjalan di peramban</span>
-      <h1>Citra CT dan MRI yang <span class="grad">mengambang</span> di dalam prisma kaca.</h1>
-      <p class="lead">
-        Medivox menyusun tumpukan irisan DICOM menjadi volume tiga dimensi, lalu memancarkannya
-        sebagai empat pandangan yang saling berhadapan. Letakkan prisma di atas layar dan
-        keempat pantulannya bertemu jadi satu bentuk yang tampak melayang &mdash; bisa diputar,
-        tanpa kacamata.
-      </p>
+  <!-- ============ HERO ============ -->
+  <section class="hero" id="product">
+    <div class="hero-copy">
+      <span class="eyebrow"><span class="dot-live"></span> Pseudo-holographic DICOM workstation</span>
+      <h1>Anatomy that <span class="grad-text">floats</span>.<br>Decisions made together.</h1>
+      <p class="lead">MEDIVOX turns CT and MRI series into a floating 3D image inside a glass prism that a
+        whole team can walk around and review together. No headset, no glasses, nothing to touch,
+        and no files uploaded.</p>
       <div class="hero-cta">
-        <a class="btn btn-primary" href="prisma.html"><img class="ikon" src="assets/ui/ikon/hologram.webp" alt="" aria-hidden="true" decoding="async">Buka Panggung Hologram</a>
-        <a class="btn" href="worklist.html"><img class="ikon" src="assets/ui/ikon/studi.webp" alt="" aria-hidden="true" decoding="async">Lihat Daftar Studi</a>
+        <a href="prisma.html" class="btn btn-primary btn-lg">Open the hologram stage
+          <svg class="li"><use href="assets/ui/ikon-garis.svg#i-arrow"/></svg></a>
+        <a href="worklist.html" class="btn btn-lg">Browse studies</a>
       </div>
-      <div class="hero-meta">
-        <span><img class="ikon" src="assets/ui/ikon/centang.webp" alt="" aria-hidden="true" decoding="async"> Tanpa kacamata &amp; proyektor</span>
-        <span><img class="ikon" src="assets/ui/ikon/centang.webp" alt="" aria-hidden="true" decoding="async"> Volume dihitung di perangkat</span>
-        <span><img class="ikon" src="assets/ui/ikon/centang.webp" alt="" aria-hidden="true" decoding="async"> Berkas tidak pernah diunggah</span>
-      </div>
-      <div class="hero-angka kaca hud">
-        <div><b>127</b><span>uji inti lulus</span></div>
-        <div><b>24</b><span>sudut hologram</span></div>
-        <div><b>0</b><span>berkas diunggah</span></div>
+      <div class="hero-stats">
+        <div class="stat neu"><strong>0</strong><span>headsets needed</span></div>
+        <div class="stat neu"><strong>4</strong><span>synchronised views</span></div>
+        <div class="stat neu"><strong>0</strong><span>files uploaded</span></div>
       </div>
     </div>
 
-    <div class="hero-panggung" aria-label="Perangkat MEDIVOX-1">
-      <div class="orbit" aria-hidden="true"><i></i><i></i><i></i></div>
-      <img class="hero-produk" src="assets/3d/putih-hero.webp" width="852" height="764"
-           fetchpriority="high"
-           alt="MEDIVOX-1: basis keramik putih berpita biru dengan prisma piramida terbalik,
-                hologram otak bercahaya mengambang di dalamnya">
-      <div class="hero-chip kaca chip-a"><img class="ikon" src="assets/ui/ikon/otak.webp" alt="" aria-hidden="true" decoding="async" style="--ikon:30px"><div><b>Volume CT</b><span>512 &times; 512 &times; 248</span></div></div>
-      <div class="hero-chip kaca chip-b"><img class="ikon" src="assets/ui/ikon/hologram.webp" alt="" aria-hidden="true" decoding="async" style="--ikon:30px"><div><b>4 pandangan</b><span>Pepper&rsquo;s ghost</span></div></div>
-      <div class="hero-chip kaca chip-c"><img class="ikon" src="assets/ui/ikon/perisai.webp" alt="" aria-hidden="true" decoding="async" style="--ikon:30px"><div><b>Tetap lokal</b><span>tanpa unggahan</span></div></div>
-      <div class="hero-label"><b>MEDIVOX&#8209;1</b><span>Volumetric review system</span></div>
+    <div class="hero-visual">
+      <div class="prism-stage neu">
+        <div class="float-chip chip-a neu"><img class="i3d" src="assets/ui/ikon/mik.webp" alt=""><span>&ldquo;Rotate left&rdquo;</span></div>
+        <div class="float-chip chip-b neu"><img class="i3d" src="assets/ui/ikon/tangan.webp" alt=""><span>Gesture tracked</span></div>
+        <div class="float-chip chip-c neu"><img class="i3d" src="assets/ui/ikon/perisai.webp" alt=""><span>DICOM &middot; stays local</span></div>
+        <div class="prism" aria-hidden="true">
+          <div class="prism-glow"></div>
+          <canvas class="prism-canvas" id="heroCanvas" width="620" height="620"></canvas>
+        </div>
+        <p class="stage-caption">Four-view emitter output &middot; live, rendered in your browser</p>
+      </div>
     </div>
-  </div>
-</section>
+  </section>
 
-<!-- ============ PERANGKAT 3D ============ -->
-<section class="section" id="perangkat3d">
-  <div class="wrap">
+  <!-- ============ PRODUCT RENDERS ============ -->
+  <section class="band" id="perangkat3d">
     <div class="section-head">
-      <span class="eyebrow">Perangkat</span>
-      <h2>MEDIVOX&#8209;1 dari segala sisi</h2>
-      <p>Basis menahan panel empat kuadran yang memancarkan pandangan; prisma di atasnya
-         melipat keempatnya menjadi satu bentuk yang tampak mengambang.</p>
+      <span class="eyebrow">The device</span>
+      <h2>MEDIVOX-1 from every side</h2>
+      <p>A white ceramic base holds a four-quadrant emitter panel. The inverted glass prism above it
+        folds the four views into one form that appears to float.</p>
     </div>
-
     <div class="produk-galeri">
-      <figure class="produk-3d produk-3d--besar pola pola-lingkar hud">
-        <img src="assets/3d/putih-tigaper.webp" width="903" height="787" loading="lazy"
-             alt="MEDIVOX-1 dilihat dari sudut tiga perempat">
-        <figcaption><b>Tiga perempat</b><span>Prisma, basis, dan panel pemancar</span></figcaption>
+      <figure class="produk-3d produk-3d--besar neu">
+        <img src="assets/3d/putih-tigaper.webp" width="903" height="787" loading="lazy" alt="MEDIVOX-1 seen from a three-quarter angle">
+        <figcaption><b>Three-quarter view</b><span>Prism, base and emitter panel</span></figcaption>
       </figure>
-      <figure class="produk-3d pola pola-titik">
-        <img src="assets/3d/putih-atas.webp" width="924" height="932" loading="lazy"
-             alt="MEDIVOX-1 dilihat dari atas, memperlihatkan panel empat kuadran">
-        <figcaption><b>Dari atas</b><span>Empat kuadran pandangan</span></figcaption>
+      <figure class="produk-3d neu">
+        <img src="assets/3d/putih-atas.webp" width="924" height="932" loading="lazy" alt="MEDIVOX-1 from above, showing the four-quadrant panel">
+        <figcaption><b>Top view</b><span>Four emitter quadrants</span></figcaption>
       </figure>
-      <figure class="produk-3d pola pola-titik">
-        <img src="assets/3d/putih-samping.webp" width="878" height="778" loading="lazy"
-             alt="MEDIVOX-1 dilihat dari samping">
-        <figcaption><b>Samping</b><span>Sudut bidang pemantul</span></figcaption>
+      <figure class="produk-3d neu">
+        <img src="assets/3d/putih-samping.webp" width="878" height="778" loading="lazy" alt="MEDIVOX-1 from the side">
+        <figcaption><b>Side view</b><span>Reflector angle</span></figcaption>
       </figure>
-      <figure class="produk-3d pola pola-titik">
-        <img src="assets/3d/putih-toraks.webp" width="682" height="612" loading="lazy"
-             alt="MEDIVOX-1 menampilkan volume toraks">
-        <figcaption><b>Volume toraks</b><span>Seri CT dada</span></figcaption>
+      <figure class="produk-3d neu">
+        <img src="assets/3d/putih-toraks.webp" width="682" height="612" loading="lazy" alt="MEDIVOX-1 showing a chest volume">
+        <figcaption><b>Chest volume</b><span>CT thorax series</span></figcaption>
       </figure>
-      <figure class="produk-3d pola pola-titik">
-        <img src="assets/3d/putih-tengkorak.webp" width="682" height="612" loading="lazy"
-             alt="MEDIVOX-1 menampilkan volume tengkorak">
-        <figcaption><b>Volume tengkorak</b><span>Rekonstruksi permukaan</span></figcaption>
+      <figure class="produk-3d neu">
+        <img src="assets/3d/putih-tengkorak.webp" width="682" height="612" loading="lazy" alt="MEDIVOX-1 showing a skull volume">
+        <figcaption><b>Skull volume</b><span>Surface reconstruction</span></figcaption>
       </figure>
     </div>
+    <p class="produk-nota">Every image above is a 3D render built by <code>tools/blender/bangun-produk.py</code>
+      through the Blender command line. None of them are photos or stock images.</p>
+  </section>
 
-    <p class="produk-nota">
-      Seluruh gambar di atas adalah render tiga dimensi yang dibangun dari skrip
-      <code>tools/blender/bangun-produk.py</code> lewat Blender CLI — bukan foto dan bukan
-      gambar stok. Bentuknya mengikuti kompilasi KACA&#8209;1.
-    </p>
-  </div>
-</section>
-
-<!-- ============ PANGGUNG DEMO ============ -->
-<section class="section alt" id="panggung-demo">
-  <div class="wrap split">
-    <div>
-      <span class="eyebrow">Panggung di peramban</span>
-      <h2>Empat pandangan yang sama, langsung di layar Anda</h2>
-      <p style="color:var(--text-2)">
-        Yang dipancarkan panel MEDIVOX&#8209;1 bisa dijalankan apa adanya di peramban: empat
-        proyeksi volume yang saling berhadapan, siap dipantulkan prisma akrilik biasa.
-      </p>
-      <div class="hero-cta" style="margin-bottom:0">
-        <a class="btn btn-primary" href="prisma.html">Buka panggung hologram</a>
-        <a class="btn" href="worklist.html">Lihat daftar studi</a>
-      </div>
-    </div>
-    <div class="hero-mock hologram-mock">
-      <div class="bar">
-        <i></i><i></i><i></i><b>PANGGUNG HOLOGRAM — 24 SUDUT &middot; MIP</b>
-      </div>
-      <div class="stage">
-        <canvas id="heroCanvas" width="620" height="620"></canvas>
-        <div class="ovl tl">Susunan empat sisi<br>tepi atas menghadap pusat</div>
-        <div class="ovl br">Letakkan puncak<br>prisma di tengah</div>
-      </div>
-    </div>
-  </div>
-</section>
-
-<!-- ============ LOGOS ============ -->
-<div class="logos">
-  <div class="wrap">
-    <b>Membaca</b>
-    <span>DICOM P10</span><span>CT · MR · US</span><span>Multi-frame</span>
-    <span>Segmentation 1-bit</span><span>Deflate</span><span>Palette Color</span>
-  </div>
-</div>
-
-<!-- ============ PRINSIP HOLOGRAM ============ -->
-<section class="section" id="hologram">
-  <div class="wrap">
+  <!-- ============ WHY ============ -->
+  <section class="band" id="why">
     <div class="section-head">
-      <span class="eyebrow">Cara kerjanya</span>
-      <h2>Empat pantulan yang bertemu di satu titik</h2>
-      <p>
-        Ini bukan hologram interferensi laser, melainkan <i>Pepper's ghost</i> — ilusi optik
-        berusia seratus tahun yang memakai pantulan pada kaca bening. Yang baru adalah sumber
-        gambarnya: volume tiga dimensi yang dihitung langsung dari berkas DICOM Anda.
-      </p>
+      <span class="eyebrow">Why MEDIVOX</span>
+      <h2>The missing middle between flat screens and headsets</h2>
     </div>
-    <div class="holo-grid">
-      <article class="holo-step">
-        <span class="num">01</span>
-        <h3>Irisan jadi volume</h3>
-        <p>
-          Tumpukan irisan CT atau MRI disusun jadi kisi voxel. Urutan dan jarak antar irisan
-          diambil dari geometri di header — bukan dari nama berkas — sehingga proporsinya benar
-          dalam milimeter.
-        </p>
+    <div class="compare">
+      <article class="compare-card neu">
+        <img class="i3d lg" src="assets/ui/ikon/viewer.webp" alt="">
+        <h3>Flat-panel viewers</h3>
+        <p>Precise and familiar, but two-dimensional. The reader rebuilds the 3D shape mentally, one slice at a time.</p>
+        <ul class="mini-list"><li class="neg">2D only</li><li class="neg">Single reader</li></ul>
       </article>
-      <article class="holo-step">
-        <span class="num">02</span>
-        <h3>Volume jadi sudut pandang</h3>
-        <p>
-          Sinar ditembakkan menembus volume dari puluhan arah yang mengelilingi tubuh. Bisa
-          intensitas maksimum untuk tulang dan pembuluh, opasitas untuk jaringan, atau permukaan
-          bernaung hasil isosurface.
-        </p>
+      <article class="compare-card neu featured">
+        <span class="badge">MEDIVOX</span>
+        <img class="i3d lg" src="assets/ui/ikon/hologram.webp" alt="">
+        <h3>Shared volumetric view</h3>
+        <p>A floating 3D image the whole team sees from any side, controlled by voice and gesture.</p>
+        <ul class="mini-list"><li>Glasses-free 3D</li><li>Multi-viewer</li><li>Touchless</li></ul>
       </article>
-      <article class="holo-step">
-        <span class="num">03</span>
-        <h3>Empat sisi menghadap pusat</h3>
-        <p>
-          Empat sudut yang berjarak tepat 90° disusun mengelilingi titik tengah layar, masing-masing
-          dengan tepi atas mengarah ke dalam. Sudutnya diprarender sekali lalu diputar-ulang, jadi
-          putarannya mulus.
-        </p>
-      </article>
-      <article class="holo-step">
-        <span class="num">04</span>
-        <h3>Prisma menyatukannya</h3>
-        <p>
-          Tiap bidang prisma memantulkan satu sisi ke arah mata. Karena keempat pantulan bertemu di
-          ruang yang sama, otak membacanya sebagai satu benda padat yang menggantung di dalam kaca.
-        </p>
+      <article class="compare-card neu">
+        <img class="i3d lg" src="assets/ui/ikon/kamera.webp" alt="">
+        <h3>VR / AR headsets</h3>
+        <p>Immersive, but they isolate the wearer from colleagues and patients and add hygiene overhead.</p>
+        <ul class="mini-list"><li class="neg">Isolating</li><li class="neg">One headset each</li></ul>
       </article>
     </div>
-  </div>
-</section>
+  </section>
 
-<!-- ============ PERANGKAT ============ -->
-<section class="section alt" id="perangkat">
-  <div class="wrap split">
-    <div>
-      <span class="eyebrow">Yang perlu disiapkan</span>
-      <h2>Satu prisma kaca dan layar yang bisa direbahkan</h2>
-      <p style="color:var(--text-2)">
-        Tidak ada perangkat khusus yang harus dibeli dari kami. Prisma piramida akrilik untuk
-        ponsel dijual luas dan harganya murah; yang penting keempat bidangnya bening dan
-        sudutnya seragam.
-      </p>
-      <ul class="check-list">
-        <li>Ruangan yang bisa digelapkan — pantulan kalah oleh cahaya sekitar</li>
-        <li>Layar mendatar: tablet direbahkan, atau monitor yang bisa dimiringkan penuh</li>
-        <li>Puncak prisma diletakkan tepat pada penanda tengah di panggung</li>
-        <li>Ukuran sisi dan jarak ke pusat disetel sampai keempat pantulan bertumpuk rapi</li>
-        <li>Sakelar <b>Cermin</b> dinyalakan bila citranya terbaca terbalik</li>
-      </ul>
-      <div class="hero-cta" style="margin-bottom:0">
-        <a class="btn btn-primary" href="prisma.html">Coba sekarang tanpa prisma</a>
-      </div>
-      <p style="color:var(--muted);font-size:13px;margin-top:14px">
-        Tanpa prisma pun panggungnya tetap berguna: keempat pandangan berputar bisa dilihat
-        langsung di layar sebagai empat proyeksi bersamaan.
-      </p>
-    </div>
-    <div>
-      <div class="alat-grid">
-        <div class="alat">
-          <b>Prisma piramida</b>
-          <span class="spek">4 sisi · sudut ±45°</span>
-          <p>Akrilik atau kaca bening. Ukuran ponsel cukup untuk tablet 10 inci.</p>
-        </div>
-        <div class="alat">
-          <b>Layar</b>
-          <span class="spek">mendatar · kontras tinggi</span>
-          <p>OLED memberi hitam paling pekat, jadi pantulannya paling bersih.</p>
-        </div>
-        <div class="alat">
-          <b>Peramban</b>
-          <span class="spek">Canvas 2D · ES5</span>
-          <p>Tanpa WebGL, tanpa plugin. Semua perhitungan di CPU perangkat Anda.</p>
-        </div>
-        <div class="alat">
-          <b>Berkas</b>
-          <span class="spek">≥ 4 irisan · idealnya ≥ 60</span>
-          <p>Makin rapat irisannya, makin halus bentuk yang muncul di dalam prisma.</p>
-        </div>
-      </div>
-    </div>
-  </div>
-</section>
-
-<!-- ============ FITUR ============ -->
-<section class="section" id="fitur">
-  <div class="wrap">
+  <!-- ============ HOW ============ -->
+  <section class="band" id="how">
     <div class="section-head">
-      <span class="eyebrow">Kemampuan</span>
-      <h2>Semua yang dibutuhkan untuk satu siklus pembacaan</h2>
-      <p>Dari saat studi masuk ke worklist sampai laporan diverifikasi — tanpa berpindah aplikasi.</p>
+      <span class="eyebrow">How it works</span>
+      <h2>From DICOM to prism in four steps</h2>
+      <p>The optics are Pepper&rsquo;s ghost, a reflection trick over a century old. What is new is the
+        image source: a volume computed directly from your DICOM files.</p>
     </div>
-    <div class="grid-3" id="featGrid"></div>
-  </div>
-</section>
+    <ol class="steps">
+      <li class="step neu"><span class="step-no">01</span><img class="i3d" src="assets/ui/ikon/berkas.webp" alt=""><h3>Parse the series</h3><p>Files are read with the File API and parsed by our own DICOM parser, in memory. Nothing is uploaded.</p></li>
+      <li class="step neu"><span class="step-no">02</span><img class="i3d" src="assets/ui/ikon/kubus.webp" alt=""><h3>Build the volume</h3><p>Slices are ordered by header geometry, spacing is measured, and a voxel grid is built at true millimetre scale.</p></li>
+      <li class="step neu"><span class="step-no">03</span><img class="i3d" src="assets/ui/ikon/hologram.webp" alt=""><h3>Project four views</h3><p>Rays are cast through the volume from every angle. Four views 90&deg; apart are laid out around the screen centre.</p></li>
+      <li class="step neu"><span class="step-no">04</span><img class="i3d" src="assets/ui/ikon/mik.webp" alt=""><h3>Control it touchless</h3><p>Speak a command or swipe a hand in front of the camera. The hologram rotates, scales or switches mode.</p></li>
+    </ol>
+  </section>
 
-<!-- ============ ALUR KERJA ============ -->
-<section class="section alt" id="alur">
-  <div class="wrap">
+  <!-- ============ TOUCHLESS ============ -->
+  <section class="band" id="touchless">
+    <div class="touch-grid">
+      <div class="touch-copy">
+        <span class="eyebrow">Touchless control</span>
+        <h2>Say it, swipe it, see it</h2>
+        <p class="lead">In a sterile field or around a crowded table, nobody wants to reach for a mouse. MEDIVOX
+          listens for a short list of commands and follows a hand in front of the camera.</p>
+        <div class="cmd-chips">
+          <span class="cmd">&ldquo;rotate&rdquo;</span><span class="cmd">&ldquo;stop&rdquo;</span>
+          <span class="cmd">&ldquo;zoom in&rdquo;</span><span class="cmd">&ldquo;zoom out&rdquo;</span>
+          <span class="cmd">&ldquo;show bone&rdquo;</span><span class="cmd">&ldquo;faster&rdquo;</span>
+          <span class="cmd">&ldquo;mirror&rdquo;</span><span class="cmd">&ldquo;reset&rdquo;</span>
+        </div>
+        <p class="muted small">Voice uses the browser&rsquo;s speech recognition. In Chrome that service sends audio to
+          Google, which the app says plainly before the microphone starts. Camera frames for gestures are processed in
+          the browser and discarded.</p>
+      </div>
+      <div class="touch-cards">
+        <article class="uc neu"><img class="i3d" src="assets/ui/ikon/mik.webp" alt=""><div><h3>Voice commands</h3><p>Rotate, stop, faster, slower, zoom, mirror, full screen, reset, switch rendering mode, or name an organ in the anatomy atlas.</p></div></article>
+        <article class="uc neu"><img class="i3d" src="assets/ui/ikon/tangan.webp" alt=""><div><h3>Hand swipe</h3><p>Move a hand left or right in front of the camera and the hologram turns with it.</p></div></article>
+        <article class="uc neu"><img class="i3d" src="assets/ui/ikon/zoom.webp" alt=""><div><h3>Push and pull</h3><p>Bring the hand closer to enlarge, move it away to shrink. The mapping is smoothed so the image never jitters.</p></div></article>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ FEATURES ============ -->
+  <section class="band" id="fitur">
     <div class="section-head">
-      <span class="eyebrow">Alur kerja</span>
-      <h2>Dari berkas ke hologram dalam empat langkah</h2>
-      <p>Panggung hologram adalah tujuan utamanya. Worklist dan viewer 2D ada untuk mendukungnya.</p>
+      <span class="eyebrow">Capabilities</span>
+      <h2>Everything one reading needs</h2>
+      <p>From the moment a study arrives to the signed report, without switching apps.</p>
     </div>
-    <div class="steps">
-      <div class="step">
-        <h3>Pilih studi</h3>
-        <p>Buka berkas DICOM langsung di panggung, atau pilih dari antrian studi. Phantom demo tersedia untuk mencoba.</p>
-      </div>
-      <div class="step">
-        <h3>Volume tersusun</h3>
-        <p>Irisan diurutkan dari geometri header, jaraknya dihitung, lalu jadi kisi voxel berskala milimeter.</p>
-      </div>
-      <div class="step">
-        <h3>Pilih tampilan</h3>
-        <p>MIP, volume rendering beropasitas, proyeksi rerata, atau rekonstruksi permukaan pada ambang pilihan Anda.</p>
-      </div>
-      <div class="step">
-        <h3>Pasang prisma</h3>
-        <p>Setel ukuran sisi dan jarak ke pusat, gelapkan ruangan, letakkan prisma — bentuknya muncul mengambang.</p>
-      </div>
-    </div>
-  </div>
-</section>
+    <div class="feat-grid" id="featGrid"></div>
+  </section>
 
-<!-- ============ VIEWER SPLIT ============ -->
-<section class="section" id="viewer">
-  <div class="wrap split">
-    <div>
-      <span class="eyebrow">Pendukung</span>
-      <h2>Viewer 2D untuk yang tidak bisa dilihat dari hologram</h2>
-      <p style="color:var(--text-2)">
-        Hologram bagus untuk memahami bentuk dan hubungan ruang, tetapi pengukuran dan pembacaan
-        detail tetap butuh irisan datar. Viewer 2D-nya penuh — dan dari sana pula volume 3D
-        dibangun, lengkap dengan MPR koronal serta sagital yang muncul sebagai seri baru.
-      </p>
-      <ul class="check-list">
-        <li>Tombol <b>Bangun 3D &amp; MPR</b> menambah tujuh seri turunan sekaligus</li>
-        <li>MPR koronal &amp; sagital dengan koreksi piksel tidak bujur sangkar</li>
-        <li>MIP slab tiga bidang, ketebalan dalam milimeter</li>
-        <li>Rekonstruksi permukaan dengan ekspor STL &amp; OBJ</li>
-        <li>Pengukuran milimeter, ROI dengan statistik HU, probe nilai piksel</li>
-        <li>Inspektur tag DICOM lengkap dengan pencarian cepat</li>
-      </ul>
-      <div class="hero-cta" style="margin-bottom:0">
-        <a class="btn btn-primary" href="prisma.html?demo=ST-2409-0144">Lihat sebagai hologram</a>
-        <a class="btn" href="viewer.html?demo=ST-2409-0144">Buka viewer 2D</a>
-      </div>
-    </div>
-    <div class="hero-mock" style="transform:none">
-      <div class="bar"><i></i><i></i><i></i><b>MRI KEPALA — AX T1 MPRAGE</b></div>
-      <div class="stage">
-        <canvas id="heroCanvas2" width="560" height="400"></canvas>
-        <div class="ovl tl">HALIM, MARIA<br>RM-0113507 · P · 37 Th</div>
-        <div class="ovl br">Im: <span id="heroIm2">9</span>/22</div>
-      </div>
-    </div>
-  </div>
-</section>
-
-<!-- ============ STATS ============ -->
-<section class="section alt">
-  <div class="wrap">
-    <div class="stats">
-      <div class="stat"><b>4</b><span>Pandangan bertemu di prisma</span></div>
-      <div class="stat"><b>60 fps</b><span>Putaran hologram</span></div>
-      <div class="stat"><b>100%</b><span>Dihitung di perangkat Anda</span></div>
-      <div class="stat"><b>0</b><span>Plugin &amp; kacamata</span></div>
-    </div>
-  </div>
-</section>
-
-<!-- ============ KEAMANAN ============ -->
-<section class="section" id="keamanan">
-  <div class="wrap split">
-    <div class="card">
-      <span class="pill pill-ok" style="margin-bottom:14px"><span class="dot"></span> Privasi berdasar desain</span>
-      <h3 style="font-size:19px">File tidak pernah meninggalkan perangkat</h3>
-      <p style="color:var(--muted);font-size:14.5px">
-        Pada mode inspeksi lokal, berkas DICOM dibaca lewat File API dan diurai di memori browser.
-        Tidak ada unggahan, tidak ada penyimpanan sementara di server.
-      </p>
-      <table style="width:100%;border-collapse:collapse;font-size:13.5px;margin-top:8px">
-        <tr style="border-top:1px solid var(--line-soft)"><td style="padding:10px 0;color:var(--muted)">Enkripsi transport</td><td style="text-align:right">TLS 1.3</td></tr>
-        <tr style="border-top:1px solid var(--line-soft)"><td style="padding:10px 0;color:var(--muted)">Audit trail</td><td style="text-align:right">Per akses studi</td></tr>
-        <tr style="border-top:1px solid var(--line-soft)"><td style="padding:10px 0;color:var(--muted)">Kontrol akses</td><td style="text-align:right">Berbasis peran</td></tr>
-        <tr style="border-top:1px solid var(--line-soft)"><td style="padding:10px 0;color:var(--muted)">De-identifikasi</td><td style="text-align:right">Profil dasar DICOM PS3.15</td></tr>
-      </table>
-    </div>
-    <div>
-      <span class="eyebrow">Keamanan &amp; kepatuhan</span>
-      <h2>Data pasien tetap di tempat yang seharusnya</h2>
-      <p style="color:var(--text-2)">
-        Medivox memisahkan jalur data citra dari jalur metadata. Integrasi PACS memakai koneksi
-        yang Anda kendalikan sendiri, dan setiap tindakan pembacaan tercatat.
-      </p>
-      <ul class="check-list">
-        <li>Mode lokal sepenuhnya luring — cocok untuk tinjauan cepat dan pengajaran</li>
-        <li>Peran pengguna: radiolog, residen, teknisi, administrator</li>
-        <li>Penanda hasil pembacaan dengan jejak waktu dan identitas pembaca</li>
-        <li>Ekspor gambar dengan opsi menghilangkan overlay identitas</li>
-      </ul>
-    </div>
-  </div>
-</section>
-
-<!-- ============ HARGA ============ -->
-<section class="section alt" id="harga">
-  <div class="wrap">
-    <div class="section-head">
-      <span class="eyebrow">Harga</span>
-      <h2>Mulai gratis, bayar saat dipakai untuk pembacaan klinis</h2>
-      <p>Semua paket memakai viewer yang sama. Yang berbeda hanya integrasi dan kolaborasi.</p>
-    </div>
-    <div class="grid-3">
-      <div class="price">
-        <h3>Lokal</h3>
-        <div class="amt">Rp 0<small> /pengguna</small></div>
-        <p style="color:var(--muted);font-size:13.5px;margin:0">Untuk tinjauan mandiri &amp; pengajaran.</p>
-        <ul>
-          <li>Buka file &amp; folder DICOM lokal</li>
-          <li>Semua alat ukur &amp; anotasi</li>
-          <li>Inspektur tag DICOM</li>
-          <li>Ekspor PNG</li>
+  <!-- ============ 2D VIEWER ============ -->
+  <section class="band" id="viewer">
+    <div class="split neu">
+      <div class="split-copy">
+        <span class="eyebrow">Supporting 2D viewer</span>
+        <h2>For what a hologram cannot show</h2>
+        <p>A hologram is ideal for shape and spatial relationships, but measurement and fine reading still
+          need flat slices. The 2D viewer is complete, and it is also where the 3D volume is built.</p>
+        <ul class="check-list">
+          <li>Build 3D &amp; MPR adds seven derived series in one step</li>
+          <li>Coronal and sagittal MPR with non-square pixel correction</li>
+          <li>Three-plane MIP slabs with thickness in millimetres</li>
+          <li>Surface reconstruction with STL and OBJ export</li>
+          <li>Millimetre measurements, ROI statistics in HU, pixel probe</li>
         </ul>
-        <a class="btn" href="prisma.html">Mulai sekarang</a>
+        <div class="hero-cta">
+          <a class="btn btn-primary" href="prisma.html?demo=ST-2409-0144">View as hologram</a>
+          <a class="btn" href="viewer.html?demo=ST-2409-0144">Open 2D viewer</a>
+        </div>
       </div>
-      <div class="price pop">
-        <h3>Klinik <span class="pill pill-accent" style="margin-left:6px">Populer</span></h3>
-        <div class="amt">Rp 690rb<small> /pengguna/bln</small></div>
-        <p style="color:var(--muted);font-size:13.5px;margin:0">Untuk unit radiologi kecil–menengah.</p>
-        <ul>
-          <li>Semua fitur paket Lokal</li>
-          <li>Worklist terpusat &amp; status baca</li>
-          <li>Koneksi DICOMweb / C-FIND</li>
-          <li>Laporan terstruktur &amp; template</li>
-          <li>Audit trail 12 bulan</li>
-        </ul>
-        <a class="btn btn-primary" href="prisma.html">Coba 14 hari</a>
-      </div>
-      <div class="price">
-        <h3>Rumah Sakit</h3>
-        <div class="amt">Kustom</div>
-        <p style="color:var(--muted);font-size:13.5px;margin:0">Untuk lintas cabang &amp; teleradiologi.</p>
-        <ul>
-          <li>Semua fitur paket Klinik</li>
-          <li>SSO &amp; kontrol akses berbasis peran</li>
-          <li>Integrasi HL7 / FHIR</li>
-          <li>Pemasangan on-premise</li>
-          <li>Dukungan 24/7</li>
-        </ul>
-        <a class="btn" href="#kontak">Hubungi kami</a>
+      <div class="vp-mock">
+        <canvas id="heroCanvas2" width="560" height="440"></canvas>
+        <div class="ov tl">HALIM, MARIA<br>MRN-0113507 &middot; F &middot; 37y</div>
+        <div class="ov tr">AX T1 MPRAGE</div>
+        <div class="ov br">Im: <span id="heroIm2">9</span>/22</div>
       </div>
     </div>
-  </div>
-</section>
+  </section>
 
-<!-- ============ FAQ ============ -->
-<section class="section" id="faq">
-  <div class="wrap" style="max-width:860px">
+  <!-- ============ USE CASES ============ -->
+  <section class="band" id="usecases">
+    <div class="section-head">
+      <span class="eyebrow">Built for</span>
+      <h2>Where teams need to see the same thing</h2>
+    </div>
+    <div class="usecases">
+      <div class="uc neu"><img class="i3d" src="assets/ui/ikon/pengguna.webp" alt=""><div><h3>Tumour boards</h3><p>Everyone around the table looks at the same lesion, each from their own side.</p></div></div>
+      <div class="uc neu"><img class="i3d" src="assets/ui/ikon/panjang.webp" alt=""><div><h3>Pre-surgical planning</h3><p>Walk through the approach in 3D before the first incision.</p></div></div>
+      <div class="uc neu"><img class="i3d" src="assets/ui/ikon/tangan.webp" alt=""><div><h3>Sterile procedures</h3><p>Voice and gesture control, with nothing to touch.</p></div></div>
+      <div class="uc neu"><img class="i3d" src="assets/ui/ikon/otak.webp" alt=""><div><h3>Teaching</h3><p>Residents and students see anatomy as it really sits in space.</p></div></div>
+      <div class="uc neu"><img class="i3d" src="assets/ui/ikon/laporan.webp" alt=""><div><h3>Patient consultations</h3><p>Explain a finding in a way patients can actually picture.</p></div></div>
+      <div class="uc neu"><img class="i3d" src="assets/ui/ikon/kunci.webp" alt=""><div><h3>Privacy by design</h3><p>Parsing and rendering run locally. Pixels never leave the device.</p></div></div>
+    </div>
+  </section>
+
+  <!-- ============ SPECS ============ -->
+  <section class="band" id="specs">
+    <div class="specs neu">
+      <div class="specs-copy">
+        <span class="eyebrow">System</span>
+        <h2>Built from commodity parts and a browser</h2>
+        <p>Any flat screen laid face-up can act as the emitter, and an inexpensive acrylic pyramid can serve as
+          the prism. MEDIVOX is a visualisation and communication aid, not a primary diagnostic display.</p>
+        <a href="prisma.html" class="btn btn-primary">Try it now, no prism needed
+          <svg class="li"><use href="assets/ui/ikon-garis.svg#i-arrow"/></svg></a>
+      </div>
+      <dl class="spec-list">
+        <div><dt>Display</dt><dd>Four-face Pepper&rsquo;s-ghost glass prism</dd></div>
+        <div><dt>Emitter</dt><dd>Four synchronised views, 90&deg; apart</dd></div>
+        <div><dt>Data</dt><dd>DICOM Part 10 files, parsed in the browser</dd></div>
+        <div><dt>Rendering</dt><dd>CPU ray casting on canvas 2D: MIP, composite, average, isosurface</dd></div>
+        <div><dt>Voice</dt><dd>Web Speech API, constrained command vocabulary</dd></div>
+        <div><dt>Gesture</dt><dd>Webcam hand tracking, swipe to rotate, push/pull to scale</dd></div>
+        <div><dt>Modalities</dt><dd>CT, MR, and other volumetric series</dd></div>
+      </dl>
+    </div>
+  </section>
+
+  <!-- ============ FAQ ============ -->
+  <section class="band" id="faq">
     <div class="section-head">
       <span class="eyebrow">FAQ</span>
-      <h2>Pertanyaan yang sering muncul</h2>
+      <h2>Questions people ask</h2>
     </div>
     <div class="faq">
-      <details open>
-        <summary>Apakah file DICOM saya diunggah ke server?</summary>
-        <p>Tidak. Saat Anda membuka file lewat tombol “Buka File DICOM”, berkas dibaca dengan File API
-        dan diurai langsung di browser. Tidak ada permintaan jaringan yang membawa isi berkas.</p>
+      <details class="neu" open>
+        <summary>Are my DICOM files uploaded to a server?</summary>
+        <p>No. Files are read with the File API and parsed directly in the browser. No network request carries
+          their contents. Signed-in users only sync reading status and report text.</p>
       </details>
-      <details>
-        <summary>Transfer syntax apa saja yang didukung?</summary>
-        <p>Parser bawaan menangani Implicit VR Little Endian, Explicit VR Little Endian, dan Explicit VR
-        Big Endian untuk data piksel native 8/16 bit. Pixel data terenkapsulasi JPEG baseline juga bisa
-        ditampilkan. JPEG 2000, JPEG-LS, dan RLE dikenali headernya namun perlu dekoder tambahan.</p>
+      <details class="neu">
+        <summary>Which transfer syntaxes are supported?</summary>
+        <p>Implicit VR Little Endian, Explicit VR Little Endian and Big Endian, and Deflated Explicit VR, for native
+          8- and 16-bit pixel data, multi-frame, palette colour and 1-bit segmentation. Baseline JPEG displays.
+          JPEG 2000, JPEG-LS and RLE are recognised and reported clearly, but need an extra decoder.</p>
       </details>
-      <details>
-        <summary>Apakah ini bisa dipakai untuk diagnosis?</summary>
-        <p>Prototipe ini dibuat untuk demonstrasi alur kerja dan bukan perangkat medis bersertifikat.
-        Untuk penggunaan diagnostik dibutuhkan validasi, kalibrasi monitor, dan izin edar sesuai
-        peraturan yang berlaku di wilayah Anda.</p>
+      <details class="neu">
+        <summary>Does voice control send audio anywhere?</summary>
+        <p>The Web Speech API in Chrome sends audio to Google&rsquo;s speech service. It is the only part of the system
+          that sends anything off the device, so it is always off until you turn it on, with a warning. Gestures are
+          processed locally.</p>
       </details>
-      <details>
-        <summary>Bagaimana pengukuran dihitung?</summary>
-        <p>Jarak dihitung dalam piksel lalu dikalikan dengan Pixel Spacing (0028,0030) dari header,
-        sehingga hasilnya dalam milimeter. Bila tag tersebut tidak ada, hasil ditampilkan dalam piksel
-        dan diberi tanda peringatan.</p>
+      <details class="neu">
+        <summary>Can it be used for diagnosis?</summary>
+        <p>No. This is an interface prototype, not a certified medical device. Diagnostic use would require clinical
+          validation, display calibration and regulatory approval.</p>
       </details>
-      <details>
-        <summary>Apakah bisa terhubung ke PACS yang sudah ada?</summary>
-        <p>Ya, pada paket Klinik ke atas melalui DICOMweb (QIDO-RS, WADO-RS) atau gateway C-FIND/C-MOVE
-        yang dipasang di jaringan Anda. Pada prototipe ini koneksi tersebut disimulasikan.</p>
+      <details class="neu">
+        <summary>Do I need the MEDIVOX-1 hardware?</summary>
+        <p>No. The hologram stage runs on any screen. A tablet laid flat with an acrylic pyramid on top already works,
+          and without a prism you still see four rotating projections at once.</p>
       </details>
     </div>
-  </div>
-</section>
+  </section>
 
-<!-- ============ CTA ============ -->
-<section class="section" id="kontak">
-  <div class="wrap">
-    <div class="cta-band">
-      <h2>Lihat hologramnya sekarang</h2>
-      <p>Panggung langsung terbuka dengan phantom demo — tidak perlu masuk, tidak perlu prisma
-      untuk mulai mencoba. Berkas DICOM Anda sendiri bisa dibuka langsung di sana.</p>
-      <div class="row" style="justify-content:center;flex-wrap:wrap">
-        <a class="btn btn-primary" href="prisma.html?demo=ST-2409-0146">Buka Panggung Hologram</a>
-        <a class="btn" href="viewer.html?demo=ST-2409-0146">Viewer 2D</a>
-        <a class="btn" href="worklist.html">Daftar studi</a>
+  <!-- ============ CTA ============ -->
+  <section class="cta-band" id="kontak">
+    <div class="cta-inner">
+      <h2>See. Speak. Understand.</h2>
+      <p>The stage opens with a demo phantom. No sign-in and no prism are needed to start.</p>
+      <div class="hero-cta" style="justify-content:center">
+        <a href="prisma.html?demo=ST-2409-0146" class="btn btn-white btn-lg">Open the hologram stage
+          <svg class="li"><use href="assets/ui/ikon-garis.svg#i-arrow"/></svg></a>
+        <a href="masuk.html" class="btn btn-glass btn-lg">Create an account</a>
       </div>
     </div>
-  </div>
-</section>
+  </section>
 
-<!-- ============ FOOTER ============ -->
-<footer class="site-foot">
-  <div class="wrap">
-    <div class="foot-grid">
-      <div>
-        <a class="brand" href="index.html" style="margin-bottom:14px">
-          <span class="mark">M</span><span class="wordmark">Medivox<small>See. Speak. Understand.</small></span>
-        </a>
-        <p style="color:var(--muted);font-size:13.5px;max-width:38ch">
-          Viewer hologram prisma untuk citra CT dan MRI. Volume dihitung di peramban, berkas tidak
-          pernah meninggalkan perangkat Anda.
-        </p>
-      </div>
-      <div>
-        <h4>Produk</h4>
-        <a href="prisma.html">Panggung hologram</a><a href="#hologram">Cara kerja</a>
-        <a href="#perangkat">Perangkat</a><a href="#harga">Harga</a>
-      </div>
-      <div>
-        <h4>Sumber Daya</h4>
-        <a href="#faq">FAQ</a><a href="#alur">Alur kerja</a>
-        <a href="#keamanan">Keamanan</a><a href="viewer.html" data-short="2D">Viewer 2D</a>
-      </div>
-      <div>
-        <h4>Perusahaan</h4>
-        <a href="#kontak">Kontak</a><a href="#">Kebijakan privasi</a>
-        <a href="#">Syarat layanan</a><a href="#">Status layanan</a>
-      </div>
-    </div>
-    <div class="foot-bottom">
-      <span>© 2026 Medivox. Prototipe antarmuka.</span>
-      <span>Dibangun dengan HTML, CSS, dan JavaScript native.</span>
-    </div>
-    <p class="disclaimer">
-      Perhatian: Medivox adalah prototipe demonstrasi antarmuka dan bukan perangkat medis. Seluruh data
-      pasien yang tampil pada demo adalah fiktif dan citra yang ditampilkan merupakan phantom sintetis.
-      Jangan gunakan untuk pengambilan keputusan klinis.
-    </p>
-  </div>
-</footer>
+  <footer class="site-footer">
+    <a href="index.html" class="brand small"><img class="brand-mark" src="assets/ui/logo-mark.svg" alt=""><span class="brand-word"><b>MEDI</b><i>VOX</i></span></a>
+    <p>Research prototype. Not intended for primary diagnosis. All patient data shown is fictional and images are synthetic phantoms.</p>
+    <p class="muted">&copy; 2026 MEDIVOX</p>
+  </footer>
+</div>
 
 <script src="assets/js/common.js"></script>
 <script src="assets/js/volume.js"></script>

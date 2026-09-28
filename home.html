@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Home · MEDIVOX</title>
+<link rel="icon" href="assets/ui/logo-mark.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Sora:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="assets/css/base.css">
+<link rel="stylesheet" href="assets/css/app.css">
+<link rel="stylesheet" href="assets/css/home.css">
+</head>
+<body class="app beranda">
+<a class="skip-link" href="#konten">Skip to content</a>
+
+<aside class="sidebar" aria-label="Main navigation">
+  <a href="index.html" class="brand"><img class="brand-mark" src="assets/ui/logo-mark.svg" alt=""><span class="brand-word"><b>MEDI</b><i>VOX</i></span></a>
+  <nav class="side-nav">
+    <a href="home.html" class="on" aria-current="page"><svg class="li"><use href="assets/ui/ikon-garis.svg#i-home"/></svg><span>Home</span></a>
+    <a href="prisma.html"><svg class="li"><use href="assets/ui/ikon-garis.svg#i-cube"/></svg><span>Hologram</span></a>
+    <a href="viewer.html"><svg class="li"><use href="assets/ui/ikon-garis.svg#i-grid"/></svg><span>2D View</span></a>
+    <a href="worklist.html"><svg class="li"><use href="assets/ui/ikon-garis.svg#i-folder"/></svg><span>Studies</span></a>
+  </nav>
+  <div class="side-device neu-in">
+    <div class="dev-row"><span class="dot-live"></span><b>Stage ready</b></div>
+    <p>Everything renders in this browser</p>
+    <ul class="dev-list" id="devList"></ul>
+  </div>
+  <button class="side-logout" type="button" data-keluar><svg class="li"><use href="assets/ui/ikon-garis.svg#i-logout"/></svg><span>Sign out</span></button>
+</aside>
+
+<div class="app-shell">
+  <header class="app-bar">
+    <img class="brand-m" src="assets/ui/logo-mark.svg" alt="MEDIVOX">
+    <div class="page-title"><small id="greet">Welcome</small><h1 id="namaPembaca">MEDIVOX</h1></div>
+    <form class="search-box hide-narrow" action="worklist.html" role="search">
+      <img class="ikon" src="assets/ui/ikon/cari.webp" alt="" aria-hidden="true">
+      <input class="field" name="q" placeholder="Search studies, patients…" aria-label="Search studies">
+    </form>
+    <div class="user-chip" id="userChip"></div>
+  </header>
+
+  <main class="home-scroll" id="konten">
+    <div class="home-grid">
+      <article class="hero-card">
+        <div class="hc-copy">
+          <span class="chip-glass"><span class="dot-live white"></span> Stage ready</span>
+          <h2 id="heroJudul">Continue where you left off</h2>
+          <p id="heroSub">Loading the study list…</p>
+          <div class="hc-actions">
+            <a href="prisma.html" class="btn btn-white" id="heroHolo">Start hologram <svg class="li"><use href="assets/ui/ikon-garis.svg#i-play"/></svg></a>
+            <a href="viewer.html" class="btn btn-glass" id="hero2D">Open in 2D</a>
+          </div>
+        </div>
+        <div class="hc-visual"><img src="assets/3d/putih-hero.webp" alt="" width="852" height="764"></div>
+      </article>
+
+      <div class="quick">
+        <a href="worklist.html" class="q neu"><img class="i3d" src="assets/ui/ikon/studi.webp" alt=""><span>Studies</span></a>
+        <a href="prisma.html" class="q neu"><img class="i3d" src="assets/ui/ikon/hologram.webp" alt=""><span>Hologram</span></a>
+        <a href="viewer.html" class="q neu"><img class="i3d" src="assets/ui/ikon/viewer.webp" alt=""><span>2D View</span></a>
+        <a href="prisma.html#suara" class="q neu"><img class="i3d" src="assets/ui/ikon/mik.webp" alt=""><span>Voice</span></a>
+      </div>
+
+      <section class="card status-card">
+        <div class="card-head"><h3>This device</h3><span class="pill pill-ok" id="statusPill">Checking…</span></div>
+        <div class="status-grid" id="statusGrid"></div>
+      </section>
+
+      <section class="card recent-card">
+        <div class="card-head"><h3>Recent studies</h3><a href="worklist.html" class="link">View all</a></div>
+        <ul class="study-list" id="recentList"><li class="muted small">Loading…</li></ul>
+      </section>
+
+      <section class="card tips-card">
+        <div class="card-head"><h3>Say it, see it</h3><img class="i3d sm" src="assets/ui/ikon/mik.webp" alt=""></div>
+        <div class="cmd-chips">
+          <span class="cmd">&ldquo;rotate&rdquo;</span><span class="cmd">&ldquo;stop&rdquo;</span><span class="cmd">&ldquo;rotate left&rdquo;</span>
+          <span class="cmd">&ldquo;zoom in&rdquo;</span><span class="cmd">&ldquo;show bone&rdquo;</span><span class="cmd">&ldquo;faster&rdquo;</span>
+          <span class="cmd">&ldquo;mirror&rdquo;</span><span class="cmd">&ldquo;reset&rdquo;</span>
+        </div>
+        <p class="muted small">A short, fixed command list keeps recognition reliable. Turn voice on in the Hologram panel.</p>
+      </section>
+
+      <section class="card gesture-card">
+        <div class="card-head"><h3>Hands-free</h3><img class="i3d sm" src="assets/ui/ikon/tangan.webp" alt=""></div>
+        <ul class="gest-guide">
+          <li><img class="i3d sm" src="assets/ui/ikon/tangan.webp" alt=""><div><b>Swipe left or right</b><small>Rotates the hologram</small></div></li>
+          <li><img class="i3d sm" src="assets/ui/ikon/zoom.webp" alt=""><div><b>Push or pull</b><small>Changes the size</small></div></li>
+          <li><img class="i3d sm" src="assets/ui/ikon/perisai.webp" alt=""><div><b>Stays on this device</b><small>Camera frames are discarded after processing</small></div></li>
+        </ul>
+      </section>
+    </div>
+  </main>
+</div>
+
+<nav class="bottom-nav" aria-label="Main">
+  <a href="home.html" class="on" aria-current="page"><svg class="li"><use href="assets/ui/ikon-garis.svg#i-home"/></svg><span>Home</span></a>
+  <a href="worklist.html"><svg class="li"><use href="assets/ui/ikon-garis.svg#i-folder"/></svg><span>Studies</span></a>
+  <a href="prisma.html" class="fab" aria-label="Hologram"><svg class="li"><use href="assets/ui/ikon-garis.svg#i-cube"/></svg></a>
+  <a href="viewer.html"><svg class="li"><use href="assets/ui/ikon-garis.svg#i-grid"/></svg><span>2D</span></a>
+  <a href="#" data-akun><svg class="li"><use href="assets/ui/ikon-garis.svg#i-user"/></svg><span>Account</span></a>
+</nav>
+
+<div id="toasts"></div>
+
+<script type="module" src="assets/js/firebase-init.js"></script>
+<script src="assets/js/common.js"></script>
+<script src="assets/js/idb.js"></script>
+<script src="assets/js/dicom.js"></script>
+<script src="assets/js/demo.js"></script>
+<script src="assets/js/auth.js"></script>
+<script src="assets/js/bantuan.js"></script>
+<script src="assets/js/home.js"></script>
+</body>
+</html>

@@ -263,11 +263,11 @@
     var self = this;
     if (this.jalan) return Promise.resolve();
     if (!this.dukung()) {
-      var e = new Error('Peramban ini tidak menyediakan akses kamera.');
+      var e = new Error('This browser does not provide camera access.');
       this.onGalat(e);
       return Promise.reject(e);
     }
-    this.onStatus('meminta izin kamera');
+    this.onStatus('requesting camera permission');
     return global.navigator.mediaDevices.getUserMedia({
       video: { width: { ideal: 320 }, height: { ideal: 240 }, facingMode: 'user' },
       audio: false
@@ -283,7 +283,7 @@
     }).then(function () {
       self.jalan = true;
       self.acuan = null;
-      self.onStatus('kamera aktif');
+      self.onStatus('camera on');
       self._timer = global.setInterval(function () { self.langkah(); }, 1000 / self._fps);
     }).catch(function (err) {
       self.onGalat(err);
@@ -300,7 +300,7 @@
     this.video = null;
     this.acuan = null;
     this.jalan = false;
-    this.onStatus('kamera mati');
+    this.onStatus('camera off');
   };
 
   Gerak.prototype.langkah = function () {
@@ -339,31 +339,31 @@
      ========================================================== */
   var KOSAKATA = [
     /* mode tampilan */
-    { perintah: 'mode', nilai: 'permukaan', kata: ['permukaan', 'tulang', 'surface', 'kerangka'] },
-    { perintah: 'mode', nilai: 'komposit', kata: ['volume', 'komposit', 'jaringan'] },
-    { perintah: 'mode', nilai: 'rerata', kata: ['rerata', 'rontgen', 'radiograf'] },
-    { perintah: 'mode', nilai: 'maks', kata: ['mip', 'maksimum', 'intensitas'] },
+    { perintah: 'mode', nilai: 'permukaan', kata: ['permukaan', 'tulang', 'surface', 'kerangka', 'show bone', 'bone', 'skeleton'] },
+    { perintah: 'mode', nilai: 'komposit', kata: ['volume', 'komposit', 'jaringan', 'soft tissue', 'tissue'] },
+    { perintah: 'mode', nilai: 'rerata', kata: ['rerata', 'rontgen', 'radiograf', 'average', 'x ray', 'xray'] },
+    { perintah: 'mode', nilai: 'maks', kata: ['mip', 'maksimum', 'intensitas', 'maximum intensity', 'maximum'] },
 
     /* putaran */
-    { perintah: 'jeda', kata: ['berhenti', 'stop', 'jeda', 'diam', 'tahan'] },
-    { perintah: 'putar', kata: ['putar', 'jalan', 'mulai', 'lanjut'] },
-    { perintah: 'arah', kata: ['balik arah', 'balik', 'sebaliknya', 'putar balik'] },
-    { perintah: 'cepat', nilai: 1, kata: ['lebih cepat', 'percepat', 'cepat'] },
-    { perintah: 'cepat', nilai: -1, kata: ['lebih lambat', 'perlambat', 'lambat'] },
+    { perintah: 'jeda', kata: ['berhenti', 'stop', 'jeda', 'diam', 'tahan', 'pause', 'freeze', 'hold'] },
+    { perintah: 'putar', kata: ['putar', 'jalan', 'mulai', 'lanjut', 'rotate', 'spin', 'start', 'resume'] },
+    { perintah: 'arah', kata: ['balik arah', 'balik', 'sebaliknya', 'putar balik', 'reverse', 'other way'] },
+    { perintah: 'cepat', nilai: 1, kata: ['lebih cepat', 'percepat', 'cepat', 'faster', 'speed up'] },
+    { perintah: 'cepat', nilai: -1, kata: ['lebih lambat', 'perlambat', 'lambat', 'slower', 'slow down'] },
 
     /* ukuran */
-    { perintah: 'skala', nilai: 1, kata: ['perbesar', 'besarkan', 'lebih besar', 'besar', 'zoom in'] },
-    { perintah: 'skala', nilai: -1, kata: ['perkecil', 'kecilkan', 'lebih kecil', 'kecil', 'zoom out'] },
+    { perintah: 'skala', nilai: 1, kata: ['perbesar', 'besarkan', 'lebih besar', 'besar', 'zoom in', 'bigger', 'larger', 'enlarge'] },
+    { perintah: 'skala', nilai: -1, kata: ['perkecil', 'kecilkan', 'lebih kecil', 'kecil', 'zoom out', 'smaller', 'shrink'] },
 
     /* rotasi bertahap */
-    { perintah: 'geser', nilai: -1, kata: ['ke kiri', 'kiri'] },
-    { perintah: 'geser', nilai: 1, kata: ['ke kanan', 'kanan'] },
+    { perintah: 'geser', nilai: -1, kata: ['ke kiri', 'kiri', 'rotate left', 'turn left', 'left'] },
+    { perintah: 'geser', nilai: 1, kata: ['ke kanan', 'kanan', 'rotate right', 'turn right', 'right'] },
 
     /* tampilan */
-    { perintah: 'cermin', kata: ['cermin', 'mirror', 'terbalik'] },
-    { perintah: 'penuh', kata: ['layar penuh', 'penuh', 'fullscreen'] },
-    { perintah: 'panel', kata: ['sembunyikan panel', 'tampilkan panel', 'panel'] },
-    { perintah: 'reset', kata: ['atur ulang', 'setel ulang', 'reset', 'kembalikan'] },
+    { perintah: 'cermin', kata: ['cermin', 'mirror', 'terbalik', 'flip'] },
+    { perintah: 'penuh', kata: ['layar penuh', 'penuh', 'fullscreen', 'full screen'] },
+    { perintah: 'panel', kata: ['sembunyikan panel', 'tampilkan panel', 'panel', 'hide panel', 'show panel'] },
+    { perintah: 'reset', kata: ['atur ulang', 'setel ulang', 'reset', 'kembalikan', 'reset view', 'start over'] },
 
     /* ----------------------------------------------------------
        Atlas anatomi
@@ -390,11 +390,11 @@
     { perintah: 'organ', nilai: 'mata', kata: ['mata', 'bola mata', 'eyeball'] },
     { perintah: 'organ', nilai: 'kulit', kata: ['kulit', 'skin'] },
 
-    { perintah: 'pisah', kata: ['pisahkan', 'uraikan', 'ledakkan', 'pisah', 'urai'] },
-    { perintah: 'satukan', kata: ['satukan', 'rapatkan', 'gabungkan', 'kumpulkan'] },
+    { perintah: 'pisah', kata: ['pisahkan', 'uraikan', 'ledakkan', 'pisah', 'urai', 'separate', 'explode'] },
+    { perintah: 'satukan', kata: ['satukan', 'rapatkan', 'gabungkan', 'kumpulkan', 'combine', 'bring together', 'collapse'] },
     /* Pemicunya wajib dua kata. 'semuanya' sendirian pernah dicoba dan
        membuat "selamat pagi semuanya" ikut tertangkap sebagai perintah. */
-    { perintah: 'semua', kata: ['tampilkan semua', 'semua organ'] }
+    { perintah: 'semua', kata: ['tampilkan semua', 'semua organ', 'show all', 'all organs'] }
   ];
 
   function normalkan(teks) {
@@ -438,7 +438,7 @@
      ========================================================== */
   function Suara(opsi) {
     opsi = opsi || {};
-    this.bahasa = opsi.bahasa || 'id-ID';
+    this.bahasa = opsi.bahasa || 'en-US';
     this.onPerintah = opsi.onPerintah || function () {};
     this.onDengar = opsi.onDengar || function () {};
     this.onGalat = opsi.onGalat || function () {};
@@ -456,7 +456,7 @@
     var self = this;
     if (this.jalan) return;
     if (!this.dukung()) {
-      this.onGalat(new Error('Peramban ini tidak menyediakan pengenalan suara.'));
+      this.onGalat(new Error('This browser does not provide speech recognition.'));
       return;
     }
     var SR = global.SpeechRecognition || global.webkitSpeechRecognition;
@@ -479,13 +479,13 @@
     sr.onerror = function (ev) {
       /* 'no-speech' dan 'aborted' wajar terjadi, bukan kegagalan */
       if (ev.error === 'no-speech' || ev.error === 'aborted') return;
-      self.onGalat(new Error('Pengenalan suara: ' + ev.error));
+      self.onGalat(new Error('Speech recognition: ' + ev.error));
     };
     sr.onend = function () {
       /* Chrome memutus sesi sendiri setiap beberapa puluh detik;
          disambung ulang selama pengguna belum mematikannya */
-      if (self._sengajaHenti) { self.jalan = false; self.onStatus('mikrofon mati'); return; }
-      try { sr.start(); } catch (e) { self.jalan = false; self.onStatus('mikrofon mati'); }
+      if (self._sengajaHenti) { self.jalan = false; self.onStatus('microphone off'); return; }
+      try { sr.start(); } catch (e) { self.jalan = false; self.onStatus('microphone off'); }
     };
 
     this._sr = sr;
@@ -493,7 +493,7 @@
     try {
       sr.start();
       this.jalan = true;
-      this.onStatus('mendengarkan');
+      this.onStatus('listening');
     } catch (e) {
       this.onGalat(e);
     }
@@ -503,7 +503,7 @@
     this._sengajaHenti = true;
     if (this._sr) { try { this._sr.stop(); } catch (e) {} }
     this.jalan = false;
-    this.onStatus('mikrofon mati');
+    this.onStatus('microphone off');
   };
 
   global.KENDALI = {

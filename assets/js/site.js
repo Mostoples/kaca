@@ -14,12 +14,12 @@
 
   /* ---------- kartu fitur ---------- */
   var FEATURES = [
-    ['layers', 'Panggung hologram prisma', 'Empat pandangan mengelilingi satu titik pusat, siap dipantulkan prisma kaca. Sudut diprarender lalu diputar mulus 60 fps.'],
-    ['brain', 'Rekonstruksi permukaan 3D', 'Isosurface marching tetrahedra pada ambang pilihan Anda, dinaungi cahaya, bisa diunduh sebagai STL atau OBJ.'],
-    ['zap', 'MIP & volume rendering', 'Intensitas maksimum untuk tulang dan pembuluh, atau ray-cast beropasitas dengan kepadatan dan gamma yang bisa disetel.'],
-    ['ruler', 'MPR & pengukuran', 'Potongan koronal dan sagital dengan proporsi milimeter yang benar, lengkap dengan alat panjang, sudut, dan ROI.'],
-    ['file', 'Parser DICOM sendiri', 'Ditulis dari nol: tiga transfer syntax utama, deflate, palette color, multi-frame, sampai Segmentation 1 bit.'],
-    ['lock', 'Berkas tidak pernah diunggah', 'Volume dan hologram dihitung di CPU perangkat Anda. Yang tersimpan ke akun hanya teks laporan.']
+    ['hologram', 'Prism hologram stage', 'Four views arranged around one centre point, ready for a glass prism. Angles are pre-rendered, then replayed smoothly.'],
+    ['mik', 'Voice and gesture control', 'Rotate, stop, zoom and switch modes by voice, or turn the hologram with a hand swipe in front of the camera.'],
+    ['kubus', '3D surface reconstruction', 'Marching-tetrahedra isosurface at the threshold you choose, shaded, and exportable as STL or OBJ.'],
+    ['petir', 'MIP and volume rendering', 'Maximum intensity for bone and vessels, or opacity ray casting with adjustable density and gamma.'],
+    ['panjang', 'MPR and measurement', 'Coronal and sagittal reformats at true millimetre proportions, with length, angle and ROI tools.'],
+    ['berkas', 'Our own DICOM parser', 'Written from scratch: the three main transfer syntaxes, deflate, palette colour, multi-frame and 1-bit segmentation.']
   ];
   var grid = document.getElementById('featGrid');
   if (grid) {
@@ -128,7 +128,7 @@
       ctx.fillStyle = '#5ec9f2';
       ctx.font = '12px "JetBrains Mono", monospace';
       ctx.textAlign = 'center';
-      ctx.fillText('menyusun hologram… ' + n + '/' + SUDUT, cv.width / 2, cv.height / 2);
+      ctx.fillText('building hologram… ' + n + '/' + SUDUT, cv.width / 2, cv.height / 2);
       /* bilah kemajuan tipis */
       var w = cv.width * 0.34, x = (cv.width - w) / 2, y = cv.height / 2 + 16;
       ctx.fillStyle = 'rgba(47,212,189,.22)';
@@ -224,7 +224,7 @@
         ctx.fillStyle = '#7e8fa3';
         ctx.font = '12px system-ui';
         ctx.textAlign = 'center';
-        ctx.fillText('Pratinjau tidak tersedia', cv.width / 2, cv.height / 2);
+        ctx.fillText('Preview unavailable', cv.width / 2, cv.height / 2);
       });
     }
 
@@ -243,7 +243,7 @@
   /* hero: hologram sungguhan */
   mountHologram('heroCanvas', {
     studi: 'ST-2409-0146', sudut: 16, px: 132,
-    wc: 300, ww: 900, elevasi: 0.18, jeda: 110
+    wc: 700, ww: 2000, elevasi: 0.18, jeda: 110, colormap: 'bone'
   });
 
   /* bagian viewer 2D di bawah tetap memakai pratinjau irisan */
@@ -262,7 +262,7 @@
       var t = document.querySelector(id);
       if (!t) return;
       e.preventDefault();
-      window.scrollTo({ top: t.getBoundingClientRect().top + window.scrollY - 76, behavior: 'smooth' });
+      window.scrollTo({ top: t.getBoundingClientRect().top + window.scrollY - 90, behavior: 'smooth' });
     });
   });
 })();

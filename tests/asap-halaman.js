@@ -274,7 +274,7 @@ async function ujiViewer() {
 
   const meshInfo = dok.getElementById('meshInfo');
   periksa('info permukaan terisi',
-    meshInfo && /segitiga/.test(meshInfo.textContent), meshInfo && meshInfo.textContent);
+    meshInfo && /triangles/.test(meshInfo.textContent), meshInfo && meshInfo.textContent);
 
   periksa('tombol ekspor STL & OBJ jadi aktif',
     !dok.getElementById('btnStl').disabled && !dok.getElementById('btnObj').disabled);
@@ -337,7 +337,7 @@ async function ujiAtlas(win, dok) {
 
   const info = dok.getElementById('atlasInfo');
   periksa('atlas termuat dari OBJ',
-    info && /2 bagian/.test(info.textContent), info && info.textContent);
+    info && /2 parts/.test(info.textContent), info && info.textContent);
 
   periksa('mode berpindah ke atlas',
     dok.querySelector('#modeGrid button[data-mode="atlas"]').classList.contains('on'));
@@ -352,7 +352,7 @@ async function ujiAtlas(win, dok) {
 
   const render = dok.getElementById('renderInfo');
   periksa('atlas ikut diprarender',
-    render && /sudut/.test(render.textContent), render && render.textContent);
+    render && /angles/.test(render.textContent), render && render.textContent);
 
   /* memilih organ → tersorot, dan yang lain dipudarkan */
   dok.querySelector('#daftarOrgan [data-organ="1"]').click();
@@ -426,7 +426,7 @@ async function ujiPrisma() {
 
   const render = dok.getElementById('renderInfo');
   periksa('prarender sudut selesai',
-    render && /sudut/.test(render.textContent), render && render.textContent);
+    render && /angles/.test(render.textContent), render && render.textContent);
 
   const status = dok.getElementById('status');
   periksa('lapisan status disembunyikan setelah selesai',
@@ -501,7 +501,7 @@ async function ujiPrisma() {
   periksa('sakelar dimatikan sendiri saat perangkat tidak ada',
     !dok.getElementById('swGestur').checked && !dok.getElementById('swSuara').checked);
   periksa('alasannya dijelaskan ke pengguna',
-    /tidak menyediakan|gagal/i.test(dok.getElementById('kendaliStatus').textContent),
+    /does not provide|failed/i.test(dok.getElementById('kendaliStatus').textContent),
     dok.getElementById('kendaliStatus').textContent);
 
   let matiGalat = null;
@@ -544,7 +544,7 @@ async function ujiPrisma() {
   await tunggu(win, 140);
   const mesh = dok.getElementById('meshInfo');
   periksa('mode permukaan menghasilkan isosurface', !ulangGalat &&
-    mesh && /segitiga/.test(mesh.textContent), ulangGalat || (mesh && mesh.textContent));
+    mesh && /triangles/.test(mesh.textContent), ulangGalat || (mesh && mesh.textContent));
 
   /* atlas dijalankan paling akhir: memuat model berpindah mode dan
      mengosongkan tanda "perlu render", jadi kalau ditaruh di tengah ia

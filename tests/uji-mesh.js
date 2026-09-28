@@ -359,7 +359,7 @@
       samaDengan(v, mesh.jumlahTitik(), 'jumlah baris v');
       samaDengan(vn, mesh.jumlahTitik(), 'jumlah baris vn');
       samaDengan(f, mesh.jumlahSegitiga(), 'jumlah baris f');
-      benar(teks.indexOf('PROTOTIPE') !== -1, 'ada peringatan prototipe di komentar');
+      benar(teks.indexOf('PROTOTYPE') !== -1, 'ada peringatan prototipe di komentar');
 
       /* indeks OBJ berbasis satu, jadi tidak boleh ada 0 */
       var adaNol = baris.some(function (b) { return /^f (0|\S*\s0)\b/.test(b); });

@@ -213,8 +213,8 @@
       }
     }
 
-    if (adaPoligon) catatan.push('Poligon dipecah menjadi segitiga (kipas).');
-    if (!vx.length) throw new Error('OBJ tidak memuat satu pun titik (v).');
+    if (adaPoligon) catatan.push('Polygons were split into triangles (fan).');
+    if (!vx.length) throw new Error('The OBJ contains no vertices (v).');
 
     var punyaNormal = vn.length > 0;
     var bagian = [];
@@ -244,21 +244,21 @@
 
       totalTri += triB.length / 3;
       if (totalTri > MAKS_SEGITIGA) {
-        catatan.push('Model dipotong pada ' + MAKS_SEGITIGA.toLocaleString('id-ID') + ' segitiga.');
+        catatan.push('Model truncated at ' + MAKS_SEGITIGA.toLocaleString('id-ID') + ' triangles.');
         break;
       }
 
       var vertA = new Float32Array(vertB);
       var normA = (punyaNormal && normB.length === vertB.length) ? new Float32Array(normB) : null;
-      if (punyaNormal && !normA) catatan.push('Normal berkas tidak lengkap; dihitung ulang.');
+      if (punyaNormal && !normA) catatan.push('File normals were incomplete; recomputed.');
 
       bagian.push(bagianBaru(kel.nama, bikinMesh(vertA, normA, triB, {
         sumber: opsi.sumber || '', desc: kel.nama
       }), bagian.length));
     }
 
-    if (!bagian.length) throw new Error('OBJ tidak memuat satu pun wajah (f).');
-    if (!punyaNormal) catatan.push('Berkas tanpa vn; normal per titik dihitung dari geometri.');
+    if (!bagian.length) throw new Error('The OBJ contains no faces (f).');
+    if (!punyaNormal) catatan.push('No vn in the file; per-vertex normals computed from geometry.');
 
     return { bagian: bagian, format: 'OBJ', catatan: catatan };
   }
@@ -306,7 +306,7 @@
     var u8 = keU8(data);
     var biner = stlBiner(u8);
     var hasil = biner ? stlDariBiner(u8, opsi) : stlDariTeks(keTeks(u8), opsi);
-    hasil.format = biner ? 'STL biner' : 'STL teks';
+    hasil.format = biner ? 'Binary STL' : 'ASCII STL';
     return hasil;
   }
 
@@ -341,9 +341,9 @@
       }
       pos += 2;                                    /* atribut */
     }
-    if (terpotong) catatan.push('STL dipotong pada ' + MAKS_SEGITIGA.toLocaleString('id-ID') + ' segitiga.');
-    catatan.push('Titik dilas (' + las.jumlah().toLocaleString('id-ID') +
-                 ' unik dari ' + (jml * 3).toLocaleString('id-ID') + '); normal dihitung ulang.');
+    if (terpotong) catatan.push('STL truncated at ' + MAKS_SEGITIGA.toLocaleString('id-ID') + ' triangles.');
+    catatan.push('Vertices welded (' + las.jumlah().toLocaleString('id-ID') +
+                 ' unique of ' + (jml * 3).toLocaleString('id-ID') + '); normals recomputed.');
 
     var nama = judulSTL(u8) || opsi.nama || 'model';
     return {
@@ -382,11 +382,11 @@
       tri.push(las.tambah(+p[0], +p[1], +p[2]));
     }
     if (tri.length % 3 !== 0) {
-      catatan.push('Jumlah titik bukan kelipatan tiga; sisa dibuang.');
+      catatan.push('Vertex count is not a multiple of three; the remainder was dropped.');
       tri.length -= tri.length % 3;
     }
-    if (!tri.length) throw new Error('STL teks tidak memuat satu pun "vertex".');
-    catatan.push('Titik dilas (' + las.jumlah().toLocaleString('id-ID') + ' unik); normal dihitung ulang.');
+    if (!tri.length) throw new Error('The ASCII STL contains no "vertex" lines.');
+    catatan.push('Vertices welded (' + las.jumlah().toLocaleString('id-ID') + ' unique); normals recomputed.');
     nama = nama || 'model';
     return {
       bagian: [bagianBaru(nama, bikinMesh(las.selesai(), null, tri, {
@@ -432,9 +432,9 @@
     if (/\.obj$/.test(n)) return dariOBJ(data, opsi);
     if (/\.stl$/.test(n)) return dariSTL(data, opsi);
     if (/\.(glb|gltf)$/.test(n)) {
-      throw new Error('glTF/GLB belum didukung: berkas modern memakai ' +
-        'EXT_meshopt_compression / KHR_mesh_quantization yang butuh dekoder WASM. ' +
-        'Konversikan ke OBJ atau STL terlebih dahulu.');
+      throw new Error('glTF/GLB is not supported yet: modern files use ' +
+        'EXT_meshopt_compression / KHR_mesh_quantization, which need a WASM decoder. ' +
+        'Convert to OBJ or STL first.');
     }
     /* tanpa ekstensi: tebak dari isi */
     var u8 = typeof data === 'string' ? null : keU8(data);
@@ -451,7 +451,7 @@
   }
 
   function keU8(d) {
-    if (!d) throw new Error('Data model kosong.');
+    if (!d) throw new Error('The model data is empty.');
     if (d instanceof Uint8Array) return d;
     if (typeof ArrayBuffer !== 'undefined' && d instanceof ArrayBuffer) return new Uint8Array(d);
     if (d.buffer) return new Uint8Array(d.buffer, d.byteOffset || 0, d.byteLength);
@@ -460,7 +460,7 @@
       for (var i = 0; i < d.length; i++) u[i] = d.charCodeAt(i) & 0xFF;
       return u;
     }
-    throw new Error('Bentuk data model tidak dikenali.');
+    throw new Error('The model data format is not recognised.');
   }
 
   function keTeks(d) {
@@ -479,7 +479,7 @@
      ========================================================== */
   function bagianBaru(nama, mesh, urutan) {
     return {
-      nama: nama || ('bagian ' + (urutan + 1)),
+      nama: nama || ('part ' + (urutan + 1)),
       mesh: mesh,
       warna: warnaOrgan(nama, urutan),
       tampil: true,
@@ -514,8 +514,8 @@
   };
 
   Adegan.prototype.info = function () {
-    return this.bagian.length + ' bagian · ' +
-      this.jumlahSegitiga().toLocaleString('id-ID') + ' segitiga';
+    return this.bagian.length + ' parts · ' +
+      this.jumlahSegitiga().toLocaleString('id-ID') + ' triangles';
   };
 
   /* Kotak pembatas gabungan, sudah memperhitungkan geser & skala */
@@ -843,7 +843,7 @@
       pixelSpacing: [mmPerPx, mmPerPx], sliceThickness: 0,
       pixels: piksel, min: 0, max: 255,
       encapsulated: false, mime: null, blobBytes: null,
-      derived: 'Atlas anatomi 3D (' + adegan.bagian.length + ' bagian)'
+      derived: '3D anatomy atlas (' + adegan.bagian.length + ' parts)'
     };
   }
 
@@ -857,7 +857,7 @@
     var jml = o.jumlah || 24;
     var cache = {};
     return {
-      desc: 'Atlas anatomi (' + jml + ' sudut)',
+      desc: 'Anatomy atlas (' + jml + ' angles)',
       number: 940, modality: '', count: jml,
       key: 'ATLAS#' + this.bagian.length + '#' + jml + '#' + (o.ukuran || 256),
       derived: true,
@@ -882,8 +882,8 @@
           { tag: '(0008,0008)', key: '00080008', vr: 'CS', name: 'ImageType',
             value: 'DERIVED\\SECONDARY\\SURFACE RENDERING' },
           { tag: '(0008,2111)', key: '00082111', vr: 'ST', name: 'DerivationDescription',
-            value: 'Atlas anatomi dari model permukaan luar, ' +
-                   self.jumlahSegitiga() + ' segitiga, dirender di peramban' },
+            value: 'Anatomy atlas from an external surface model, ' +
+                   self.jumlahSegitiga() + ' triangles, rendered in the browser' },
           { tag: '(0028,0002)', key: '00280002', vr: 'US', name: 'SamplesPerPixel', value: '3' },
           { tag: '(0028,0004)', key: '00280004', vr: 'CS', name: 'PhotometricInterpretation', value: 'RGB' },
           { tag: '(0062,0002)', key: '00620002', vr: 'SQ', name: 'SegmentSequence', value: nama }

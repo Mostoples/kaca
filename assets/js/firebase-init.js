@@ -42,29 +42,29 @@ setPersistence(auth, browserLocalPersistence).catch(() => {});
 
 /* ---------- pesan galat berbahasa Indonesia ---------- */
 const PESAN = {
-  'auth/invalid-email': 'Format alamat email tidak valid.',
-  'auth/missing-password': 'Kata sandi belum diisi.',
-  'auth/weak-password': 'Kata sandi terlalu lemah — minimal 6 karakter.',
-  'auth/email-already-in-use': 'Email ini sudah terdaftar. Silakan masuk.',
-  'auth/invalid-credential': 'Email atau kata sandi salah.',
-  'auth/invalid-login-credentials': 'Email atau kata sandi salah.',
-  'auth/wrong-password': 'Email atau kata sandi salah.',
-  'auth/user-not-found': 'Akun dengan email ini belum terdaftar.',
-  'auth/too-many-requests': 'Terlalu banyak percobaan. Coba lagi beberapa saat lagi.',
-  'auth/network-request-failed': 'Gagal terhubung ke jaringan.',
-  'auth/popup-closed-by-user': 'Jendela masuk ditutup sebelum selesai.',
-  'auth/popup-blocked': 'Jendela masuk diblokir peramban. Izinkan pop-up untuk situs ini.',
+  'auth/invalid-email': 'That email address is not valid.',
+  'auth/missing-password': 'Please enter a password.',
+  'auth/weak-password': 'That password is too weak: use at least 6 characters.',
+  'auth/email-already-in-use': 'This email is already registered. Please sign in.',
+  'auth/invalid-credential': 'Wrong email or password.',
+  'auth/invalid-login-credentials': 'Wrong email or password.',
+  'auth/wrong-password': 'Wrong email or password.',
+  'auth/user-not-found': 'No account is registered with this email.',
+  'auth/too-many-requests': 'Too many attempts. Please try again in a moment.',
+  'auth/network-request-failed': 'Could not connect to the network.',
+  'auth/popup-closed-by-user': 'The sign-in window was closed before finishing.',
+  'auth/popup-blocked': 'The browser blocked the sign-in window. Allow pop-ups for this site.',
   'auth/operation-not-allowed':
-    'Metode masuk ini belum diaktifkan pada project Firebase. ' +
-    'Aktifkan di Firebase Console → Authentication → Sign-in method.',
+    'This sign-in method is not enabled in the Firebase project. ' +
+    'Enable it in Firebase Console → Authentication → Sign-in method.',
   'auth/unauthorized-domain':
-    'Domain ini belum diizinkan di Firebase Console → Authentication → Settings → Authorized domains.',
-  'permission-denied': 'Akses ditolak oleh aturan keamanan Firestore.',
-  'unavailable': 'Layanan Firestore sedang tidak dapat dijangkau.'
+    'This domain is not authorised in Firebase Console → Authentication → Settings → Authorized domains.',
+  'permission-denied': 'Access denied by the Firestore security rules.',
+  'unavailable': 'The Firestore service cannot be reached right now.'
 };
 function pesanGalat(err) {
   const kode = (err && (err.code || err.message)) || '';
-  return PESAN[kode] || (err && err.message) || 'Terjadi kesalahan yang tidak diketahui.';
+  return PESAN[kode] || (err && err.message) || 'An unknown error occurred.';
 }
 
 /* ---------- API yang dipakai halaman lain ---------- */
@@ -97,7 +97,7 @@ const KFB = {
 
   /* --- status baca worklist --- */
   async simpanStatus(studyId, status) {
-    const u = auth.currentUser; if (!u) throw new Error('Belum masuk');
+    const u = auth.currentUser; if (!u) throw new Error('Not signed in');
     await setDoc(doc(db, 'users', u.uid, 'worklist', studyId),
       { studyId, status, updatedAt: serverTimestamp() });
   },
@@ -111,7 +111,7 @@ const KFB = {
 
   /* --- laporan --- */
   async simpanLaporan(studyId, data) {
-    const u = auth.currentUser; if (!u) throw new Error('Belum masuk');
+    const u = auth.currentUser; if (!u) throw new Error('Not signed in');
     await setDoc(doc(db, 'users', u.uid, 'reports', studyId), {
       studyId,
       clinical: data.clinical || '',
@@ -119,7 +119,7 @@ const KFB = {
       impression: data.impression || '',
       status: data.status || 'Draf',
       patient: data.patient || '',
-      by: u.displayName || u.email || 'Pengguna',
+      by: u.displayName || u.email || 'User',
       updatedAt: serverTimestamp()
     });
   },
